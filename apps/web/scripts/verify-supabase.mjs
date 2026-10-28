@@ -36,6 +36,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   process.exit(1)
 }
 
+if(process.env.REALM_TEST_PROJECT_URL!==SUPABASE_URL)throw new Error('Set REALM_TEST_PROJECT_URL to the dedicated disposable test project URL.')
+
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 })
@@ -81,25 +83,11 @@ async function run() {
     u3 = res3.data.user
     console.log(`  ✓ Created nonmember: ${u3.id} (${email3})`)
 
-    // 2. Provision Space, Space Members, Channel
-    console.log('\n[2/8] Provisioning space, channel, and memberships via Admin...')
-    const { data: space, error: spaceErr } = await admin.from('spaces').insert({ name: `Test Space ${timestamp}` }).select().single()
-    if (spaceErr) throw spaceErr
-    spaceId = space.id
-    console.log(`  ✓ Created space: ${spaceId}`)
-
-    const { error: memErr } = await admin.from('space_members').insert([
-      { space_id: spaceId, user_id: u1.id, role: 'owner' },
-      { space_id: spaceId, user_id: u2.id, role: 'member' },
-    ])
-    if (memErr) throw memErr
-    console.log('  ✓ Enrolled member1 (owner) and member2 (member); nonmember excluded.')
-
-    const { data: channel, error: chanErr } = await admin.from('channels').insert({ space_id: spaceId, name: 'general' }).select().single()
-    if (chanErr) throw chanErr
-    channelId = channel.id
-    console.log(`  ✓ Created channel: ${channelId} ('general')`)
-
+    // Atomic owner/member creation preserves the deferred exact-owner invariant.
+    const fixture = await admin.rpc('realm_test_fixture', { p_users: [u1.id,u2.id,u3.id], p_space: true })
+    if(fixture.error) throw new Error('Install supabase/tests/integration_fixture_support.sql in the dedicated test project first.')
+    spaceId=fixture.data.space
+    channelId=fixture.data.channel
     // 3. Test Unauthenticated (Anon) Access Denied
     console.log('\n[3/8] Testing unauthenticated (Anon) access restrictions...')
     const { data: anonSpaces } = await anon.from('spaces').select('*')
@@ -267,7 +255,7 @@ async function run() {
       console.log('  ✓ Member 2 received realtime INSERT event successfully!')
       await client2.removeChannel(realtimeChannel)
     } else {
-      console.log('  ⚠ Realtime subscription status: ' + subscriptionStatus)
+      throw new Error('Realtime subscription did not succeed: ' + subscriptionStatus)
     }
 
     // 8. Test Membership Revocation
@@ -291,13 +279,14 @@ async function run() {
     console.log('\n=== ALL SUPABASE BACKEND & RLS CHECKS PASSED SUCCESSFULLY ===\n')
   } finally {
     console.log('Cleaning up test resources...')
+    const cleanupFailures=[]
     if (spaceId) {
-      await admin.from('spaces').delete().eq('id', spaceId)
+      const deleted=await admin.from('spaces').delete().eq('id', spaceId)
+      if(deleted.error)cleanupFailures.push('space')
       console.log('  ✓ Deleted test space')
     }
-    if (u1?.id) await admin.auth.admin.deleteUser(u1.id)
-    if (u2?.id) await admin.auth.admin.deleteUser(u2.id)
-    if (u3?.id) await admin.auth.admin.deleteUser(u3.id)
+    for(const user of [u1,u2,u3])if(user?.id){const deleted=await admin.auth.admin.deleteUser(user.id);if(deleted.error)cleanupFailures.push('account')}
+    if(cleanupFailures.length)throw new Error('Temporary resource cleanup needs operator review; no success claim is made.')
     console.log('  ✓ Deleted test auth users')
   }
 }

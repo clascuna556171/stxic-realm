@@ -1,0 +1,8 @@
+{
+  "nodeModulesDir": "auto",
+  "compilerOptions": {"strict": true},
+  "tasks": {
+    "check": "deno check realm-invitations/index.ts realm-onboarding/index.ts realm-privacy/index.ts realm-worker/index.ts",
+    "test": "deno test --allow-env _shared/http.test.ts"
+  }
+}

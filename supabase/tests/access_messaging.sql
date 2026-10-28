@@ -1,0 +1,192 @@
+begin;
+create function pg_temp.assert_ok(ok boolean,label text) returns void language plpgsql as $$begin if ok is distinct from true then raise exception 'TEST FAILED: %',label;end if;end$$;
+create function pg_temp.denied(statement text,expected text,label text) returns void language plpgsql as $$
+begin
+ begin execute statement;exception when others then if sqlstate=expected then return;end if;raise exception 'TEST FAILED %: expected %, got % (%)',label,expected,sqlstate,sqlerrm;end;
+ raise exception 'TEST FAILED %: statement was accepted',label;
+end $$;
+insert into auth.users(id,email,email_confirmed_at,encrypted_password) values
+ ('10000000-0000-4000-8000-000000000001','access-owner@example.invalid',now(),'test-only'),
+ ('20000000-0000-4000-8000-000000000002','access-member@example.invalid',now(),'test-only'),
+ ('30000000-0000-4000-8000-000000000003','access-outsider@example.invalid',now(),'test-only'),
+ ('40000000-0000-4000-8000-000000000004','access-mod@example.invalid',now(),'test-only'),
+ ('50000000-0000-4000-8000-000000000005','access-platform@example.invalid',now(),'test-only'),
+ ('60000000-0000-4000-8000-000000000006','access-invited@example.invalid',now(),'test-only');
+select pg_temp.assert_ok((select count(*)=6 from realm_private.accounts where state='invited'),'unknown Auth identities quarantined');
+select pg_temp.assert_ok((select value='false' from realm_private.settings where key='privacy_jobs'),'privacy disabled by default');
+select pg_temp.assert_ok(not has_function_privilege('authenticated','public.server_invitation(uuid,text,text,uuid,uuid)','execute'),'client cannot invoke Auth-admin service');
+select pg_temp.assert_ok(not has_function_privilege('authenticated','realm_private.own_export(uuid)','execute'),'client cannot invoke arbitrary export helper');
+select pg_temp.assert_ok(not has_function_privilege('authenticated','realm_private.charge(text,integer,integer)','execute'),'client cannot alter quotas');
+select pg_temp.assert_ok(not has_function_privilege('anon','public.message_send(text,uuid,text,uuid)','execute'),'anonymous send denied');
+select pg_temp.assert_ok(not has_table_privilege('authenticated','realm_private.reports','select'),'evidence isolated from direct REST');
+update realm_private.accounts set state='active' where user_id<>'60000000-0000-4000-8000-000000000006';
+insert into realm_private.platform_admins values('50000000-0000-4000-8000-000000000005');
+update realm_private.settings set value='true' where key in ('administration','privacy_jobs','account_invitations');
+update realm_private.settings set value='10' where key='pilot_accounts';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','60000000-0000-4000-8000-000000000006',true);
+select pg_temp.assert_ok((select count(*)=0 from public.profiles),'unadmitted profiles hidden');
+select pg_temp.denied('select public.get_identity()','42501','unadmitted old RPC denied');
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select set_config('realm.test.space',public.manage_space('create',p_name=>'Access test')::text,true);
+select set_config('realm.test.channel',(select id::text from public.channels where space_id=current_setting('realm.test.space')::uuid limit 1),true);
+select pg_temp.denied(format('select public.manage_space(''role'',%L,%L,p_role=>''owner'',p_revision=>0)',current_setting('realm.test.space'),'10000000-0000-4000-8000-000000000001'),'42501','self role changes denied');
+select set_config('realm.test.invite',(public.membership_invite('create',current_setting('realm.test.space')::uuid,'access-member@example.invalid')->>'token'),true);
+select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000003',true);
+select pg_temp.denied(format('select public.membership_invite(''redeem'',p_token=>%L)',current_setting('realm.test.invite')),'42501','wrong invite recipient denied');
+select pg_temp.denied(format('select public.space_admin_data(%L)',current_setting('realm.test.space')),'42501','outsider roster denied');
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select public.membership_invite('redeem',p_token=>current_setting('realm.test.invite'));
+select pg_temp.denied(format('select public.membership_invite(''redeem'',p_token=>%L)',current_setting('realm.test.invite')),'42501','invite replay denied');
+select pg_temp.denied(format('select public.manage_channel(''create'',%L,p_name=>''forbidden'')',current_setting('realm.test.space')),'42501','member channel administration denied');
+select pg_temp.assert_ok(not (public.access_status()->>'platform_admin')::boolean,'space role does not confer platform authority');
+-- Raw inserts remain guarded during compatible rollout.
+insert into public.messages(channel_id,author_id,client_id,body) values(current_setting('realm.test.channel')::uuid,auth.uid(),gen_random_uuid(),'raw guarded message');
+select pg_temp.denied(format('insert into public.messages(channel_id,author_id,client_id,body) values(%L,%L,gen_random_uuid(),''spoof'')',current_setting('realm.test.channel'),'10000000-0000-4000-8000-000000000001'),'42501','raw spoof denied');
+select pg_temp.denied('update public.messages set body=''bypass''','42501','raw edit denied');
+select pg_temp.denied('delete from public.messages','42501','raw delete denied');
+select set_config('realm.test.message',public.message_send('channel',current_setting('realm.test.channel')::uuid,'hello', '20000000-0000-4000-8000-000000000099')::text,true);
+select public.message_change('channel',current_setting('realm.test.channel')::uuid,current_setting('realm.test.message')::uuid,2,'edited');
+select pg_temp.denied(format('select public.message_change(''channel'',%L,%L,2,''stale'')',current_setting('realm.test.channel'),current_setting('realm.test.message')),'PT409','stale edit denied');
+select public.message_change('channel',current_setting('realm.test.channel')::uuid,current_setting('realm.test.message')::uuid,3,p_remove=>true);
+select pg_temp.assert_ok((select body='' and removed_at is not null from public.messages where id=current_setting('realm.test.message')::uuid),'removed body tombstoned');
+-- Shared send quota, including the old direct insert route.
+do $$declare n integer;begin for n in 1..8 loop perform public.message_send('channel',current_setting('realm.test.channel')::uuid,'quota '||n,gen_random_uuid());end loop;end$$;
+select pg_temp.denied(format('insert into public.messages(channel_id,author_id,client_id,body) values(%L,auth.uid(),gen_random_uuid(),''over quota'')',current_setting('realm.test.channel')),'PT429','legacy send quota enforced');
+-- A committed identical retry succeeds even at the quota boundary.
+select set_config('realm.test.retry',(select client_id::text from public.messages where body='quota 8'),true);
+select public.message_send('channel',current_setting('realm.test.channel')::uuid,'quota 8',current_setting('realm.test.retry')::uuid);
+select pg_temp.denied(format('select public.message_send(''channel'',%L,''different'',%L)',current_setting('realm.test.channel'),current_setting('realm.test.retry')),'PT409','retry content conflict');
+reset role;
+select pg_temp.assert_ok((select count(*)=10 from realm_private.usage_events where actor='20000000-0000-4000-8000-000000000002' and operation='send_burst'),'idempotent retry does not consume quota');
+update realm_private.settings set value='1000' where key in ('send_burst','send_minute');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select set_config('realm.test.modinvite',public.membership_invite('create',current_setting('realm.test.space')::uuid,'access-mod@example.invalid')->>'token',true);
+select set_config('request.jwt.claim.sub','40000000-0000-4000-8000-000000000004',true);
+select public.membership_invite('redeem',p_token=>current_setting('realm.test.modinvite'));
+select pg_temp.assert_ok(public.message_unread('channel',current_setting('realm.test.channel')::uuid)=0,'new member starts at current stream position');
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select public.manage_space('role',current_setting('realm.test.space')::uuid,'40000000-0000-4000-8000-000000000004',p_role=>'moderator',p_revision=>0);
+select set_config('realm.test.reportable',public.message_send('channel',current_setting('realm.test.channel')::uuid,'Reportable owner message',gen_random_uuid())::text,true);
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select set_config('realm.test.staffreport',public.submit_report('channel',current_setting('realm.test.channel')::uuid,current_setting('realm.test.reportable')::uuid,p_reason=>'harassment')::text,true);
+select set_config('realm.test.badmessage',public.message_send('channel',current_setting('realm.test.channel')::uuid,'Reportable member message',gen_random_uuid())::text,true);
+select set_config('request.jwt.claim.sub','40000000-0000-4000-8000-000000000004',true);
+select pg_temp.assert_ok(jsonb_array_length(public.report_queue(current_setting('realm.test.space')::uuid))=0,'staff-target report routed away from space queue');
+select pg_temp.denied(format('select public.review_report(%L,0,''remove'',''deny'')',current_setting('realm.test.staffreport')),'42501','moderator cannot read or act on platform staff complaint');
+select set_config('realm.test.memberreport',public.submit_report('channel',current_setting('realm.test.channel')::uuid,current_setting('realm.test.badmessage')::uuid,p_reason=>'spam')::text,true);
+select public.review_report(current_setting('realm.test.memberreport')::uuid,0,'claim','Investigating');
+select pg_temp.denied(format('select public.review_report(%L,0,''remove'',''stale'')',current_setting('realm.test.memberreport')),'PT409','review revision enforced');
+select public.review_report(current_setting('realm.test.memberreport')::uuid,1,'mute','Repeated spam',1);
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select pg_temp.denied(format('select public.message_send(''channel'',%L,''muted'',gen_random_uuid())',current_setting('realm.test.channel')),'42501','muted RPC send denied');
+select pg_temp.denied(format('insert into public.messages(channel_id,author_id,client_id,body) values(%L,auth.uid(),gen_random_uuid(),''muted'')',current_setting('realm.test.channel')),'42501','muted legacy send denied');
+reset role;
+update realm_private.restrictions set expires_at=now()-interval '1 second';
+set local role authenticated;
+select public.message_send('channel',current_setting('realm.test.channel')::uuid,'unmuted',gen_random_uuid());
+-- Stable equal-timestamp pages, >100-message recovery, old loaded edits/removals.
+select set_config('realm.test.before',(public.message_history('channel',current_setting('realm.test.channel')::uuid)->>'watermark'),true);
+do $$declare n integer;begin for n in 1..125 loop perform public.message_send('channel',current_setting('realm.test.channel')::uuid,'history '||n,gen_random_uuid());end loop;end$$;
+do $$declare page jsonb;event_count integer:=0;cursor bigint:=current_setting('realm.test.before')::bigint;high bigint;begin
+ loop
+ page:=public.message_recover('channel',current_setting('realm.test.channel')::uuid,cursor,high);high:=(page->>'watermark')::bigint;cursor:=(page->>'next')::bigint;
+ event_count:=event_count+jsonb_array_length(page->'events');exit when cursor=high;
+ end loop;
+ perform pg_temp.assert_ok(event_count=125,'recovery replays every page beyond latest 100');
+end$$;
+do $$declare page jsonb;oldest jsonb;total integer:=0;before_time timestamptz;before_id uuid;begin
+ loop page:=public.message_history('channel',current_setting('realm.test.channel')::uuid,before_time,before_id);
+ total:=total+jsonb_array_length(page->'messages');exit when jsonb_array_length(page->'messages')<50;
+ oldest:=page->'messages'->0;before_time:=(oldest->>'created_at')::timestamptz;before_id:=(oldest->>'id')::uuid;
+ end loop;
+ perform pg_temp.assert_ok(total=(select count(*) from public.messages),'timestamp/id history has no gaps');
+end$$;
+select set_config('realm.test.visibility',public.message_history('channel',current_setting('realm.test.channel')::uuid)->>'visibility',true);
+select public.set_block('10000000-0000-4000-8000-000000000001',true);
+select pg_temp.assert_ok(public.message_history('channel',current_setting('realm.test.channel')::uuid)->>'visibility'<>current_setting('realm.test.visibility'),'block invalidates loaded projection');
+select pg_temp.assert_ok((select count(*)=0 from public.messages where author_id='10000000-0000-4000-8000-000000000001'),'blocked author hidden by raw RLS');
+select public.set_block('10000000-0000-4000-8000-000000000001',false);
+-- Existing JWT loses every protected table and legacy RPC immediately.
+reset role;
+update realm_private.accounts set state='suspended' where user_id='20000000-0000-4000-8000-000000000002';
+set local role authenticated;
+select pg_temp.assert_ok((select count(*)=0 from public.messages),'suspended channel reads denied');
+select pg_temp.assert_ok((select count(*)=0 from public.user_themes),'suspended private reads denied');
+select pg_temp.denied('select public.get_identity()','42501','suspended old identity RPC denied');
+select pg_temp.denied(format('select public.message_history(''channel'',%L)',current_setting('realm.test.channel')),'42501','suspended history denied');
+select pg_temp.assert_ok(jsonb_typeof(public.privacy_request('list'))='array','suspended self privacy remains accessible');
+reset role;
+update realm_private.accounts set state='active' where user_id='20000000-0000-4000-8000-000000000002';
+-- Auth verified invitation proof, not client-editable metadata.
+set local role service_role;
+select set_config('realm.test.account_token',public.server_invitation('50000000-0000-4000-8000-000000000005','create','access-invited@example.invalid')->>'token',true);
+reset role;
+update realm_private.account_invites set user_id='60000000-0000-4000-8000-000000000006',delivery='sent' where email='access-invited@example.invalid';
+set local role authenticated;
+select set_config('request.jwt.claim.sub','60000000-0000-4000-8000-000000000006',true);
+select pg_temp.denied(format('select public.accept_account(%L)',current_setting('realm.test.account_token')),'42501','clients cannot attest initial password setup');
+reset role;
+set local role service_role;
+select public.complete_account_invite('60000000-0000-4000-8000-000000000006',current_setting('realm.test.account_token'),true);
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','60000000-0000-4000-8000-000000000006',true);
+select pg_temp.assert_ok((public.access_status()->>'active')::boolean,'verified invited account admitted');
+select pg_temp.denied(format('select public.accept_account(%L)',current_setting('realm.test.account_token')),'42501','account grant single use');
+-- Privacy reauthentication and ownership, report-then-block DMs, data-preserving deletion.
+reset role;
+insert into public.friendships(requester,addressee,status) values('20000000-0000-4000-8000-000000000002','30000000-0000-4000-8000-000000000003','accepted');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select set_config('realm.test.dm',public.open_direct('30000000-0000-4000-8000-000000000003')::text,true);
+select public.send_direct(current_setting('realm.test.dm')::uuid,'Keep my contribution',gen_random_uuid());
+select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000003',true);
+select set_config('realm.test.dm_bad',public.send_direct(current_setting('realm.test.dm')::uuid,'Abusive DM',gen_random_uuid())::text,true);
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select set_config('realm.test.dm_report',public.submit_report('direct',current_setting('realm.test.dm')::uuid,current_setting('realm.test.dm_bad')::uuid,p_reason=>'harassment',p_block=>true)::text,true);
+select pg_temp.assert_ok(public.submit_report('direct',current_setting('realm.test.dm')::uuid,current_setting('realm.test.dm_bad')::uuid,p_reason=>'harassment',p_block=>true)::text=current_setting('realm.test.dm_report'),'lost report-and-block response retries idempotently');
+select pg_temp.assert_ok((select count(*)=0 from public.direct_messages),'report then block revokes DM');
+select pg_temp.denied('select public.privacy_request(''export'')','42501','export requires recent password authentication');
+select set_config('request.jwt.claims',jsonb_build_object('amr',jsonb_build_array(jsonb_build_object('method','password','timestamp',extract(epoch from clock_timestamp()))))::text,true);
+select set_config('realm.test.export',public.privacy_request('export')->>'id',true);
+select pg_temp.assert_ok(public.privacy_request('export')->>'id'=current_setting('realm.test.export'),'export request idempotent');
+reset role;
+select realm_private.process_privacy_jobs();
+set local role authenticated;
+select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000003',true);
+select pg_temp.denied(format('select public.privacy_request(''download'',%L)',current_setting('realm.test.export')),'42501','other user cannot download artifact');
+select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
+select pg_temp.assert_ok(jsonb_array_length(public.privacy_request('download',current_setting('realm.test.export')::uuid)->'authored_direct_messages')=1,'own export excludes peer messages');
+reset role;
+update realm_private.export_artifacts set expires_at=clock_timestamp()-interval '1 second' where job_id=current_setting('realm.test.export')::uuid;
+set local role authenticated;
+select pg_temp.assert_ok(public.privacy_request('export')->>'id'<>current_setting('realm.test.export'),'expired export can be replaced without waiting for maintenance');
+select set_config('request.jwt.claim.sub','30000000-0000-4000-8000-000000000003',true);
+select set_config('realm.test.deletion',public.privacy_request('delete')->>'id',true);
+select public.privacy_request('cancel',current_setting('realm.test.deletion')::uuid);
+select pg_temp.assert_ok((public.privacy_request('list')->0->>'status')='cancelled','deletion cancellation');
+select set_config('realm.test.deletion',public.privacy_request('delete')->>'id',true);
+reset role;
+update realm_private.privacy_jobs set not_before=clock_timestamp()-interval '1 second' where id=current_setting('realm.test.deletion')::uuid;
+select realm_private.process_privacy_jobs();
+select pg_temp.assert_ok((select state='deleting' from realm_private.accounts where user_id='30000000-0000-4000-8000-000000000003'),'processing revokes account access');
+select set_config('request.jwt.claim.sub','',true);
+delete from auth.users where id='30000000-0000-4000-8000-000000000003';
+select pg_temp.assert_ok((select body='Keep my contribution' from public.direct_messages where author_id='20000000-0000-4000-8000-000000000002'),'peer authored content survives deletion');
+select pg_temp.assert_ok((select body='' and author_id is null from public.direct_messages where id=current_setting('realm.test.dm_bad')::uuid),'deleted content tombstone survives');
+select pg_temp.assert_ok((select evidence='Abusive DM' from realm_private.reports where id=current_setting('realm.test.dm_report')::uuid),'already captured evidence retained in restricted queue');
+select pg_temp.assert_ok((select count(*)=0 from realm_private.message_events where to_jsonb(message_events)?'body'),'journal contains no old bodies');
+update realm_private.reports set created_at=clock_timestamp()-interval '91 days' where id=current_setting('realm.test.dm_report')::uuid;
+select realm_private.maintenance();
+select pg_temp.assert_ok(not exists(select 1 from realm_private.reports where id=current_setting('realm.test.dm_report')::uuid),'original absolute evidence cap enforced');
+update realm_private.streams set floor=revision;
+set local role authenticated;
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+select pg_temp.assert_ok((public.message_recover('channel',current_setting('realm.test.channel')::uuid,0)->>'reset')::boolean,'expired journal requests explicit reset');
+select pg_temp.denied('select public.privacy_request(''delete'')','PT409','owner must transfer or explicitly close spaces');
+reset role;
+set constraints all immediate;
+select 'ALL ACCESS/MESSAGING SQL ACCEPTANCE TESTS PASSED' as result;
+rollback;

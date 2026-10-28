@@ -9,6 +9,7 @@ dist/
 dist-ssr/
 build/
 *.local
+*.local.*
 .vite/
 .cache/
 *.tsbuildinfo
@@ -27,6 +28,7 @@ playwright/.cache/
 # Local design/QA captures and handoff reports, not design configuration
 /.impeccable/review/
 /.impeccable/account-review/
+/.impeccable/access-review/
 
 # Original duplicate export; the extracted sample source is retained
 /Build STXIC Realm App.zip

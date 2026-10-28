@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {defaults} from '../src/appearance.ts'
-import {appearanceFor,identityPayload,saveIdentity,getIdentity} from '../src/account-repository.ts'
+import {appearanceFor,identityPayload,saveIdentity,getIdentity,invoke,errorText} from '../src/account-repository.ts'
 import {mergeDirectMessages} from '../src/direct.ts'
 const profile={id:'alice',username:' alice ',display_name:' Alice ',bio:' Hello ',revision:3,updated_at:''}
 test('public character payload excludes private theme and separates home mood',()=>{
@@ -22,4 +22,8 @@ test('direct-message recovery merges duplicate hints and retains older history w
  const old={...base,id:'a',created_at:'2026-10-27T00:00:00Z'},a={...base,id:'b'},b={...base,id:'c'}
  assert.deepEqual(mergeDirectMessages([old,b],[a,b]).map(m=>m.id),['a','b','c'])
  assert.equal(mergeDirectMessages([a],[{...a,body:'canonical'}])[0].body,'canonical')
+})
+test('Edge failures preserve the actionable server explanation and retry interval',async()=>{
+ const error={context:new Response(JSON.stringify({code:'PT429',error:'Wait before replacing this invitation.'}),{status:429,headers:{'Retry-After':'60'}})}
+ await assert.rejects(invoke({functions:{invoke:async()=>({data:null,error})}},'realm-invitations',{}),e=>errorText(e).includes('60 seconds')&&errorText(e).includes('Wait before'))
 })

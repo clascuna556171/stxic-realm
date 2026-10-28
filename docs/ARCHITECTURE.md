@@ -57,3 +57,11 @@ Illustrative scene (dimensions and identifiers are examples):
 ## Implemented account/social contracts — 28 October 2026
 
 The current web slice adds `profiles`, `profile_appearances`, private `user_themes`, `friendships`, `user_blocks`, `direct_conversations`, `direct_messages`, `homes` and token-bound `home_visits`. Account identity and social APIs are in `apps/web/src/account-repository.ts`; `Account.tsx` owns session/identity lifecycle. New migration routines are privileged only inside unexposed `realm_private`, with public invoker wrappers and read-only client table grants. `get_identity`/`save_identity`, `request_friend`/`respond_friend`/`set_block`, `open_direct`/`send_direct`, and `save_home`/`enter_home`/`room_state`/`move_home`/`leave_home` implement the first version of these contracts. Homes use database-authorized polling, not untrusted client movement broadcasts. See implementation notes for verification and limits; the broader architecture above remains proposed where no implementation is stated.
+
+## Local access and messaging extension
+
+Private admission and restrictive policies now guard the existing table/RPC boundary; server-managed platform grants are independent of space roles. Space/channel/invitation/report/privacy commands use invoker wrappers around scoped private routines. Auth-admin invitations and password-setup completion are server-only Edge operations. No browser metadata grants authority.
+
+Messages retain their existing tables and stable history index; private stream rows serialize a metadata-only mutation journal until commit. Snapshot/recovery/read/unread/change APIs share current authorization and block projections. Realtime is a hint, and expired journal cursors explicitly reset. Shared account quota locks cover both RPC and legacy channel insert routes.
+
+Export artifacts, case evidence, limits, audit, grants and jobs remain unexposed private tables. Auth deletion scrubs authored bodies and sets author/participant references null instead of cascading away peer history. Explicitly closed spaces preserve read-only shared content; open spaces retain exact ownership. A leased Edge worker performs bounded privacy work and retention sweeps. See [operations and remaining verification gates](ACCESS_OPERATIONS.md); these additions have not been deployed.

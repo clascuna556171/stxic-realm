@@ -30,3 +30,9 @@ Test validators and theme tokens, repositories and RLS, and end-to-end account, 
 - Clean-machine Windows build/install instructions work, with quotas and basic controls enforced.
 
 Before expanding, review measured demand, capacity, backups, provider limits and moderation readiness.
+
+## Local access controls and rollout
+
+The access/moderation plan now has local database, Edge and frontend implementation. Current-state admission guards apply to old table/RPC routes as well as the new screens; current space roles, bounded restrictions, shared send limits and private evidence/artifacts are enforced at the database boundary. New administration/reporting, invitations and privacy processing default off. See [Access operations](ACCESS_OPERATIONS.md) for bootstrap, exact origins, server keys, callback flow, email/job rehearsal, retention monitoring and compatible rollback.
+
+Do not enable reporting without a verified retention scheduler. Expired evidence is omitted from queues immediately, but physical removal requires the sweep; a stopped worker cannot satisfy a purge deadline. Real mail/Auth/realtime/concurrency, scheduler/deletion rehearsal, measured budgets, restoration and independent visible QA remain gates. No new migration, live mail, hosted configuration or release was applied in this implementation pass.

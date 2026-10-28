@@ -1,19 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { sendMessage } from '../src/message-repository.ts'
-function db(insertError, existing) {
-  const lookup = { maybeSingle: async () => ({ data: existing, error: null }) }
-  return { from: () => ({
-    insert: async () => ({ error: insertError }),
-    select: () => ({ eq: () => ({ eq: () => lookup }) }),
-  }) }
-}
 test('accepts a previously committed matching retry', async () => {
-  await sendMessage(db({code:'23505'}, {channel_id:'channel',body:'hello'}), 'channel', 'user', 'hello', 'key')
+  const db={rpc:async(name,args)=>{assert.equal(name,'message_send');assert.deepEqual(args,{p_kind:'channel',p_stream:'channel',p_body:'hello',p_client:'key'});return {data:'committed-id',error:null}}}
+  await sendMessage(db, 'channel', 'user', 'hello', 'key')
 })
 test('rejects a duplicate key belonging to different content', async () => {
-  await assert.rejects(sendMessage(db({code:'23505'}, {channel_id:'other',body:'hello'}), 'channel', 'user', 'hello', 'key'))
+  const error={code:'PT409',message:'Retry identifier belongs to different content.'}
+  await assert.rejects(sendMessage({rpc:async()=>({error})}, 'channel', 'user', 'hello', 'key'),e=>e===error)
 })
 test('propagates authorization errors', async () => {
-  await assert.rejects(sendMessage(db({code:'42501'}, null), 'channel', 'user', 'hello', 'key'))
+  const error={code:'42501',message:'Account access is unavailable.'}
+  await assert.rejects(sendMessage({rpc:async()=>({error})}, 'channel', 'user', 'hello', 'key'),e=>e===error)
 })

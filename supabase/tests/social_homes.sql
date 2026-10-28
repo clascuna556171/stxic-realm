@@ -5,6 +5,8 @@ insert into auth.users(id,email) values
  ('10000000-0000-4000-8000-000000000001','realm-sql-test-1@example.invalid'),
  ('20000000-0000-4000-8000-000000000002','realm-sql-test-2@example.invalid'),
  ('30000000-0000-4000-8000-000000000003','realm-sql-test-3@example.invalid');
+-- Explicitly reviewed test fixtures, never blanket admission of real Auth users.
+update realm_private.accounts set state='active' where user_id in ('10000000-0000-4000-8000-000000000001','20000000-0000-4000-8000-000000000002','30000000-0000-4000-8000-000000000003');
 update public.profiles set username='realm_test_alice' where id='10000000-0000-4000-8000-000000000001';
 update public.profiles set username='realm_test_bob' where id='20000000-0000-4000-8000-000000000002';
 update public.profiles set username='realm_test_eve' where id='30000000-0000-4000-8000-000000000003';

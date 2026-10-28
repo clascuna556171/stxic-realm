@@ -13,6 +13,7 @@ This folder is the working information source for STXIC Realm. The [original pro
 - [Architecture and data](docs/ARCHITECTURE.md) — proposed stack, boundaries, data and contracts.
 - [Security and operations](docs/SECURITY_OPERATIONS.md) — privacy, moderation, deployment and quality gates.
 - [Implementation and local setup](docs/IMPLEMENTATION.md) — current working slice, setup and verification limits.
+- [Access and moderation operations](docs/ACCESS_OPERATIONS.md) — admission bootstrap, messaging/admin/privacy APIs, deployment order and verification gates.
 - [Roadmap](docs/ROADMAP.md) — proposed phases, dependencies and acceptance criteria.
 - [Decisions and questions](docs/DECISIONS.md) — proposals, uncertainties and scope clarifications.
 

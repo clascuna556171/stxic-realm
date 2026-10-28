@@ -20,12 +20,23 @@ export function identityPayload(profile:Profile,appearance:Appearance){
 export function errorText(error:unknown):string {
  const code=(error as {code?:string})?.code
  if(code==='23505')return 'That handle or request already exists. Choose another handle or check your requests.'
- if(code==='40001'||code==='PT409')return 'Changed in another tab or device. Reload from your account before saving.'
+ if(code==='40001'||code==='PT409')return (error as {message?:string})?.message||'Changed in another tab or device. Reload before saving.'
+ if(code==='PT429'){let retry=0;try{retry=Number(JSON.parse((error as {details?:string}).details??'{}').retry_after)||0}catch{/* Limits may omit a retry interval. */}return `${(error as {message?:string}).message||'Limit reached.'}${retry>0?` Try again in ${Math.ceil(retry)} seconds.`:''}`}
  return (error as {message?:string})?.message || 'Could not connect. Check your connection and try again.'
 }
 export async function rpc<T>(db:SupabaseClient,name:string,args?:Record<string,unknown>):Promise<T>{
  const {data,error}=await db.rpc(name,args)
  if(error)throw error
+ return data as T
+}
+export async function invoke<T>(db:SupabaseClient,name:string,body:Record<string,unknown>):Promise<T>{
+ const {data,error}=await db.functions.invoke(name,{body})
+ if(error){const response=(error as {context?:unknown}).context
+  if(response instanceof Response){let detail:{error?:string;code?:string}={};try{detail=await response.clone().json()}catch{/* A network proxy may return a non-JSON error. */}
+   if(detail.error)throw {message:detail.error,code:detail.code??`PT${response.status}`,details:JSON.stringify({retry_after:Number(response.headers.get('Retry-After'))||0})}
+  }
+  throw error
+ }
  return data as T
 }
 export const getIdentity=(db:SupabaseClient)=>rpc<Identity>(db,'get_identity')

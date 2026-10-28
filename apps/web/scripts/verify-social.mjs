@@ -7,6 +7,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 const env=Object.fromEntries(fs.readFileSync(path.join(root,'.env.local'),'utf8').split(/\r?\n/).filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>{const i=l.indexOf('=');return[l.slice(0,i),l.slice(i+1)]}))
 const url=process.env.VITE_SUPABASE_URL||env.VITE_SUPABASE_URL,key=process.env.VITE_SUPABASE_ANON_KEY||env.VITE_SUPABASE_ANON_KEY,secret=process.env.SUPABASE_SERVICE_ROLE_KEY
 if(!url||!key||!secret)throw new Error('Supabase public config and an admin key in SUPABASE_SERVICE_ROLE_KEY are required. Never pass the admin key to the browser.')
+if(process.env.REALM_TEST_PROJECT_URL!==url)throw new Error('Set REALM_TEST_PROJECT_URL to the dedicated test project URL. Never run this suite incidentally against the linked project.')
 const options={auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(30000)})}},admin=createClient(url,secret,options),fixtures=path.resolve(root,'../../supabase/.temp/browser-fixtures.json')
 if(process.argv.includes('--cleanup-fixtures')){
  if(fs.existsSync(fixtures)){const saved=JSON.parse(fs.readFileSync(fixtures,'utf8'));for(const u of saved.users){const {error}=await admin.auth.admin.deleteUser(u.id);if(error)throw error}fs.unlinkSync(fixtures);console.log('Browser test accounts cleaned up.')}
@@ -22,6 +23,7 @@ try{
   console.log(`Preparing temporary test identity ${i+1}/3`);
   const email=`realm-check-${tag}-${i}@example.invalid`,{data,error}=await admin.auth.admin.createUser({email,password,email_confirm:true});if(error)throw error
   users.push({id:data.user.id,email,password,handle:`check_${tag}_${i}`})
+  const admitted=await admin.rpc('realm_test_fixture',{p_users:[data.user.id]});if(admitted.error)throw new Error('Install supabase/tests/integration_fixture_support.sql in the dedicated test project first.')
   const db=createClient(url,key,options),auth=await db.auth.signInWithPassword({email,password});if(auth.error)throw auth.error
   clients.push(db);await db.realtime.setAuth(auth.data.session.access_token)
   const identity=await call(db,'get_identity');await call(db,'save_identity',{p_username:users[i].handle,p_name:['Alex (test)','Blair (test)','Casey (test)'][i],p_bio:'Temporary verification account',p_character:identity.character,p_theme:{accent:i?'obsidian':'violet',logo:'mist'},p_mood:'cozy',p_revision:identity.profile.revision})

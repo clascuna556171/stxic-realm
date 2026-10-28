@@ -7,8 +7,15 @@
     "build": "pnpm --filter @realm/web build",
     "typecheck": "pnpm --filter @realm/web typecheck",
     "test": "pnpm --filter @realm/web test",
+    "test:database": "node supabase/tests/run-local.mjs",
+    "test:access:ui": "node apps/web/scripts/verify-access-ui.mjs",
+    "test:access:integration": "pnpm --filter @realm/web test:access",
     "test:integration": "pnpm --filter @realm/web test:integration",
     "test:social": "pnpm --filter @realm/web test:social",
     "test:social:sql": "npx --yes supabase@2.122.0 db query --linked --file supabase/tests/social_homes.sql"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.12",
+    "playwright": "1.64.1"
   }
 }

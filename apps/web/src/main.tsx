@@ -6,6 +6,12 @@ import { applyAppearance, readAppearance } from './appearance'
 import AppearanceStudio from './AppearanceStudio'
 import './styles.css'
 import './social.css'
+import './administration.css'
+import {AuthCallback,Recovery} from './Auth'
+const Spaces=lazy(()=>import('./Spaces'))
+const Privacy=lazy(()=>import('./Safety').then(m=>({default:m.PrivacyPage})))
+const Moderation=lazy(()=>import('./Safety').then(m=>({default:m.ModerationPage})))
+const Platform=lazy(()=>import('./Platform'))
 const RoomPreview=lazy(()=>import('./world/RoomPreview'))
 const HomeStudio=lazy(()=>import('./world/HomeStudio'))
 const SharedHome=lazy(()=>import('./world/SharedHome'))
@@ -15,6 +21,9 @@ const Profile=lazy(()=>import('./Social').then(m=>({default:m.ProfilePage})))
 applyAppearance(readAppearance())
 function Routes(){
  const account=useAccount(),params=new URLSearchParams(window.location.search)
+ if(window.location.pathname==='/auth/callback')return <AuthCallback/>
+ if(window.location.pathname==='/auth/recover')return <Recovery/>
+ if(params.has('privacy'))return <Privacy key={account.session?.user.id??'signed-out'}/>
  if(account.loading)return <main className="setup" role="status">Loading your account…</main>
  if(params.has('appearance'))return account.session?<AccountGate><AppearanceStudio key={account.session.user.id}/></AccountGate>:<AppearanceStudio key="local"/>
  if(params.has('room-studio'))return account.session?<AccountGate><HomeStudio key={account.session.user.id}/></AccountGate>:<HomeStudio key="local"/>
@@ -23,6 +32,9 @@ function Routes(){
  if(params.has('friends'))return <Friends/>
  if(params.has('profile'))return <Profile/>
  if(params.has('dm'))return <DirectMessages id={params.get('dm')??''}/>
+ if(params.has('spaces'))return <Spaces/>
+ if(params.has('moderation'))return <Moderation/>
+ if(params.has('platform'))return <Platform/>
  return <App/>
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><AccountProvider><Suspense fallback={<main className="setup" role="status">Opening Realm…</main>}><Routes/></Suspense></AccountProvider></React.StrictMode>)

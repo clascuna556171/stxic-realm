@@ -1,15 +1,15 @@
 # Implementation and local setup
 
-The initial working slice is in `apps/web`; the separate `Build STXIC Realm App` folder remains a UI-only sample. The new app supports password sign-in for pre-provisioned accounts, membership-scoped channel browsing, persisted text messages, idempotent retries, and a realtime subscription that reloads the latest messages after connection or reconnection. The browser cannot create users, spaces, memberships or channels. The foundation migration, RLS policies, and realtime broadcast have been applied and verified against the live project `stxic-realm` (`rrprjxubfdixoqvquptq`).
+The working app is in `apps/web`; `Build STXIC Realm App` remains a separate UI-only sample. The latest slice adds invitation/recovery, space/channel/membership administration, journal-backed messaging/unread/edit/remove, moderation, limits and privacy jobs. Read [Access operations](ACCESS_OPERATIONS.md) for setup and release gates. All migrations `20261028000000` through `20261028070000` and all Edge Functions are deployed to linked development project `stxic-realm` (`rrprjxubfdixoqvquptq`). First administrator account `c.lascuna.556171@umindanao.edu.ph` is bootstrapped.
 
 ## Requirements
 
 Node 24 and pnpm 11.22.0. For an isolated local backend, a running Docker engine and Supabase CLI are needed; alternatively use a dedicated, non-production Supabase project. Never run development migrations against an existing production project without review and backup. Do not commit credentials or use a service-role key in browser code.
 
 1. Run `pnpm install --frozen-lockfile` at the repository root.
-2. In a disposable Supabase project, disable public email/password signup in Auth settings. Create tester accounts through trusted administrative tooling. The client currently supports password sign-in only; invitation redemption, password setup/reset and email confirmation flows are not implemented.
-3. Apply `supabase/migrations/20261028000000_foundation.sql` using the Supabase migration workflow (`npx supabase db push --linked`). The SQL expects Supabase's `auth` schema, authenticated roles and `supabase_realtime` publication. Never expose service-role access to the frontend.
-4. Using trusted administrator SQL, insert a space, add existing `auth.users` IDs to `public.space_members`, and add a channel. No regular user can provision memberships via this slice.
+2. Use a dedicated disposable Supabase project and inspect its actual Auth settings; disable public signup, verify confirmation/redirect/provider limits and configure captured/test SMTP. New frontend callback routes are `/auth/callback` and `/auth/recover`.
+3. Follow [the migration preflight, reviewed account bootstrap and compatible rollout](ACCESS_OPERATIONS.md). Apply all migrations in order only to the authorized target. SQL expects Supabase's `auth` schema, roles and realtime publication. Never expose service-role access to the frontend.
+4. Explicitly admit reviewed existing identities and bootstrap the platform administrator with trusted tooling. New admin/reporting, invitation and privacy processing features remain disabled until configured/tested; owners then create spaces/channels and invite verified admitted members through RPC-backed screens.
 5. Copy `apps/web/.env.example` to `apps/web/.env.local`, set the project URL and public anon/publishable key, then run `pnpm dev`. Verify the key is a public client key, not the secret/service-role key.
 6. Run `pnpm typecheck`, `pnpm test`, and `pnpm build`.
 
@@ -89,8 +89,8 @@ The roadmap recommendation is now implemented as a first account-backed slice. M
 
 - `/?friends` supports exact-handle requests, incoming acceptance/decline, outgoing cancellation, removal, blocking and unblocking. Only the request recipient may accept. Unblocking does not restore a friendship.
 - Accepted friends can open a unique 1:1 conversation at `/?dm=<conversation-id>`. Messages use server-derived authors, idempotent client IDs, an earlier-history cursor and permission-filtered realtime notifications with a 10-second read fallback. A pending send disables the text field to preserve retry intent.
-- Removing a friendship or blocking either direction revokes DM reads/sends and visits between those users. Retained DM history becomes readable again only after a new accepted friendship. Account deletion cascades it away.
-- This does not add group DMs, unread counts, message editing, reporting or full messaging administration.
+- Removing a friendship or blocking either direction revokes DM reads/sends and visits between those users. Retained DM history becomes readable again only after a new accepted friendship. The later access migrations replace Auth cascade deletion with content/author tombstones and preserve peer contributions.
+- This baseline did not add group DMs, unread counts, message editing, reporting or messaging administration; the later access implementation below adds the latter controls locally.
 
 ### Homes and trusted movement
 
@@ -110,3 +110,33 @@ The roadmap recommendation is now implemented as a first account-backed slice. M
 - No five-person load test, assistive-technology pass, arbitrary network-loss simulation, Windows package or production deployment was performed. The visible Copilot QA handoff was attempted through `D:\AgentTeam\Invoke-QA.ps1` but could not start: no team session is registered for this project. No independent QA pass is claimed. This remains a development slice, not an alpha-release approval.
 
 Reference guidance used: [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [function security and grants](https://supabase.com/docs/guides/database/functions), and [PostgREST custom HTTP errors](https://docs.postgrest.org/en/stable/references/errors.html#raise-errors-with-http-status-codes).
+
+## Access, communication administration and moderation — 28 October 2026
+
+Implemented locally from the approved implementation request: private admission/current-session enforcement, platform grants, guarded legacy writes, space/channel/role/invitation APIs and screens, complete cursor history and journal recovery, channel/DM unread/edit/remove, atomic report-and-block, scoped review actions, private exports and resumable deletion with peer-content preservation. Routes include `/?spaces`, `/?platform`, `/?moderation&space=<id>`, `/?privacy`, `/auth/callback` and `/auth/recover`. Ordinary conversation screens use the same stream component for channels and DMs. Anonymous previews and existing identity/home workflows remain separate.
+
+New migrations `20261028030000` through `20261028070000`, Edge sources, local Auth/mail configuration and test tooling are in the repository. They have not been deployed to the linked project. New features default off; activation requires operator inputs, reviewed admission, provider/scheduler setup and the specified external verification. [Access operations](ACCESS_OPERATIONS.md) is the current setup/verification/restore source and supersedes the historical baseline's latest-100, admin-console membership and cascade-deletion behavior.
+
+Local evidence: TypeScript and production build pass; 24 unit tests, three rollback SQL suites, migration/upgrade checks and four Edge HTTP tests pass. The browser contract suite exercises two simulated clients, gaps beyond 100 changes, old edits/removal, late-send drafts, reporting, space creation, privacy requests, callbacks and suspension; desktop/phone captures are in `.impeccable/access-review/`. Provider requests are intercepted in that suite. These checks are not real mail, Auth/realtime or multi-connection concurrency evidence.
+
+Real social/access integration currently cannot run without a dedicated test-project URL and server test credentials. Docker is unavailable. Actual inbox delivery/resend, hosted Auth settings, scheduler/deletion retry/physical purge rehearsal, measured five-person budgets, backup/restore and independent visible security/implementation QA remain open. The existing lazy Phaser chunk warning persists.
+
+## Home Studio undo/redo — 28 October 2026
+
+Furniture placement, movement, removal and explicit browser-draft import now have a 50-edit in-memory history. Undo/Redo buttons and Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z and Ctrl+Y operate outside text fields. Invalid/no-op edits preserve history; new edits discard redo; saving retains history and updates the dirty baseline; reloading clears history. Restored coordinates follow the selected item. Privacy settings are separate from layout history. No Supabase schema/Auth/server files changed in this pass.
+
+Checks: 27 unit tests, TypeScript/build, and isolated desktop/phone browser interactions pass. Captures: `.impeccable/review/studio-undo/`. Account save/import wiring retains the existing API; no new live Supabase verification was performed for this frontend change.
+
+Independent visible QA for the undo/redo slice could not dispatch: Invoke-QA.ps1 returned runtime_unavailable because the Orca app could not be reached. No independent pass is claimed; the saved request is .impeccable/review/studio-undo/qa-request.md.
+
+## Hosted Supabase deployment & Concept v3 visual overhaul — 29 October 2026
+
+1. **Hosted Supabase Integration (`rrprjxubfdixoqvquptq`):**
+   - Applied migrations `20261028030000_access_foundation.sql` through `20261028070000_server_jobs_and_grants.sql` (including `WHERE s.id IS NOT NULL` safeupdate fix in `realm_private.maintenance()`).
+   - Configured closed-alpha Auth (`enable_signup: false`, `external_email_enabled: true`, `site_url: http://127.0.0.1:5175`, callback allowlist, minimum password length 12, secure password change).
+   - Bootstrapped administrator account `c.lascuna.556171@umindanao.edu.ph` as `active` and `platform_admin`.
+   - Deployed Edge Functions (`realm-invitations`, `realm-onboarding`, `realm-privacy`, `realm-worker`), verified `realm-worker` execution (`204 No Content`), and enabled feature flags (`administration`, `account_invitations`, `privacy_jobs`).
+   - Verified live frontend password recovery, sign-in, profile view, space creation and channel messaging/editing on `http://127.0.0.1:5175/`.
+2. **Concept v3 & Reference Visual Implementation:**
+   - Updated the orbital `R` SVG mark (`Brand.tsx`, `apps/web/public/brand/`), 48 × 64 RPG character sprites (`character.ts`), 512 × 384 pixel room and 10 furniture pieces (`art.ts`, `RoomArtwork.tsx`, `renderer.ts`), 12-starter `AppearanceStudio.tsx` with twilight castle preview backdrop and Randomize/Reset controls, and `Spaces.tsx` moonlit pixel castle hero banner and space cards.
+   - Passed `pnpm typecheck`, `pnpm test` (27/27), `pnpm test:database`, Deno `check`/`test` (4/4), `pnpm build`, and `pnpm test:access:ui`.
