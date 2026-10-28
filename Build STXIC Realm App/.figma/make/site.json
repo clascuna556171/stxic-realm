@@ -1,0 +1,10 @@
+{
+  "description": "A private social platform for friends and communities to chat, customize profiles, and create cozy pixel-art homes for a shared digital space.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

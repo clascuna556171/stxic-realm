@@ -1,0 +1,27 @@
+{
+  "name": "@realm/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test tests/*.test.mjs",
+    "test:integration": "node scripts/verify-supabase.mjs",
+    "test:social": "node scripts/verify-social.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.49.8",
+    "phaser": "3.90.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.0",
+    "typescript": "5.9.3",
+    "vite": "8.0.5"
+  }
+}

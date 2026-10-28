@@ -53,3 +53,7 @@ Illustrative scene (dimensions and identifiers are examples):
 
 - [Tauri](https://tauri.app/), [Phaser](https://docs.phaser.io/), [Supabase](https://supabase.com/docs), [Cloudflare Pages](https://developers.cloudflare.com/pages/), [Tiled](https://www.mapeditor.org/) and [WCAG 2.2](https://www.w3.org/TR/WCAG22/).
 - Provider limits and terms must be verified at deployment, not inferred from this document.
+
+## Implemented account/social contracts — 28 October 2026
+
+The current web slice adds `profiles`, `profile_appearances`, private `user_themes`, `friendships`, `user_blocks`, `direct_conversations`, `direct_messages`, `homes` and token-bound `home_visits`. Account identity and social APIs are in `apps/web/src/account-repository.ts`; `Account.tsx` owns session/identity lifecycle. New migration routines are privileged only inside unexposed `realm_private`, with public invoker wrappers and read-only client table grants. `get_identity`/`save_identity`, `request_friend`/`respond_friend`/`set_block`, `open_direct`/`send_direct`, and `save_home`/`enter_home`/`room_state`/`move_home`/`leave_home` implement the first version of these contracts. Homes use database-authorized polling, not untrusted client movement broadcasts. See implementation notes for verification and limits; the broader architecture above remains proposed where no implementation is stated.

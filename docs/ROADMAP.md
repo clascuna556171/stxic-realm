@@ -1,6 +1,6 @@
 # Roadmap
 
-Source: specification v1.0, pp. 11–12. The original estimate is 8–12 solo-developer weeks, dependent on availability, art and debugging. The indicative windows below are relative, not calendar commitments. Nothing here is marked complete: the inspected folder contained only the source PDF before this documentation was created.
+Source: specification v1.0, pp. 11–12. The original estimate is 8–12 solo-developer weeks, dependent on availability, art and debugging. The indicative windows below are relative, not calendar commitments. Foundations and channel messaging are implemented, with the first profile/friends/DM/shared-home slice now added. Remaining release gates still apply; no whole-phase completion is implied. See [implementation and local setup](IMPLEMENTATION.md) for current scope and verification.
 
 ## Phase 0 — Foundations (indicative week 1)
 
@@ -12,9 +12,13 @@ Build friends, spaces, channels, persistent text messages and reconnect recovery
 
 ## Phase 2 — Pixel prototype (weeks 4–5)
 
+The local preview remains available. Signed-in shared homes now support accepted-friend/owner-only access, two-client tested visits, a text occupant list and server-validated movement. Five-person quotas, recovery and broader performance/accessibility verification remain open; see [implementation](IMPLEMENTATION.md).
+
 Build one room with a small original sprite set, movement, join/leave, privacy checks and a non-spatial alternative. **Exit:** at least two authorized friends can join a home and see movement; restricted users cannot enter. Measure realtime use and verify disconnect/reconnect behavior.
 
 ## Phase 3 — Home Studio (weeks 6–7)
+
+The editor supports anonymous browser drafts and signed-in account homes, ten furniture items, server validation, owner-only saving, revision conflicts, privacy and explicit draft import. Guestbooks and the remaining social object actions are outstanding.
 
 Add the initial furniture catalog, bounded editor, server validation, versioned save/load and guestbook. **Exit:** owners can edit and reload their home; invalid or unauthorized changes fail, and stale revisions produce a visible conflict.
 
@@ -42,3 +46,7 @@ Run sessions with five invited testers, measure usage and costs, and fix defects
 ## Beyond alpha
 
 **Beta / 20–100 invited users:** load tests, metrics, moderation tools, tested recovery, asset processing and provider quota review; evaluate themes, templates, presence and a voice pilot. **Public:** only after moderation operations, abuse controls, privacy/legal decisions, capacity and support are ready. Consider dedicated authoritative room infrastructure when measurement shows it is needed. Monetization and public discovery remain future decisions.
+
+## Current next priorities — 28 October 2026
+
+Profiles/account appearance, friend requests/blocking, 1:1 DMs and a first shared-home slice are implemented and tested; they are no longer the next unstarted tasks. Next: account invitation/recovery flow and channel history/admin tools; guestbook/object interactions; optional Server Hall; then Windows/web release operations and five-person alpha checks. Directional sprite animation, full presence statuses, unread counts, moderation and operational quotas remain open. Upload and alpha-board scope decisions remain unresolved.

@@ -1,21 +1,51 @@
 # Dependencies
 node_modules/
 .pnpm-store/
+.npm/
+.yarn/cache/
 
 # Production / Build
 dist/
 dist-ssr/
 build/
 *.local
+.vite/
+.cache/
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# Test and browser-run output (keep test source and fixtures tracked)
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+.auth/
+
+# Local design/QA captures and handoff reports, not design configuration
+/.impeccable/review/
+/.impeccable/account-review/
+
+# Original duplicate export; the extracted sample source is retained
+/Build STXIC Realm App.zip
 
 # Environment variables
 .env
-.env*.local
+.env.*
 !.env.example
+!.env.*.example
+!.env.template
+!.env.*.template
+*.key
+*.p12
+*.pfx
 
 # Logs
 logs/
 *.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -29,9 +59,15 @@ lerna-debug.log*
 .idea/
 *.suo
 *.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.swp
+*.swo
+*~
+
+# Scratch output
+/tmp/
+/temp/
+*.tmp
+*.temp
 
 # OS generated files
 .DS_Store
@@ -39,7 +75,9 @@ Thumbs.db
 desktop.ini
 
 # Tauri
-src-tauri/target/
+/target/
+**/src-tauri/target/
+**/src-tauri/gen/schemas/
 
 # Supabase
 supabase/.branches/

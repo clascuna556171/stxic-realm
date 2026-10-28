@@ -1,22 +1,24 @@
 # Design and experience
 
-Source: specification v1.0, pp. 4–5, 7, 11–12. All artwork and interface details remain proposed.
+Source: specification v1.0, pp. 4–5, 7, 11–12. The PDF describes the planning baseline; the implemented local web direction below supersedes its earlier palette suggestions.
 
 ## Brand and visual direction
 
-STXIC is the umbrella brand; Realm is the product. Personality: welcoming, calm, expressive, modern and technically competent. Write clearly and concisely without gamer-only jargon. A simple orbit/portal motif is a logo direction, not a finished mark; design an original mark and check trademark availability before public release.
+**Implemented local direction (28 October 2026):** The owner requested a full visual overhaul, original rooms and characters, and an obsidian default. The web app now uses neutral charcoal surfaces across sign-in, chat, room preview, Home Studio and appearance editing. Personal accents and logo colors remain optional choices. This supersedes the earlier green-charcoal implementation and the provisional violet default. The existing flat orbital mark is retained; generated mood concepts remain references, not shipped artwork.
+
+STXIC is the umbrella brand; Realm is the product. Personality: welcoming, calm, expressive, modern and technically competent. Write clearly and concisely without gamer-only jargon. The current app uses a proposed vector logo kit; a simpler concept has since been preferred by the owner. Both remain subject to further design review and reference rights and trademark availability checks before public release. See [logo usage](BRAND_ASSETS.md).
 
 | Token | Proposed default |
 | --- | --- |
 | Background / surface / elevated | Obsidian `#101115` / Graphite `#1A1C22` / Slate `#262933` |
-| Accent | Realm Violet `#A78BFA` |
+| Default action / selected accent | Neutral Mist `#DEDEE6`; selectable sage, ocean, clay, violet and mist |
 | Primary / secondary text | Mist `#ECECF1` / Muted `#9295A3` |
 | Typography | Inter; Segoe UI Variable fallback; JetBrains Mono for code |
 | Spacing | 4, 8, 12, 16, 24, 32 px |
 | Radius | 8, 12, 16, 24 px |
 | Motion | 120–240 ms transitions, with reduced-motion override |
 
-The shell should be quiet and restrained while users customize their own accents. Offer light and dark themes; validate actual contrast instead of assuming the palette is accessible. Pixel art uses a consistent grid, nearest-neighbor scaling, a restrained palette and legible silhouettes. Effects must not obscure names, controls, moderation labels or messages. Use original or properly licensed assets.
+The shell should be quiet and restrained while users customize their own accents. The current local slice implements dark mode; light mode remains planned. Validate actual contrast instead of assuming the palette is accessible. Pixel art uses a consistent grid, nearest-neighbor scaling, a restrained palette and legible silhouettes. Effects must not obscure names, controls, moderation labels or messages. Use original or properly licensed assets.
 
 ## Navigation and states
 
@@ -33,3 +35,20 @@ Target WCAG 2.2 AA for the conventional web UI where applicable: keyboard naviga
 ## Identity and themes
 
 Public profile appearance (avatar frame, banner, badges and room) is separate from the viewer's private application theme. Use versioned, validated theme JSON mapped to approved tokens and effects, with safe fallbacks; never execute imported JavaScript. Proposed controls cover colors, allowlisted fonts, density, bounded sidebar width, panels and effects. Reduce or disable motion when requested.
+
+
+
+## Implemented art and workbench
+
+- Shared rail connects Chat, Home, Avatar and Studio; narrow screens use bottom navigation. Room inspection and placement retain text controls and do not require operating the canvas.
+- `apps/web/src/world/art.ts` owns original deterministic pixel artwork: oak/slate floors, architectural trim, city window, wall gallery, shelves, rug and ten catalog pieces. Phaser draws those same shapes used by the SVG sign-in illustration and furniture thumbnails. No supplied reference artwork is copied into runtime assets.
+- Cozy, medieval and tech moods change room materials independently of the private app palette. Existing saved layouts remain valid; the three extra pieces are available in the catalog without being inserted into old drafts.
+- `apps/web/src/character.ts` owns the configurable 48 × 64 character. Portraits crop the same drawing used for the full character and room sprite. Six starter looks change identity fields while preserving theme and room mood. Skin, hair style/color, eyes, clothing and accessories remain editable.
+- The appearance workbench groups character controls separately from room/interface controls, shows a live full character plus portrait, reports unsaved changes and saves only to browser storage. The room sprite refreshes on room navigation.
+- UI surfaces: `#101115`, `#18191F`, `#22242D`; dividers `#30323D`; secondary text `#A6A8B7`. Inter remains the documented interface face. Pixel art carries personality while controls stay conventional.
+
+These are local prototype capabilities. Directional animation, multiplayer, profile synchronization and server-backed home editing remain outside this slice.
+
+## Account-backed surfaces — 28 October 2026
+
+Profile, People and Direct message views extend the obsidian workspace. Signed-in Home/Studio/Appearance use account data; anonymous previews remain device-only. Public character identity and private interface theme are separate database records. The five-item narrow navigation is Chat, People, Home, Avatar, Studio; the Profile is reachable through the People header. Shared rooms show a text roster/positions alongside the scene. Save conflicts name the need to reload; access revocation ends a visit instead of retaining movement rights. See implementation notes for the checked desktop/phone flows and current limits.
