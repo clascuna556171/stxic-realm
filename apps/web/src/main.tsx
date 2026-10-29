@@ -7,8 +7,12 @@ import AppearanceStudio from './AppearanceStudio'
 import './styles.css'
 import './social.css'
 import './administration.css'
+import './world/world-theme.css'
 import {AuthCallback,Recovery} from './Auth'
 const Spaces=lazy(()=>import('./Spaces'))
+const HallPreview=lazy(()=>import('./HallPreview'))
+const SharedServerHall=lazy(()=>import('./world/SharedServerHall'))
+const HallStudio=lazy(()=>import('./world/HallStudio'))
 const Privacy=lazy(()=>import('./Safety').then(m=>({default:m.PrivacyPage})))
 const Moderation=lazy(()=>import('./Safety').then(m=>({default:m.ModerationPage})))
 const Platform=lazy(()=>import('./Platform'))
@@ -28,6 +32,9 @@ function Routes(){
  if(params.has('appearance'))return account.session?<AccountGate><AppearanceStudio key={account.session.user.id}/></AccountGate>:<AppearanceStudio key="local"/>
  if(params.has('room-studio'))return account.session?<AccountGate><HomeStudio key={account.session.user.id}/></AccountGate>:<HomeStudio key="local"/>
  if(params.has('room-preview'))return <RoomPreview/>
+ if(params.has('hall-preview'))return <HallPreview/>
+ if(params.has('server-hall'))return <SharedServerHall key={account.session?.user.id??'guest'} space={params.get('server-hall')??''}/>
+ if(params.has('hall-studio'))return account.session?<AccountGate><HallStudio key={account.session.user.id}/></AccountGate>:<HallStudio key="guest"/>
  if(params.has('home'))return <SharedHome owner={params.get('home')??''}/>
  if(params.has('friends'))return <Friends/>
  if(params.has('profile'))return <Profile/>

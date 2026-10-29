@@ -5,6 +5,8 @@ Deno.serve(async req=>{
  if(req.method!=='POST'||!secret||!await sameSecret(req.headers.get('Authorization')??'',`Bearer ${secret}`))return new Response(null,{status:403})
  const admin=service(),purge=await admin.rpc('run_maintenance')
  if(purge.error)return new Response(null,{status:500})
+ const garbage=await admin.rpc('profile_media_gc');if(garbage.error)return new Response(null,{status:500})
+ for(const path of garbage.data as string[]){const removed=await admin.storage.from('realm-profiles').remove([path]);if(removed.error)return new Response(null,{status:500});const ack=await admin.rpc('profile_media_gc',{p_path:path});if(ack.error)return new Response(null,{status:500})}
  const {data,error}=await admin.rpc('process_privacy_jobs')
  if(error)return new Response(null,{status:error.code==='42501'?403:500})
  for(const job of data as {id:string;user_id:string}[]){

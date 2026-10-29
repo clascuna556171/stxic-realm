@@ -1,0 +1,180 @@
+{
+  "request_id": "req_26951d82-bd02-442a-a83b-ef541df60027",
+  "credits": {
+    "used": 15,
+    "remaining": 0
+  },
+  "outputs": [
+    {
+      "id": "c9180d57-57ee-4cd5-9197-e970448f0e17",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:51.618Z",
+      "updatedAt": "2026-10-29T07:14:51.618Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 64,
+      "height": 64,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/c9180d57-57ee-4cd5-9197-e970448f0e17/image.png?v=1793258091618",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 0,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "d2c32b8d-aa2b-4e31-b0b4-805375ace1cd",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:52.204Z",
+      "updatedAt": "2026-10-29T07:14:52.204Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 76,
+      "height": 76,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/d2c32b8d-aa2b-4e31-b0b4-805375ace1cd/image.png?v=1793258092204",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 1,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "e2081077-3f9c-40ea-adaa-567a5ba2e0bf",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:52.686Z",
+      "updatedAt": "2026-10-29T07:14:52.686Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 71,
+      "height": 71,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/e2081077-3f9c-40ea-adaa-567a5ba2e0bf/image.png?v=1793258092686",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 2,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "1d8ac9d3-41e3-41f9-b4c5-2d87a06cf28d",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:53.248Z",
+      "updatedAt": "2026-10-29T07:14:53.248Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 64,
+      "height": 64,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/1d8ac9d3-41e3-41f9-b4c5-2d87a06cf28d/image.png?v=1793258093248",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 3,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "1e29b5e1-4e81-4606-adbe-2e9c660fdd1e",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:53.725Z",
+      "updatedAt": "2026-10-29T07:14:53.725Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 64,
+      "height": 64,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/1e29b5e1-4e81-4606-adbe-2e9c660fdd1e/image.png?v=1793258093725",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 4,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "c1778c77-e3ff-4497-8dc7-41ac6573702a",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:54.172Z",
+      "updatedAt": "2026-10-29T07:14:54.172Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 71,
+      "height": 71,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/c1778c77-e3ff-4497-8dc7-41ac6573702a/image.png?v=1793258094172",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 5,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "be6ea074-65ac-402f-a25e-f9ac31f26a0a",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:54.675Z",
+      "updatedAt": "2026-10-29T07:14:54.675Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 75,
+      "height": 75,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/be6ea074-65ac-402f-a25e-f9ac31f26a0a/image.png?v=1793258094675",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 6,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "b88ae9c9-4488-4536-809e-bf0b8e10977f",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:55.117Z",
+      "updatedAt": "2026-10-29T07:14:55.117Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 301,
+      "height": 301,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/b88ae9c9-4488-4536-809e-bf0b8e10977f/image.png?v=1793258095117",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 7,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    },
+    {
+      "id": "267431d1-28b5-454c-8b96-fe7b448cd310",
+      "type": "image",
+      "createdAt": "2026-10-29T07:14:55.753Z",
+      "updatedAt": "2026-10-29T07:14:55.753Z",
+      "prompt": "A single freestanding cozy library bookcase for STXIC Realm, front view with a small amount of visible top surface, matching the furniture camera in the supplied room. Warm honey oak carved frame with dark walnut sides, three shelves of worn books in cream, muted moss, terracotta and navy, a small brass candle lantern on top left and a trailing pothos on top right. The entire object and feet visible, balanced compact silhouette. Restrained dark outlines, textured wood grain, stepped highlights, warm afternoon lighting. Only the bookcase furnishing, no surrounding room, floor, characters or text.",
+      "width": 73,
+      "height": 73,
+      "assetUrl": "https://media.spritefusion.com/pixel-art-assets/f62e9747-9b0c-4f1d-8047-0601df244860/267431d1-28b5-454c-8b96-fe7b448cd310/image.png?v=1793258095753",
+      "style": "default",
+      "tags": [],
+      "contentType": "image/png",
+      "batchId": "11130c22-8389-46ab-b1a4-e03e53f7ffa1",
+      "batchIndex": 8,
+      "batchSize": 9,
+      "action": {
+        "kind": "same-style"
+      }
+    }
+  ]
+}

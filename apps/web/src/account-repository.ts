@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { parseAppearance, type Appearance } from './appearance.ts'
 
 export type Character = Omit<Appearance,'accent'|'logo'|'mood'> & {version:1}
-export type Profile = { id:string; username:string; display_name:string; bio:string; revision:number; updated_at:string }
+export type Profile = { id:string; username:string; display_name:string; bio:string; revision:number; updated_at:string;avatar_path?:string;avatar_shape?:string;avatar_x?:number;avatar_y?:number }
 export type Identity = { profile:Profile; character:Character; theme:Pick<Appearance,'accent'|'logo'>; mood:Appearance['mood'] }
 export type PublicIdentity = Profile & {character?:Character}
 export type Friendship = {id:string;requester:string;addressee:string;status:'pending'|'accepted'}
@@ -29,8 +29,10 @@ export async function rpc<T>(db:SupabaseClient,name:string,args?:Record<string,u
  if(error)throw error
  return data as T
 }
-export async function invoke<T>(db:SupabaseClient,name:string,body:Record<string,unknown>):Promise<T>{
- const {data,error}=await db.functions.invoke(name,{body})
+export async function invoke<T>(db:SupabaseClient,name:string,body:Record<string,unknown>|Blob,headers?:Record<string,string>):Promise<T>{
+ // Installed functions-js omits Blob bodies when an invoke-level Content-Type is
+ // provided. Binary callers let the SDK choose it; servers inspect the bytes.
+ const {data,error}=await db.functions.invoke(name,{body,headers})
  if(error){const response=(error as {context?:unknown}).context
   if(response instanceof Response){let detail:{error?:string;code?:string}={};try{detail=await response.clone().json()}catch{/* A network proxy may return a non-JSON error. */}
    if(detail.error)throw {message:detail.error,code:detail.code??`PT${response.status}`,details:JSON.stringify({retry_after:Number(response.headers.get('Retry-After'))||0})}
@@ -44,9 +46,9 @@ export const saveIdentity=(db:SupabaseClient,p:Profile,a:Appearance)=>rpc<Identi
 export async function publicIdentities(db:SupabaseClient,ids:string[]):Promise<Record<string,PublicIdentity>>{
  if(!ids.length)return {}
  const unique=[...new Set(ids)]
- const [profiles,characters]=await Promise.all([db.from('profiles').select('id,username,display_name,bio,revision,updated_at').in('id',unique),db.from('profile_appearances').select('user_id,character').in('user_id',unique)])
+ const [profiles,characters,portraits]=await Promise.all([db.from('profiles').select('id,username,display_name,bio,revision,updated_at').in('id',unique),db.from('profile_appearances').select('user_id,character').in('user_id',unique),db.from('account_portraits').select('user_id,object_path,shape,x,y').in('user_id',unique)])
  if(profiles.error)throw profiles.error;if(characters.error)throw characters.error
- return Object.fromEntries((profiles.data as Profile[]).map(p=>[p.id,{...p,character:characters.data.find(c=>c.user_id===p.id)?.character as Character|undefined}]))
+ return Object.fromEntries((profiles.data as Profile[]).map(p=>{const photo=portraits.data?.find(a=>a.user_id===p.id);return [p.id,{...p,...(photo?{avatar_path:photo.object_path,avatar_shape:photo.shape,avatar_x:Number(photo.x),avatar_y:Number(photo.y)}:{}),character:characters.data.find(c=>c.user_id===p.id)?.character as Character|undefined}]}))
 }
 export async function getOwnHome(db:SupabaseClient,id:string):Promise<Home>{
  const {data,error}=await db.from('homes').select('owner_id,privacy,mood,layout,revision').eq('owner_id',id).single()

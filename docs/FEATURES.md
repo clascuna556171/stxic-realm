@@ -1,6 +1,12 @@
 # Features and behavior
 
-Source: specification v1.0, pp. 3–8, 10–12. Features are planned, not verified as implemented.
+Source: specification v1.0, pp. 3–8, 10–12. The descriptions below include future scope. Current implementation and verification take precedence in [IMPLEMENTATION.md](IMPLEMENTATION.md).
+
+## Implemented starter social world — 29 October 2026
+
+Account-profile uploads/customization now have a local implementation independent from the pixel world character. Profiles support account photos, banners/gallery and flexible structured content/style with private Storage, validation, section privacy, notes and revisions. See [ACCOUNT_PROFILES.md](ACCOUNT_PROFILES.md) for exact limits, tests and pending hosted rollout. This resolves profile-image scope only; chat attachments and arbitrary file uploads remain future work.
+
+Locally implemented: privacy/friend-authorized guestbooks (posting controls, quotas, removal), up to five safe HTTPS project-desk links, conventional guestbook/project/chat controls, and optional shared halls stored per server with owner enablement, explicit decorators, server layout validation/revisions, channel portals and moderated text announcements. Shared halls reuse Hall Studio and remain separate from the device-local personal cross-server hub. New migrations are undeployed. Exact behavior, limits, local SQL/browser evidence and live release gates: [SHARED_WORLD.md](SHARED_WORLD.md). Sitting, image frames/uploads, playlists, trophies and hall multiplayer remain future work. Existing account/messaging/editor implementations are not reopened by this plan.
 
 ## Accounts, friends and messaging
 

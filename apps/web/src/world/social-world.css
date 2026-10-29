@@ -1,0 +1,29 @@
+.world-social { margin-top: 24px; padding: 24px 0; border-top: 1px solid var(--border, #30323d); min-width: 0; }
+.world-social section, .world-social details { margin-top: 28px; min-width: 0; }
+.world-social h2 { margin-bottom: 12px; font-size: 1.25rem; }
+.world-social form { display: grid; gap: 14px; margin: 16px 0; max-width: 720px; }
+.world-social label { display: grid; gap: 7px; min-width: 0; }
+.world-social input, .world-social select, .world-social textarea { width: 100%; min-width: 0; box-sizing: border-box; }
+.world-social textarea { min-height: 100px; resize: vertical; }
+.world-social fieldset { display: grid; gap: 12px; min-width: 0; border: 1px solid var(--border, #30323d); padding: 16px; }
+.world-social summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
+.world-social a, .world-entry-list p { overflow-wrap: anywhere; }
+.world-entry-list { list-style: none; padding: 0; margin: 20px 0; }
+.world-entry-list li { padding: 18px 0; border-top: 1px solid var(--border, #30323d); }
+.world-entry-list p { white-space: pre-wrap; margin: 12px 0; }
+.world-entry-list time { display: block; color: var(--muted, #a6a8b7); font-size: .8rem; margin-top: 4px; }
+.shared-hall-content { max-width: 1360px; padding: 32px; margin: 0 auto; }
+.shared-hall-content h1 { margin: 12px 0; }
+.shared-hall-scene { position: relative; overflow: hidden; margin: 20px 0; background: #18191f; }
+.shared-hall-scene .world-ambience { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; image-rendering: pixelated; }
+.shared-hall-portals { display: flex; gap: 12px; flex-wrap: wrap; padding: 14px 0; }
+.shared-hall-content .social-actions { flex-wrap: wrap; }
+.shared-hall-content button, .world-social button { min-height: 40px; white-space: normal; }
+.shared-hall-content button, .world-social button { background: var(--realm-raised, #22242d); color: var(--realm-text, #e5e7eb); border: 1px solid var(--realm-line, #30323d); border-radius: 5px; padding: 9px 13px; font: inherit; font-size: .85rem; cursor: pointer; }
+.shared-hall-content button:hover:not(:disabled), .world-social button:hover:not(:disabled) { background: #30343e; }
+.shared-hall-content button:disabled, .world-social button:disabled { color: var(--realm-muted, #a6a8b7); opacity: .65; cursor: default; }
+.world-social input, .world-social select, .world-social textarea { background: var(--realm-surface, #18191f); color: var(--realm-text, #e5e7eb); border: 1px solid var(--realm-line, #30323d); border-radius: 5px; padding: 10px 12px; min-height: 40px; font: inherit; }
+.world-social :is(input, select, textarea):focus-visible, .world-social button:focus-visible, .shared-hall-content button:focus-visible { outline: 2px solid var(--realm-accent, #b1c8bd); outline-offset: 3px; }
+.world-social textarea { line-height: 1.6; }
+.shared-hall-content select { max-width: 100%; }
+@media (max-width: 600px) { .shared-hall-content { padding: 20px 14px; } .world-social { padding-top: 18px; } .shared-hall-portals button { flex: 1 1 140px; } }

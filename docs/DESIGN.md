@@ -1,5 +1,23 @@
 # Design and experience
 
+## Account profiles — 29 October 2026
+
+The owner's Discord profile reference supersedes the earlier character-preview treatment of account profiles. The card uses an uploaded banner, overlapping photo, status, name/handle/pronouns, actions and reorderable content. Account photos belong to the account; the pixel character belongs to rooms, halls and its character studio. Communication portraits use account photos or initials. Never silently use the world character as an account photo.
+
+The charcoal card pairs with labeled Identity, Photos & banner, Style and Sections controls. Phones use a sticky Edit/Preview switch. Public profile colors/fonts/framing are separate from the private app theme. Customization is structured data; user HTML/CSS/JavaScript never executes. Accent colors get contrasting black/white action text; low body-text contrast is disclosed. Reduced motion uses still frames. Exact capabilities and pending deployment: [ACCOUNT_PROFILES.md](ACCOUNT_PROFILES.md). Earlier character-preview descriptions below are historical.
+
+## Sprite Fusion and account refinement — 29 October 2026
+
+The original warm room concept remains the visual authority. A Sprite Fusion library shelf now appears consistently in halls, personal rooms and their editors, with theme-aware timber and source-positioned lantern light. Rooms share the hall's material palette; cozy daylight, sage textiles and oak replace the remaining purple floor portal and mismatched details. Account profiles combine a live character setting, readable account fields and direct links to the three editors. The setting is labeled Character preview and does not claim to show a saved home. See [Sprite Fusion artwork and verification](SPRITEFUSION_ART.md).
+
+## Editable hall and palette correction — 29 October 2026
+
+The owner rejected the mismatch between the illustrated hall, olive/gold controls and the rest of Realm. Current world surfaces use one obsidian/slate interface and original modular pixel artwork. Environment materials come from `world/palette.ts`: cozy cream/oak/sage, medieval limestone/wine-red, and tech slate/silver/cyan. Rooms, furniture and character alcoves inherit those materials; user-selected interface accents remain independent. The personal hall can be arranged in Hall Studio with multiple components, swappable entrances, undo/redo and browser-local account-scoped saves. See [Hall Studio](HALL_STUDIO.md). This supersedes the illustrated-hall implementation below.
+
+## Server Halls and world update — 29 October 2026
+
+The owner's visual-overhaul brief extends Realm into a medieval pixel-art world. Server Halls now leads with an original stone-and-oak gathering hall, selectable entrances, a searchable membership directory and working links into the selected server's channels. Brass, sage, wine-red heraldry and warm lighting belong to the world surfaces; private app accents remain personal. Rooms gain shared source-positioned lighting and medieval masonry; character previews use the same stone-and-brass vocabulary. A self-hosted Pixelify Sans display face complements conventional body text. See [Server Halls](SERVER_HALLS.md) for components, assets, states, verification commands and limits. The historical sections below describe earlier slices; current account and permission behavior is documented in IMPLEMENTATION.md.
+
 Source: specification v1.0, pp. 4–5, 7, 11–12. The PDF describes the planning baseline; the implemented local web direction below supersedes its earlier palette suggestions.
 
 ## Brand and visual direction

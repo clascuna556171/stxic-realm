@@ -1,6 +1,7 @@
 {
   "name": "stxic-realm",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "pnpm --filter @realm/web dev",
@@ -9,10 +10,16 @@
     "test": "pnpm --filter @realm/web test",
     "test:database": "node supabase/tests/run-local.mjs",
     "test:access:ui": "node apps/web/scripts/verify-access-ui.mjs",
+    "test:world:ui": "node apps/web/scripts/verify-world-ui.mjs",
+    "test:hall:ui": "node apps/web/scripts/verify-hall-studio-ui.mjs",
+    "test:world:social:ui": "node apps/web/scripts/verify-world-social-ui.mjs",
+    "test:profile:ui": "node apps/web/scripts/verify-profile-ui.mjs",
+    "release:preflight": "node scripts/release-preflight.mjs",
     "test:access:integration": "pnpm --filter @realm/web test:access",
     "test:integration": "pnpm --filter @realm/web test:integration",
     "test:social": "pnpm --filter @realm/web test:social",
-    "test:social:sql": "npx --yes supabase@2.122.0 db query --linked --file supabase/tests/social_homes.sql"
+    "test:social:sql": "npx --yes supabase@2.122.0 db query --linked --file supabase/tests/social_homes.sql",
+    "setup:team": "powershell -ExecutionPolicy Bypass -File scripts/setup-team.ps1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.12",

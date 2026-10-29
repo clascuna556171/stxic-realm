@@ -1,0 +1,129 @@
+.halls-page { --hall-text: var(--realm-text); --hall-muted: var(--realm-muted); min-height: 100dvh; color: var(--hall-text); }
+.halls-content { max-width: 1560px; margin: auto; padding: 30px 36px 54px; }
+.hall-introduction { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 26px; }
+.hall-introduction h1 { font-size: clamp(34px,3.6vw,48px); line-height: 1.15; margin: 0 0 9px; }
+.hall-introduction h1 > span { color: #a6d8bc; }
+.hall-introduction p { color: var(--realm-muted); font-size: 13px; margin: 0; line-height: 1.7; }
+.hall-intro-actions { display: flex; gap: 10px; align-items: center; }
+.hall-intro-actions a, .hall-primary { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 42px; padding: 10px 15px; border: 1px solid #4a596b; border-radius: 5px; color: #dce6f1; font-size: 12px; text-decoration: none; }
+.hall-intro-actions a:hover { background: #253140; }
+.hall-primary, .hall-intro-actions .hall-primary { background: var(--realm-accent); border-color: var(--realm-accent); color: #17212b; font-weight: 600; }
+.hall-primary:hover, .hall-intro-actions .hall-primary:hover { background: #e5eee9; color: #17212b; }
+.hall-intro-actions svg { width: 16px; height: 16px; }
+.hall-preview-note, .hall-layout-warning { display: flex; align-items: center; gap: 9px; color: #b6c7d6; font-size: 11px; line-height: 1.8; margin: -6px 0 20px; }
+.hall-preview-note svg { width: 17px; height: 17px; flex-shrink: 0; color: #a6d8bc; }
+.hall-preview-note a { color: #c3e7d7; text-underline-offset: 4px; }
+.hall-layout { display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 20px; }
+.hall-world { min-width: 0; background: #181f29; border: 1px solid #3a4757; border-radius: 8px; overflow: hidden; }
+.hall-world-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 55px; padding: 9px 16px; }
+.hall-world-top > span { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.hall-world-top strong { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hall-world-top > span > svg { width: 17px; height: 17px; color: #b6dcca; flex-shrink: 0; }
+.hall-scene-tools { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
+.hall-scene-tools > a { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: #c6e6d8; text-decoration: none; min-height: 36px; }
+.hall-scene-tools > a:hover { text-decoration: underline; }
+.hall-scene-tools > a > svg { width: 14px; height: 14px; }
+.hall-ambience { display: flex; align-items: center; gap: 6px; min-height: 34px; padding: 4px; border: 0; background: transparent; color: #b4c3d1; font-size: 9px; }
+.hall-ambience svg { width: 15px; height: 15px; }
+.hall-ambience > span { background: #2b4038; color: #c8e8d9; padding: 4px 5px; border-radius: 3px; }
+.hall-ambience[aria-pressed=false] > span { background: #303a47; color: #bdc9d6; }
+.hall-scene { position: relative; aspect-ratio: 3/2; background: #111923; isolation: isolate; overflow: hidden; border-block: 1px solid var(--realm-line); }
+.hall-pixel-canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.hall-scene > .hall-pixel-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.hall-firelight { position: absolute; inset: 0; background: radial-gradient(ellipse at 81% 74%,#ffc2710d,transparent 45%); pointer-events: none; }
+.has-ambience .hall-firelight { animation: hall-firelight 6s ease-in-out infinite alternate; }
+.hall-embers { position: absolute; inset: 20% 5% 0; overflow: hidden; pointer-events: none; }
+.hall-embers i { position: absolute; left: calc(10% + var(--ember)*9%); top: calc(48% + var(--ember)*3%); width: 2px; height: 2px; background: #f9ddae; opacity: 0; animation: hall-ember calc(7s + var(--ember)*.4s) linear infinite; animation-delay: calc(var(--ember)*-.9s); }
+.hall-entrances { position: absolute; inset: 0; }
+.hall-entrance { position: absolute; top: 12%; height: 37%; width: 20%; display: flex; flex-direction: column; justify-content: end; align-items: center; padding: 0; border: 0; border-radius: 0; background: transparent; cursor: pointer; outline-offset: 3px; }
+.entrance-0 { left: 15%; } .entrance-1 { left: 40%; } .entrance-2 { left: 65%; }
+.entrance-outline { position: absolute; inset: 0 18% 6%; border: 1px solid transparent; border-radius: 42% 42% 2px 2px; transition: background .2s,border-color .2s; pointer-events: none; }
+.hall-entrance:is(:hover,:focus-visible) .entrance-outline, .hall-entrance[aria-pressed=true] .entrance-outline { border-color: #caecd580; background: #b7dfd00b; }
+.entrance-name { position: relative; display: flex; align-items: center; gap: 7px; width: 100%; padding: 8px; background: #17212cf5; border: 1px solid #526477; border-radius: 3px; text-align: left; box-shadow: 0 4px 10px #10172144; transition: translate .18s; }
+.hall-entrance:hover .entrance-name { translate: 0 -2px; }
+.hall-entrance[aria-pressed=true] .entrance-name { border-color: #a6d8bc; }
+.entrance-name > span { min-width: 0; }
+.entrance-name strong { display: block; color: #e5edf4; font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entrance-name small { display: block; color: #adbfcc; font-size: 8px; margin-top: 5px; white-space: nowrap; }
+.server-crest { width: 27px; height: 33px; flex-shrink: 0; color: #c7b187; }
+.server-crest.grove { color: #a3cbb3; } .server-crest.ember { color: #d5af85; } .server-crest.moon { color: #a9bedb; }
+.entrance-name .server-crest { width: 20px; height: 25px; }
+.hall-traveler { position: absolute; left: var(--traveler-x,50%); width: 6.25%; bottom: 32%; translate: -50% 0; display: flex; align-items: center; flex-direction: column; pointer-events: none; transition: left .5s cubic-bezier(.16,1,.3,1); }
+.hall-traveler:before { content: ''; position: absolute; bottom: 16px; width: 36px; height: 9px; background: #10182080; border-radius: 50%; filter: blur(2px); }
+.hall-traveler .pixel-character { position: relative; width: 100%; height: auto; aspect-ratio: 3/4; filter: drop-shadow(2px 3px 1px #131a2580); }
+.hall-traveler > span { font-size: 8px; line-height: 1.4; color: #e0edf3; padding: 2px 7px; border-radius: 2px; background: #17212bed; }
+.hall-location { position: absolute; left: 18px; bottom: 13px; display: flex; align-items: center; gap: 7px; padding: 6px 9px; border-radius: 3px; background: #17212bf2; color: #c1d0dc; font-size: 9px; }
+.hall-location svg { width: 13px; height: 13px; }
+.hall-scene-pagination { position: absolute; right: 13px; bottom: 10px; display: flex; align-items: center; gap: 6px; padding: 3px 5px; font-size: 10px; background: #17212bf2; }
+.hall-scene-pagination button { width: 30px; height: 30px; padding: 6px; border: 0; background: transparent; color: #c9e9da; }
+.hall-scene-pagination svg { width: 16px; height: 16px; }
+.hall-world-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 12px 16px; font-size: 10px; color: #aabdcf; }
+.hall-world-bottom > span, .hall-world-bottom > a { display: flex; align-items: center; gap: 7px; }
+.hall-world-bottom svg { width: 14px; height: 14px; flex-shrink: 0; }
+.hall-world-bottom > a { color: #c7e4d8; text-decoration: none; white-space: nowrap; }
+.hall-world-bottom > a:hover { text-decoration: underline; }
+.hall-directory { min-width: 0; display: flex; flex-direction: column; padding: 20px 16px 0; border: 1px solid var(--realm-line); border-radius: 8px; background: var(--realm-surface); overflow: hidden; }
+.hall-directory-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.hall-directory-heading h2 { margin: 0; font-size: 15px; font-weight: 500; }
+.hall-directory-heading > span { font-size: 11px; color: var(--realm-muted); font-variant-numeric: tabular-nums; }
+.hall-search { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 12px; padding: 0 10px; border: 1px solid #45566b; border-radius: 5px; background: #121a24; }
+.hall-search svg { width: 15px; height: 15px; flex-shrink: 0; color: #b0c1d2; }
+.hall-search input { width: 100%; min-width: 0; min-height: 40px; padding: 7px 0; outline: none; border: 0; background: transparent; color: #e7edf4; font-size: 11px; }
+.hall-search input::placeholder { color: #a6b8c9; }
+.hall-search:focus-within { outline: 2px solid var(--realm-accent); outline-offset: 3px; }
+.hall-server-list { max-height: 240px; overflow-y: auto; scrollbar-gutter: stable; margin-bottom: 18px; }
+.hall-server-list > button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 64px; padding: 10px; margin: 2px 0; border: 1px solid transparent; border-radius: 5px; background: transparent; color: #e7edf4; text-align: left; }
+.hall-server-list > button:hover { background: #263340; }
+.hall-server-list > button[aria-pressed=true] { border-color: #56796c; background: #273b35; }
+.hall-server-list > button > span { flex: 1; min-width: 0; }
+.hall-server-list strong { display: block; font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
+.hall-server-list small { display: block; margin-top: 5px; font-size: 10px; color: #adbfcd; line-height: 1.6; }
+.hall-server-list > button > svg:last-child { width: 14px; height: 14px; color: #accbbd; flex-shrink: 0; }
+.hall-selected { margin-top: auto; padding-top: 18px; border-top: 1px solid var(--realm-line); }
+.hall-selected-title { display: flex; align-items: center; gap: 10px; }
+.hall-selected-title > div { min-width: 0; }
+.hall-selected-title span { font-size: 9px; color: #b3c4d0; }
+.hall-selected h3 { font-size: 15px; line-height: 1.5; font-weight: 500; margin: 4px 0 0; overflow-wrap: anywhere; }
+.hall-selected > p { font-size: 11px; color: #b4c4d2; line-height: 1.8; margin: 12px 0; }
+.hall-channel-preview { display: flex; gap: 5px 12px; flex-wrap: wrap; font-size: 10px; line-height: 1.8; margin-bottom: 16px; color: #b4d2c4; }
+.hall-channel-preview a { color: #c2ddcf; text-underline-offset: 3px; }
+.hall-enter { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 12px 14px; margin: 16px 0; border-radius: 4px; background: var(--realm-accent); color: #17212b; font-size: 12px; font-weight: 600; text-decoration: none; }
+.hall-enter:hover { filter: brightness(1.07); }
+.hall-enter svg { width: 16px; height: 16px; }
+.hall-enter.is-disabled { background: #2e3b4b; color: #b4c6d6; }
+.hall-directory-foot { display: flex; align-items: start; gap: 8px; padding: 15px 0; border-top: 1px solid var(--realm-line); color: #a9bfcd; }
+.hall-directory-foot svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 3px; }
+.hall-directory-foot p { font-size: 9px; line-height: 1.9; margin: 0; }
+.hall-directory-foot a { color: #c2dfd0; }
+.hall-wayfinding { display: flex; gap: 32px; padding-top: 20px; }
+.hall-wayfinding > a { display: flex; align-items: center; gap: 12px; min-height: 48px; max-width: 360px; flex: 1; padding: 8px 0; text-decoration: none; color: #afc3d0; }
+.hall-wayfinding > a > svg { width: 19px; height: 19px; flex-shrink: 0; }
+.hall-wayfinding > a > svg:last-child { width: 14px; margin-left: auto; }
+.hall-wayfinding strong { display: block; color: #d5e1eb; font-size: 12px; font-weight: 500; }
+.hall-wayfinding small { display: block; font-size: 10px; line-height: 1.8; margin-top: 4px; }
+.hall-wayfinding > a:hover strong { color: #c4ebd8; }
+.hall-state { padding: 14px 6px; color: #bdcddb; font-size: 12px; line-height: 1.8; }
+.hall-state button { min-height: 40px; padding: 8px 14px; border: 1px solid #5b7c71; background: #2b4038; color: #e2f1e8; }
+.hall-scene-message { position: absolute; left: 50%; top: 56%; translate: -50% -50%; display: flex; flex-direction: column; align-items: center; gap: 10px; width: min(80%,340px); padding: 22px; border: 1px solid #617e73; border-radius: 5px; background: #17222bf5; color: #e1ecef; text-align: center; }
+.hall-scene-message svg { width: 25px; height: 25px; color: #b7dfcc; }
+.hall-scene-message strong { font-size: 17px; font-weight: 500; }
+.hall-scene-message span { font-size: 11px; color: #b4c8d4; line-height: 1.7; }
+.hall-management { max-width: none; margin-top: 28px; padding: 20px 0; border-top: 1px solid var(--realm-line); scroll-margin-top: 24px; }
+.hall-management > summary { min-height: 44px; padding: 10px 0; color: #c4dfd3; cursor: pointer; font-size: 14px; }
+.hall-management > summary > span { display: inline-block; margin-left: 14px; font-size: 11px; color: var(--realm-muted); }
+.halls-page .admin-content { max-width: none; padding: 0; }
+.halls-page .admin-links { margin: 20px 0; }
+.hall-preview-invitation { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--realm-line); scroll-margin-top: 24px; }
+.hall-preview-invitation h2 { font-size: 20px; font-weight: 500; margin: 0 0 12px; }
+.hall-preview-invitation p { color: var(--realm-muted); font-size: 12px; line-height: 1.8; margin-bottom: 20px; }
+@keyframes hall-firelight { 0%,100%{opacity:.5}45%{opacity:1}70%{opacity:.7} }
+@keyframes hall-ember { 0%{opacity:0;translate:0 0}20%{opacity:.5}80%{opacity:.25}100%{opacity:0;translate:14px -70px} }
+@media(min-width:1600px) { .hall-layout { grid-template-columns:minmax(0,1fr) 320px; } .hall-directory { padding:24px 20px 0; } .hall-server-list { max-height:310px; } .entrance-name strong { font-size:12px; } .entrance-name small { font-size:9px; } }
+@media(max-width:1180px) { .halls-content { padding:28px 24px 44px; } .hall-layout { grid-template-columns:minmax(0,1fr) 255px; gap:14px; } .hall-scene-tools { gap:8px; } .hall-world-top { padding:8px 12px; flex-wrap:wrap; } .hall-world-top strong { font-size:11px; } .hall-ambience { font-size:8px; } .hall-world-bottom > span { display:none; } .hall-world-bottom { justify-content:end; } .entrance-name .server-crest { display:none; } .entrance-name { padding:7px 6px; } .entrance-name strong { font-size:9px; } .hall-directory { padding:18px 12px 0; } }
+@media(max-width:980px) { .hall-layout { grid-template-columns:1fr; } .hall-directory { display:grid; grid-template-columns:1fr 1fr; gap:0 24px; padding:22px; } .hall-directory-heading,.hall-search { grid-column:1; } .hall-server-list { grid-column:1;grid-row:3/5;max-height:240px;margin:0; } .hall-selected { grid-column:2;grid-row:1/5;margin:0;padding:0 0 0 24px;border-top:0;border-left:1px solid var(--realm-line); } .hall-directory-foot { grid-column:1/-1;margin-top:18px;padding-bottom:0; } .hall-directory-foot br { display:none; } .hall-world-bottom > span { display:flex; } .hall-world-bottom { justify-content:space-between; } .entrance-name .server-crest { display:block; } }
+@media(max-width:650px) {
+ .halls-content { padding:24px 16px 32px; } .hall-introduction { flex-direction:column;align-items:start;gap:18px;margin-bottom:24px; } .hall-introduction h1 { font-size:39px; } .hall-intro-actions { width:100%; } .hall-intro-actions a { flex:1;min-height:44px;font-size:11px;padding:10px 12px; } .hall-preview-note { font-size:10px; } .hall-world-top { gap:3px; } .hall-world-top > span { max-width:100%; } .hall-scene-tools { width:100%;justify-content:space-between;gap:12px; } .hall-scene-tools > a { font-size:10px;min-height:30px; } .hall-ambience { font-size:9px; } .hall-ambience svg { display:none; }
+ .hall-entrance { top:12%;height:39%;width:25%; } .entrance-0 { left:10%; } .entrance-1 { left:37.5%; } .entrance-2 { left:65%; } .entrance-name { padding:6px 4px;min-height:35px; } .entrance-name .server-crest { display:none; } .entrance-name strong { font-size:8px; } .entrance-name small { font-size:6px;margin-top:4px; } .hall-traveler { bottom:24%; } .hall-traveler > span { font-size:7px; } .hall-location { left:9px;bottom:8px;padding:4px 6px;font-size:7px; } .hall-location svg { display:none; } .hall-scene-pagination { right:6px;bottom:6px;gap:4px;font-size:8px; } .hall-scene-pagination button { width:26px;height:26px; } .hall-scene:has(.hall-scene-pagination) .hall-location { display:none; }
+ .hall-world-bottom { padding:10px 12px;min-height:40px; } .hall-world-bottom > span { display:none; } .hall-world-bottom > a { margin-left:auto;font-size:9px; } .hall-directory { display:flex;gap:0;padding:20px 16px 0; } .hall-directory-heading { margin-bottom:16px; } .hall-server-list { max-height:260px;margin-bottom:16px; } .hall-selected { padding:18px 0 0;border-left:0;border-top:1px solid var(--realm-line); } .hall-selected h3 { font-size:17px; } .hall-directory-foot { margin:0;padding:15px 0; } .hall-directory-foot p { font-size:10px; } .hall-channel-preview { font-size:11px; } .hall-enter { font-size:13px;min-height:46px; } .hall-search input { font-size:12px;min-height:44px; } .hall-wayfinding { flex-direction:column;gap:12px;padding-top:20px; } .hall-wayfinding > a { max-width:none; } .hall-management > summary > span { display:block;margin:8px 0 0 16px;line-height:1.8; } .hall-scene-message { padding:14px;gap:7px; } .hall-scene-message strong { font-size:13px; } .hall-scene-message span { font-size:9px; } .hall-preview-invitation h2 { font-size:18px;line-height:1.6; }
+}
+@media(prefers-reduced-motion:reduce) { .hall-embers { display:none; } .hall-firelight { animation:none!important; } .hall-traveler,.entrance-name,.entrance-outline { transition:none!important; } }

@@ -1,5 +1,11 @@
-type Name = 'home' | 'chat' | 'person' | 'studio' | 'arrow' | 'check' | 'back' | 'sparkle' | 'shuffle'
+type Name = 'home' | 'chat' | 'person' | 'studio' | 'arrow' | 'check' | 'back' | 'sparkle' | 'shuffle' | 'hall' | 'search' | 'plus' | 'compass' | 'sun' | 'shield'
 const paths: Record<Name, string> = {
+ hall: 'M3 21h18M4 21V9l8-6 8 6v12M8 21v-8a4 4 0 0 1 8 0v8M3 9h18M8 6V3m8 3V3',
+ search: 'M16 16l5 5M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+ plus: 'M12 5v14M5 12h14',
+ compass: 'm16 8-3 5-5 3 3-5 5-3ZM22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z',
+ sun: 'M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0Z',
+ shield: 'm12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Zm-4 9 3 3 5-6',
  home: 'm3 10 9-7 9 7M5 9v11h5v-6h4v6h5V9',
  chat: 'M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6 3V6a2 2 0 0 1 2-2Z',
  person: 'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',

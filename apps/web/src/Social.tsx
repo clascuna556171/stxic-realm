@@ -1,24 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { AccountGate, useAccount } from './Account'
-import { appearanceFor,errorText,publicIdentities,rpc,type Friendship,type Profile,type PublicIdentity } from './account-repository'
-import { defaults } from './appearance'
+import { errorText,publicIdentities,rpc,type Friendship,type PublicIdentity } from './account-repository'
 import { client } from './data'
-import { PixelCharacter } from './AppearanceStudio'
 import { WorkspaceNav } from './WorkspaceNav'
 import {ReportForm} from './Safety'
+import { AccountPortrait } from './AccountPortrait'
 
-export function MemberPortrait({person}:{person?:PublicIdentity}){return <div className="member-portrait"><PixelCharacter value={{...defaults,...person?.character}} portrait/></div>}
-export function ProfilePage(){return <AccountGate><ProfileEditor/></AccountGate>}
-function ProfileEditor(){
- const account=useAccount(),identity=account.identity!
- const [profile,setProfile]=useState(identity.profile),[busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[error,setError]=useState('')
- const dirty=JSON.stringify(profile)!==JSON.stringify(identity.profile)
- useEffect(()=>{if(!dirty)return;const guard=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue=''};addEventListener('beforeunload',guard);return()=>removeEventListener('beforeunload',guard)},[dirty])
- function field(key:'username'|'display_name'|'bio',value:string){setProfile(p=>({...p,[key]:value}));setNotice('')}
- async function save(e:FormEvent){e.preventDefault();setBusy(true);setError('');try{const next=await account.save(profile,appearanceFor(identity));setProfile(next.profile);setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
- async function reload(){if(dirty&&!confirm('Discard your unsaved profile edits and reload from your account?'))return;setBusy(true);try{const next=await account.reload();if(next)setProfile(next.profile);setError('');setNotice('Loaded from your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
- return <main className="workspace-page"><WorkspaceNav current="profile"/><header className="workspace-header"><strong>Your profile</strong><nav className="admin-links"><a href="/?friends">Friends & messages</a><a href="/?privacy">Privacy & data</a><a href="/?spaces">Spaces</a></nav></header><div className="social-content profile-content"><div className="appearance-intro"><div><h1>Let people know it’s you.</h1><p>Your profile and character follow your Realm account.</p></div></div><div className="profile-layout"><form className="profile-form" onSubmit={save}><label>Display name<input value={profile.display_name} onChange={e=>field('display_name',e.target.value)} maxLength={40} required autoComplete="nickname"/></label><label>Handle<input value={profile.username} onChange={e=>field('username',e.target.value.toLowerCase())} minLength={3} maxLength={24} pattern="[a-z0-9_]{3,24}" required autoComplete="username"/><small>3–24 lowercase letters, numbers or underscores. Friends can add you by this handle.</small></label><label>About you<textarea value={profile.bio} onChange={e=>field('bio',e.target.value)} maxLength={160} rows={4}/><small>{profile.bio.length}/160 characters</small></label><p className="muted">Other signed-in members can see these fields and your character. Your email and interface theme stay private.</p>{error&&<p role="alert" className="error">{error}</p>}<div className="social-actions"><button className="primary" disabled={busy||!dirty}>{busy?'Saving…':'Save profile'}</button><button type="button" onClick={()=>void reload()} disabled={busy}>Reload from account</button></div><p role="status">{notice|| (dirty?'Unsaved profile changes.':'Your current profile is saved.')}</p></form><aside className="profile-summary"><PixelCharacter value={appearanceFor(identity)}/><h2>{profile.display_name}</h2><p>@{profile.username}</p><p>{profile.bio||'A little introduction goes a long way.'}</p><a href="/?appearance">Customize your character</a><a href={`/?home=${profile.id}`}>Visit your home</a></aside></div></div></main>
-}
+export function MemberPortrait({person}:{person?:PublicIdentity}){return <a className="member-portrait" href={person?`/?profile=${person.id}`:undefined} aria-label={person?`View ${person.display_name} profile`:'Account unavailable'}><AccountPortrait person={person}/></a>}
+export {default as ProfilePage} from './ProfileStudio'
 
 export function FriendsPage(){return <AccountGate><Friends/></AccountGate>}
 function Friends(){

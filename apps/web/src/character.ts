@@ -38,7 +38,7 @@ export function characterPixels(a: Appearance): Pixel[] {
  const skinLight = mix(skin, '#fff4df', 0.26)
  const skinShadow = mix(skin, '#613931', 0.28)
  const skinDeep = mix(skin, '#3d211e', 0.46)
- const blush = mix(skin, '#d96b70', 0.34)
+ const blush = mix(skin, '#9b654e', 0.16)
 
  const hair = a.hair
  const hairDeep = mix(hair, '#100e18', 0.52)
@@ -266,16 +266,13 @@ export function characterPixels(a: Appearance): Pixel[] {
  sym(14, 18, 6, 1, hairDeep)
  sym(15, 17, 4, 1, hairShade)
 
- // Expressive RPG Eyes (6x5 with upper lashes, sclera, shaded iris & dual catchlights)
- sym(14, 20, 6, 1, ink) // Thick upper lash
- sym(13, 20, 1, 1, outlineSoft) // Outer lash wing
- sym(14, 21, 6, 4, '#f7f1e6') // Sclera
- sym(16, 21, 4, 4, eyeBase) // Iris base
- sym(16, 21, 4, 2, eyeDeep) // Upper iris shadow
- sym(17, 22, 2, 2, ink) // Pupil
- sym(17, 24, 2, 1, eyeLight) // Lower iris glow
- sym(16, 21, 2, 2, '#ffffff') // Primary top-left catchlight
- sym(19, 24, 1, 1, '#ffffff') // Secondary micro catchlight
+ // Compact RPG eyes: restrained highlights and brow shading, rather than oversized anime eyes.
+ sym(14, 20, 5, 1, skinDeep)
+ sym(15, 21, 4, 3, eyeDeep)
+ sym(16, 21, 3, 3, eyeBase)
+ sym(17, 21, 2, 2, ink)
+ sym(16, 21, 1, 1, '#f2ead8')
+ sym(17, 23, 1, 1, eyeLight)
 
  // Nose & gentle smile
  block(23, 25, 2, 2, skinShadow)

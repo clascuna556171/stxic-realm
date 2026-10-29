@@ -1,0 +1,67 @@
+:root {
+ --realm-bg: #10131a;
+ --realm-surface: #181d26;
+ --realm-raised: #242c38;
+ --realm-line: #323c4b;
+ --realm-text: #e9eef5;
+ --realm-muted: #a7b5c5;
+}
+@font-face {
+ font-family: 'Realm Display';
+ src: url('/fonts/pixelify-sans.ttf') format('truetype');
+ font-display: swap;
+ font-weight: 500;
+}
+body { background: var(--realm-bg); }
+.world-ambience { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; image-rendering:pixelated; mix-blend-mode:screen; z-index:2; }
+.garden-ambience { clip-path:polygon(0 0,4% 0,4% 87%,96% 87%,96% 0,100% 0,100% 100%,0 100%); }
+.hall-embers:has(.world-ambience) { inset:0; }
+@media(prefers-reduced-motion:reduce) { .world-ambience { display:none; } }
+.workspace-page, .room-app, .appearance-page, .halls-page, .hall-studio-page { background: var(--realm-bg); }
+.workspace-header { background: #131821; border-color: var(--realm-line); }
+.workspace-header > a { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #c6d1df; text-decoration: none; }
+.workspace-header > a:hover { color: #eef4fb; }
+.workspace-nav { background: #11161e; border-color: var(--realm-line); }
+.workspace-nav nav a { min-height: 54px; color: var(--realm-muted); }
+.workspace-nav nav a[aria-current=page] { background: #26332f; color: #c8eadb; }
+.workspace-nav nav a:hover { background: #252e3b; color: #eef4fb; }
+.workspace-page h1, .hall-introduction h1, .hall-studio-intro h1 { font-family: 'Realm Display', Georgia, serif; font-weight: 500; letter-spacing: -.025em; }
+.workspace-page :focus-visible { outline: 2px solid var(--realm-accent); outline-offset: 4px; }
+::selection { background: #b7dfd0; color: #152622; }
+* { scrollbar-color: #4c5a6d #151b24; scrollbar-width: thin; }
+input, textarea { caret-color: var(--realm-accent); }
+.login-hall-link { display: flex; align-items: center; gap: 10px; margin-top: 24px; min-height: 44px; font-size: 12px; color: #b8dfcf; text-decoration: none; }
+.login-hall-link > svg { width: 18px; height: 18px; }
+.login-hall-link > svg:last-child { margin-left: auto; width: 14px; }
+.login-hall-link:hover { color: #d6f5e9; text-decoration: underline; }
+.room-app .room-layout, .appearance-grid { border-color: var(--realm-line); background: var(--realm-surface); }
+.room-app .room-canvas-frame { background: #111821; }
+.room-app .room-inspector, .appearance-preview { background: #171e28; border-color: var(--realm-line); }
+.room-app .room-scene-head, .room-app .room-bottom, .room-app .studio-note { border-color: var(--realm-line); }
+.room-app .room-studio-link { background: #222c38; border-color: #49596c; color: #dbe4ef; }
+.room-app .room-object-list button[aria-pressed=true] { background: #293b37; border-color: #58766c; color: #e2f3eb; }
+.room-app .room-object-list button:hover { background: #26313e; }
+.room-app .room-object-list[data-thumbnails=true] button { grid-template-columns:38px minmax(0,1fr) auto; min-height:56px; gap:10px; }
+.room-app .room-object-list[data-thumbnails=true] .furniture-thumbnail { width:38px; height:44px; }
+.room-app .room-object-list[data-thumbnails=true] small { color:#b3c7bf; }
+.room-app .direction-pad button { border-color: #4a5b6e; background: #26313f; color: #d9e5ef; }
+.room-app .direction-pad button:hover { background: #354556; }
+.room-app .studio-actions .studio-primary, .room-app .studio-form-actions button:first-child { background: var(--realm-accent); border-color: var(--realm-accent); color: #171c25; }
+.character-stage:has(.alcove-backdrop) { background: #222c35; border: 1px solid #586473; border-radius: 5px; isolation: isolate; }
+.character-stage .alcove-backdrop { opacity: 1; }
+.character-stage:has(.alcove-backdrop) .pixel-character { position: relative; filter: drop-shadow(3px 5px 2px #111820a1); }
+.character-stage:has(.alcove-backdrop) .stage-orbit { width: 104px; height: 15px; bottom: 38px; border: 0; background: #141b24a6; filter: blur(3px); }
+.character-stage:has(.alcove-backdrop) .stage-caption { color: #dfe9ef; background: #17202be6; padding: 7px; bottom: 0; }
+.appearance-page .editor-tabs button.active { color: #cce8dc; border-color: #a6d8bc; }
+.appearance-page .control-section, .appearance-page .detail-controls, .appearance-page .space-controls { border-color: var(--realm-line); }
+.appearance-page .starter-looks button[aria-pressed=true] > div { outline-color: #a6d8bc; }
+.appearance-page .choice-row button, .appearance-page .stage-toolbar button, .appearance-page .GhostButton { background: #242e3b; border-color: #465468; color: #d3deeb; }
+.appearance-page .choice-row button[aria-pressed=true] { background: #2b3f3a; border-color: #8ebcab; color: #e5f2ed; }
+.appearance-page .mood-choices button { background: #202936; border-color: #425267; }
+.appearance-page .mood-choices button[aria-pressed=true] { border-color: #99c4b4; background: #263934; }
+.appearance-page .preview-title > span { color: #b7d7c9; }
+@media(max-width:650px) {
+ .workspace-nav nav a { min-width: 0; font-size: 9px; }
+ .character-stage:has(.alcove-backdrop) .stage-orbit { width: 58px; bottom: 20px; }
+ .room-app .room-heading h1, .room-app .studio-heading h1 { font-size: 31px; }
+}

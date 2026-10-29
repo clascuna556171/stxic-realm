@@ -1,6 +1,8 @@
 import type { Appearance } from '../appearance'
 import type { Pixel } from '../character'
 import type { RoomObject } from './room'
+import { worldPalettes } from './palette.ts'
+import { libraryShelfPixels } from './sprite-art.ts'
 
 // Original, deterministic high-detail pixel artwork inspired by the STXIC Realm v3 & room concepts.
 const ink = '#191722'
@@ -15,7 +17,8 @@ const goldLight = '#fff0b8'
 const cyan = '#5ce6dc'
 const violet = '#a78bfa'
 
-export function furniturePixels(id: string): Pixel[] {
+export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): Pixel[] {
+ if (id === 'bookshelf') return libraryShelfPixels(mood)
  const p: Pixel[] = []
  const r = (x: number, y: number, w: number, h: number, color: string) => {
   const rx = Math.floor(x)
@@ -127,52 +130,6 @@ export function furniturePixels(id: string): Pixel[] {
   r(56, 59, 3, 3, ink)
  }
 
- if (id === 'bookshelf') {
-  // Tall 3-tier mahogany bookcase with ivy, trophy & books
-  r(1, 4, 62, 58, ink)
-  r(3, 0, 58, 60, woodDark)
-  r(4, 1, 56, 57, wood)
-  r(2, -2, 60, 4, ink)
-  r(3, -1, 58, 3, woodLight)
-  r(5, 0, 54, 1, woodHighlight)
-  // Three recessed shelf cavities
-  const shelfY = [5, 22, 39]
-  const bookColors = ['#b84b4b', '#4d7c8a', '#c9a45c', '#5b668a', '#7c5278', '#567d62', '#c77b48']
-  for (let s = 0; s < 3; s++) {
-   const sy = shelfY[s]
-   r(7, sy, 50, 14, '#2d2322')
-   r(7, sy, 50, 2, '#1d1616')
-   for (let i = 0; i < 7; i++) {
-    const bh = 9 + ((i * 3 + s * 2) % 5)
-    const bx = 9 + i * 7
-    const by = sy + 14 - bh
-    const col = bookColors[(i + s * 2) % bookColors.length]
-    r(bx, by, 6, bh, ink)
-    r(bx + 1, by + 1, 4, bh - 1, col)
-    r(bx + 2, by + 2, 1, bh - 3, '#efe2c8')
-    r(bx + 1, by + bh - 3, 4, 1, gold)
-   }
-   r(5, sy + 14, 54, 3, woodLight)
-   r(5, sy + 16, 54, 1, woodDark)
-  }
-  // Top of bookshelf curios: Golden Trophy + Lush Trailing Ivy Plant
-  r(10, -13, 12, 11, ink)
-  r(12, -12, 8, 6, gold)
-  r(13, -11, 3, 4, goldLight)
-  r(14, -6, 4, 3, goldDark)
-  r(11, -3, 10, 2, gold)
-  // Terracotta pot & cascading ivy on top right
-  r(40, -11, 14, 10, ink)
-  r(41, -10, 12, 8, '#b87654')
-  r(40, -11, 14, 2, '#d4926e')
-  r(36, -18, 22, 8, '#2d4d3a')
-  r(38, -21, 16, 7, '#437054')
-  r(42, -23, 10, 5, '#689e78')
-  r(50, -9, 6, 16, '#2d4d3a')
-  r(51, -7, 4, 13, '#4d805f')
-  r(52, 4, 3, 8, '#689e78')
- }
-
  if (id === 'sofa') {
   // Deep plush 3-seat charcoal/indigo sofa with throw pillows & kitten
   r(2, 49, 92, 10, '#221c26')
@@ -269,12 +226,12 @@ export function furniturePixels(id: string): Pixel[] {
   r(2, 1, 28, 2, woodLight)
   r(2, 1, 4, 2, gold)
   r(26, 1, 4, 2, gold)
-  // Royal purple & crimson pennant cloth
+  // Weathered wine-red cloth and antique brass, shared with the hall heraldry.
   r(5, 3, 22, 25, ink)
-  r(6, 4, 20, 22, '#4c3366')
-  r(8, 4, 16, 20, '#623d7d')
-  r(10, 4, 12, 18, '#7a335c')
-  r(7, 5, 18, 1, '#b794f4')
+  r(6, 4, 20, 22, '#4d2930')
+  r(8, 4, 16, 20, '#693740')
+  r(10, 4, 12, 18, '#82464a')
+  r(7, 5, 18, 1, '#c5a374')
   // Gold fringe bottom & tassels
   r(6, 26, 20, 3, goldDark)
   for (let i = 0; i < 5; i++) r(7 + i * 4, 27, 2, 4, gold)
@@ -459,7 +416,14 @@ export function furniturePixels(id: string): Pixel[] {
   r(14, -20, 4, 3, gold)
  }
 
- return p
+ const c = worldPalettes[mood]
+ const colors: Record<string,string> = {
+  '#191722':'#19202b', '#523829':c.timber[0], '#7d563c':c.timber[1], '#9c6d4c':c.timber[1], '#c49166':c.timber[2], '#e3b587':mood==='tech'?'#9fb8c8':'#e8bb87',
+  '#303446':c.cloth[0], '#3f455c':c.cloth[1], '#59617d':c.cloth[2], '#353a4d':c.cloth[0], '#464d63':c.cloth[1], '#636b87':c.cloth[2], '#4b5269':c.cloth[1], '#6c7491':c.cloth[2],
+  '#292d3d':c.cloth[0], '#35384f':c.cloth[0], '#484c6b':c.cloth[1], '#666b91':c.cloth[2], '#63688f':c.cloth[2],
+  '#7b7399':mood==='tech'?'#668ba3':'#c0b398', '#b8b0d4':mood==='tech'?'#a3cad3':'#efe2c5', '#5ce6dc':mood==='tech'?'#77d8dc':'#9bc2b5', '#a78bfa':mood==='tech'?'#a0b8d8':'#a3b699'
+ }
+ return p.map(pixel=>({...pixel,color:colors[pixel.color]??pixel.color}))
 }
 
 export function roomPixels(mood: Appearance['mood']): Pixel[] {
@@ -478,17 +442,17 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
    foliage: ['#19282c', '#243b3e', '#345452', '#4c756c'],
    wallOuter: '#252330',
    wallTop: '#4c465c',
-   wall: '#8f7968',
-   wallPanel: '#756153',
-   trim: '#d6bf9e',
+   wall: '#cbb99a',
+   wallPanel: '#b19a7e',
+   trim: '#ead8b8',
    baseboard: '#4f3d32',
-   floor: ['#805940', '#8a6146', '#946a4d', '#9e7355', '#755039'],
+   floor: ['#ad7850', '#bb865a', '#c99668', '#d2a475', '#a36d49'],
    seam: '#523727',
    ray: '#b38962',
    sky: '#1e2640',
-   rugMain: '#63536e',
-   rugInner: '#8a7896',
-   rugBorder: '#d4c2bd',
+   rugMain: '#425c4a',
+   rugInner: '#708b6d',
+   rugBorder: '#d9c9a9',
   },
   medieval: {
    outer: '#121018',
@@ -525,7 +489,11 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
    rugBorder: '#82c4cc',
   },
  }
- const c = palettes[mood]
+ const material = worldPalettes[mood]
+ const c = { ...palettes[mood], wall: material.wall[0], wallPanel: material.wall[1], trim: material.trim,
+  wallOuter: material.stone[0], wallTop: material.stone[2], baseboard: material.timber[0],
+  floor: [...material.floor, material.floor[0]], seam: material.seam, sky: material.sky[0],
+  rugMain: material.cloth[0], rugInner: material.cloth[1] }
 
  // 1. EXTERIOR TWILIGHT SKY, DISTANT BAY & LUSH PERIMETER FOLIAGE
  r(0, 0, 512, 384, c.outer)
@@ -612,6 +580,25 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
   r(px, 18, 22, 24, c.wallPanel)
   r(px + 2, 20, 18, 20, c.wall)
  }
+ // Castle masonry, carved timber uprights and staggered mortar. The structural
+ // shell changes with the mood; furniture coordinates and collision stay intact.
+ if (mood === 'medieval') {
+  for (let row = 0; row < 4; row++) {
+   const y = 15 + row * 8
+   for (let col = 0; col < 17; col++) {
+    const x = 28 + col * 28 - (row % 2) * 14
+    r(x, y, 27, 7, ['#6c685c', '#777164', '#625f54'][(row + col) % 3])
+    r(x + 2, y, 23, 1, '#938671')
+    if ((row + col) % 4 === 0) r(x + 5, y + 4, 7, 1, '#58554c')
+   }
+  }
+  for (const x of [32, 174, 306, 468]) {
+   r(x, 14, 6, 35, '#352d25')
+   r(x + 1, 14, 2, 34, '#8a6b47')
+   r(x - 2, 41, 10, 5, '#3e352a')
+   r(x, 42, 6, 1, goldDark)
+  }
+ }
  r(24, 11, 464, 4, c.trim)
  r(26, 46, 460, 4, c.baseboard)
  if (mood === 'tech') r(28, 45, 456, 1, cyan)
@@ -631,12 +618,17 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
  r(186, 13, 116, 40, c.trim)
  r(190, 16, 108, 33, ink)
  r(192, 18, 104, 29, c.sky)
- // Crescent moon & twinkling stars in window
+ // Daylight in the conservatory; quiet moonlight in the evening settings.
  r(274, 21, 9, 9, '#fff0b8')
- r(272, 20, 6, 6, c.sky)
- r(202, 22, 2, 2, '#ffffff')
- r(226, 20, 1, 1, '#fff0b8')
- r(252, 24, 2, 2, '#ffffff')
+ if (mood !== 'cozy') {
+  r(272, 20, 6, 6, c.sky)
+  r(202, 22, 2, 2, '#ffffff')
+  r(226, 20, 1, 1, '#fff0b8')
+  r(252, 24, 2, 2, '#ffffff')
+ } else {
+  r(201, 24, 15, 3, '#dce8d8'); r(205, 22, 8, 3, '#dce8d8')
+  r(249, 29, 16, 3, '#dce8d8')
+ }
  // Skyline / Castle spires inside window
  for (let i = 0; i < 13; i++) {
   const bh = 6 + ((i * 9 + (mood === 'medieval' ? 5 : 2)) % 18)
@@ -742,30 +734,24 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
   r(92 + i * 8, 282, 4, 2, gold)
  }
 
- // Glowing Orbital Chat / Portal Pad on open right floor (x: 266..322, y: 238..282)
- r(268, 242, 52, 36, '#231c38')
- r(272, 240, 44, 40, '#2e234a')
- r(274, 244, 40, 32, '#443370')
- r(278, 246, 32, 28, '#6b4fbb')
- r(282, 249, 24, 22, '#322652')
- // Glowing orbital planet rune inside portal pad
- r(290, 255, 8, 8, '#d6bcfa')
- r(292, 257, 4, 4, '#ffffff')
- r(284, 259, 20, 2, cyan)
- r(276, 250, 2, 2, '#ffffff')
- r(310, 252, 2, 2, cyan)
- r(278, 268, 2, 2, '#ffe699')
- r(308, 267, 2, 2, '#ffffff')
+ // A little woven floor medallion, with colors from the selected room materials.
+ r(272, 244, 48, 32, material.timber[0])
+ r(269, 249, 54, 22, c.rugBorder)
+ r(274, 246, 44, 28, c.rugBorder)
+ r(275, 250, 42, 20, material.cloth[0])
+ r(281, 253, 30, 14, material.cloth[1])
+ r(290, 256, 12, 8, c.rugBorder)
+ r(294, 253, 4, 14, c.rugBorder)
 
  // Grand Entrance Welcome Mat, Twin Lantern Pillars & Stone Steps (x: 194..318, y: 310..382)
  r(222, 310, 68, 36, ink)
- r(224, 312, 64, 32, '#282338')
- r(226, 314, 60, 28, '#3b3354')
- r(228, 314, 56, 2, violet)
+ r(224, 312, 64, 32, material.timber[0])
+ r(226, 314, 60, 28, material.timber[1])
+ r(228, 314, 56, 2, material.timber[2])
  // Home rune icon on entrance mat
- r(252, 322, 8, 4, '#d6bcfa')
- r(250, 326, 12, 8, '#9f7aea')
- r(254, 329, 4, 5, '#282338')
+ r(252, 322, 8, 4, material.trim)
+ r(250, 326, 12, 8, material.trim)
+ r(254, 329, 4, 5, material.timber[1])
  // Stone entrance stairs
  r(214, 348, 84, 10, '#454154')
  r(218, 350, 76, 4, '#635e78')
@@ -780,7 +766,15 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
   r(lx + 1, 346, 10, 8, woodDark)
  }
 
- return p
+ const details: Record<string,string> = {
+  '#b794f4':material.cloth[2], '#9f7aea':material.cloth[1], '#d6bcfa':material.trim,
+  '#343246':material.cloth[0], '#47445e':material.cloth[1], '#39324a':material.timber[0],
+  '#1b182c':material.sky[0], '#2d2447':material.sky[0], '#46386b':material.sky[1],
+  '#554380':material.cloth[1], '#7f67b5':material.stone[2], '#3b2e5e':material.cloth[0],
+  '#5c4d8a':material.sky[1], '#8066b8':material.sky[2], '#635e78':material.stone[2],
+  '#454154':material.stone[1], '#363342':material.stone[0], '#524d63':material.stone[1], '#282533':'#19202b',
+ }
+ return p.map(pixel=>({...pixel,color:details[pixel.color]??pixel.color}))
 }
 
 export function composedRoomPixels(mood: Appearance['mood'], objects: RoomObject[]): Pixel[] {
@@ -788,6 +782,6 @@ export function composedRoomPixels(mood: Appearance['mood'], objects: RoomObject
   ...roomPixels(mood),
   ...[...objects]
    .sort((a, b) => a.y - b.y)
-   .flatMap(o => furniturePixels(o.id).map(p => ({ ...p, x: p.x + o.x * 32, y: p.y + o.y * 32 }))),
+   .flatMap(o => furniturePixels(o.id, mood).map(p => ({ ...p, x: p.x + o.x * 32, y: p.y + o.y * 32 }))),
  ]
 }

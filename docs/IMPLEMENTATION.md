@@ -1,5 +1,32 @@
 # Implementation and local setup
 
+## Phase 5 release preparation — 29 October 2026
+
+The source includes three 29 October feature migrations plus the new forward-only `20261029030000_profile_media_cleanup_safety.sql`. The latest handoff claims the feature migrations and profile/worker functions were deployed, while earlier local records say pending. Hosted state and SQL equivalence are unverified; check the actual target before any rollout. `pnpm release:preflight` is a read-only local inventory, not a hosted or release certification. [Alpha release rehearsal](ALPHA_RELEASE.md) specifies isolated verification, backup/restore, rollout and rollback gates. The cleanup migration tracks pending and deleting upload paths and delays collection for one hour; real Storage, Edge and concurrency behavior remains to be tested. The proposed Tauri desktop shell does not exist yet.
+
+
+## Flexible account profiles — 29 October 2026
+
+Account profiles now follow the owner's Discord-style reference with uploaded account photos/banners/gallery, pronouns/status/about, custom details and HTTPS connections, colors/fonts/crops, section order/visibility, viewer-private notes and actual shared-space roles. Account portraits in people/chat use photos or initials; pixel characters remain in worlds and their own studio. No existing character/home/theme data is converted. See [ACCOUNT_PROFILES.md](ACCOUNT_PROFILES.md).
+
+Migration `20261029020000_account_profiles.sql`, `realm-profile-media` and the worker blob-GC update exist locally alongside the two earlier home/hall migrations. Their hosted state is disputed and requires verification; this Phase 5 pass made no hosted changes. Local SQL/RLS, binary-validation and intercepted browser checks are distinct from live Storage/Auth/Edge evidence. The older character-preview profile sections below are historical; they no longer describe the account profile screen.
+
+## Home guestbooks, object actions and shared Server Halls — 29 October 2026
+
+Current scope and operations: [SHARED_WORLD.md](SHARED_WORLD.md). New additive migrations `20261029000000` and `20261029010000` implement private/friend-authorized persistent guestbooks, posting controls/limits/removal, safe project links, separate space-backed optional halls, explicit decorator grants, validated revisioned layouts, channel portals and moderated announcements. The existing Hall Studio, art, themes, placement rules and undo/redo are reused. Device-local personal hubs and old home arrangements are preserved. The server furniture validator now separates display copy from identity/geometry too.
+
+**Deployment:** a read-only linked migration-list check confirmed migrations through `20261028070000` are applied. The later shared handoff reports these migrations deployed, conflicting with earlier local notes; verify the actual ledger and function versions. This Phase 5 pass changed no hosted data, configuration or functions. Historical deployment/integration records below describe their original checks, not a new certification of current hosted Auth, Edge Functions, feature flags or mail/scheduler operation. Earlier “guestbooks/halls unimplemented” statements are superseded by this section; release gates are not closed.
+
+Local validation includes actual PGlite SQL/RLS distinct-user tests and browser flows with intercepted Auth/PostgREST backed by PGlite. They are separate from live Supabase verification. Run `pnpm test:world:social:ui` for the new screens, alongside the existing database/unit/build/hall/world/access checks. Hosted rollout, real multi-connection races, live reconnect/Auth, operational rehearsal and independent QA remain release gates. See the shared-world guide for exact permissions, limits and evidence.
+
+## Sprite Fusion artwork and account refinement — 29 October 2026
+
+The account/profile layout, shared hall/room shelf, room materials and editor thumbnails were refined around the original reference. One Sprite Fusion style-guided batch returned nine shelf variants; the selected original is preserved with its prompt and compiled into project-owned pixel data. Further sofa/desk generation was blocked by the service's active-subscription requirement after the remaining 15 credits were used. Existing furniture continues to be original Realm artwork. No backend/schema, publishing or save-scope changes were introduced. Current files, provenance, compilation, validation and limits: [SPRITEFUSION_ART.md](SPRITEFUSION_ART.md).
+
+[Hall Studio](HALL_STUDIO.md) at `/?hall-studio` now edits personal hall components, entrance styles and three themes. Saved layouts are browser-local and scoped by account; they do not publish to server members or sync across devices. `pnpm test:hall:ui` verifies the editor. The hall uses shared modular pixel art, replacing the earlier illustrated backdrop.
+
+The 29 October visual update adds [Server Halls](SERVER_HALLS.md): `/?spaces` for membership-scoped server navigation and `/?hall-preview` for the anonymous illustration preview. Existing administration is in **Manage spaces** below the hall. Run `pnpm test:world:ui` for local world interaction checks, alongside `pnpm test:access:ui` for simulated authenticated contracts.
+
 The working app is in `apps/web`; `Build STXIC Realm App` remains a separate UI-only sample. The latest slice adds invitation/recovery, space/channel/membership administration, journal-backed messaging/unread/edit/remove, moderation, limits and privacy jobs. Read [Access operations](ACCESS_OPERATIONS.md) for setup and release gates. All migrations `20261028000000` through `20261028070000` and all Edge Functions are deployed to linked development project `stxic-realm` (`rrprjxubfdixoqvquptq`). First administrator account `c.lascuna.556171@umindanao.edu.ph` is bootstrapped.
 
 ## Requirements
@@ -40,10 +67,10 @@ $env:SUPABASE_SERVICE_ROLE_KEY="<key>"; pnpm test:integration
 
 ## Remaining blockers and next work
 
-1. **Invites and account recovery:** administrator-provisioned accounts remain required. Invitation redemption, password setup/reset and email confirmation UI remain open.
-2. **Channel history and administration:** channel messages still reload the latest 100; cursor recovery for channel history, space/channel provisioning UI and full unread state remain open. Direct messages have their own cursor-based earlier-history control.
-3. **Moderation and uploads:** blocking is implemented for friendships, DMs and home visits; reporting, moderator queues, attachments, message edits/deletes and broader rate/usage limits remain open.
-4. **World expansion:** guestbooks, sitting and object actions, optional halls, directional animation and room/chat integration beyond navigation remain open.
+1. **Access/communication release verification:** invitation/recovery UI, cursor recovery, provisioning, unread state, message changes, reporting, moderator queues and quotas are implemented. Real mail/provider/concurrency and operational gates still require the checks in ACCESS_OPERATIONS.md.
+2. **World rollout:** guestbooks, safe desk links and optional shared halls/portals/boards are implemented locally in the two new migrations. Reconcile actual target state and stage/deploy only with authorization; live distinct-user/concurrency and reconnect checks remain open.
+3. **Future content:** attachments/uploads, sitting, additional object actions, directional animation and hall multiplayer presence are not implemented in this slice.
+4. **Independent verification:** local PGlite and intercepted-browser tests do not replace real Supabase or assistive-technology testing.
 5. **Release operations:** Windows packaging, hosted web, complete reconnect/accessibility testing, backup restoration, five-person load/usage checks and alpha release gates remain outstanding.
 
 ## Local room prototype
@@ -115,7 +142,7 @@ Reference guidance used: [Supabase RLS](https://supabase.com/docs/guides/databas
 
 Implemented locally from the approved implementation request: private admission/current-session enforcement, platform grants, guarded legacy writes, space/channel/role/invitation APIs and screens, complete cursor history and journal recovery, channel/DM unread/edit/remove, atomic report-and-block, scoped review actions, private exports and resumable deletion with peer-content preservation. Routes include `/?spaces`, `/?platform`, `/?moderation&space=<id>`, `/?privacy`, `/auth/callback` and `/auth/recover`. Ordinary conversation screens use the same stream component for channels and DMs. Anonymous previews and existing identity/home workflows remain separate.
 
-New migrations `20261028030000` through `20261028070000`, Edge sources, local Auth/mail configuration and test tooling are in the repository. They have not been deployed to the linked project. New features default off; activation requires operator inputs, reviewed admission, provider/scheduler setup and the specified external verification. [Access operations](ACCESS_OPERATIONS.md) is the current setup/verification/restore source and supersedes the historical baseline's latest-100, admin-console membership and cascade-deletion behavior.
+Migrations `20261028030000` through `20261028070000`, Edge sources, local Auth/mail configuration and test tooling are in the repository. The linked migration ledger was rechecked on 29 October and confirms those migrations are applied; the earlier undeployed statement is superseded. Feature flags default off in migration source; the later deployment record documents activation, but current hosted flags, Edge configuration and provider/scheduler health were not revalidated in this continuation. [Access operations](ACCESS_OPERATIONS.md) is the current setup/verification/restore source and supersedes the historical baseline's latest-100, admin-console membership and cascade-deletion behavior.
 
 Local evidence: TypeScript and production build pass; 24 unit tests, three rollback SQL suites, migration/upgrade checks and four Edge HTTP tests pass. The browser contract suite exercises two simulated clients, gaps beyond 100 changes, old edits/removal, late-send drafts, reporting, space creation, privacy requests, callbacks and suspension; desktop/phone captures are in `.impeccable/access-review/`. Provider requests are intercepted in that suite. These checks are not real mail, Auth/realtime or multi-connection concurrency evidence.
 
@@ -140,3 +167,7 @@ Independent visible QA for the undo/redo slice could not dispatch: Invoke-QA.ps1
 2. **Concept v3 & Reference Visual Implementation:**
    - Updated the orbital `R` SVG mark (`Brand.tsx`, `apps/web/public/brand/`), 48 × 64 RPG character sprites (`character.ts`), 512 × 384 pixel room and 10 furniture pieces (`art.ts`, `RoomArtwork.tsx`, `renderer.ts`), 12-starter `AppearanceStudio.tsx` with twilight castle preview backdrop and Randomize/Reset controls, and `Spaces.tsx` moonlit pixel castle hero banner and space cards.
    - Passed `pnpm typecheck`, `pnpm test` (27/27), `pnpm test:database`, Deno `check`/`test` (4/4), `pnpm build`, and `pnpm test:access:ui`.
+
+## Saved-home compatibility fix — 29 October 2026
+
+Owner saw unsupported-layout error on their authenticated home. Root cause: layout.validateLayout compared saved furniture names/descriptions to current display copy; visual changes had changed sofa description relative to migration 20261028010000 furniture_catalog. Restored canonical sofa metadata for server save compatibility. Layout validation now checks asset IDs, dimensions, duplicate IDs, integer positions, bounds, overlap and spawn independently of text. parseLayout rehydrates canonical metadata while preserving saved positions; invalid geometry stays rejected. Added regression loading the literal database migration catalog plus newer sofa text and moved furniture. Build and 34 unit tests pass. No hosted home layout was reset or rewritten; refresh should load it. Live authenticated browser confirmation remains unverified.

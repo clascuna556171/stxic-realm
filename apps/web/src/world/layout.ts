@@ -11,7 +11,7 @@ export function validateLayout(value: unknown): string | null {
   for (const entry of input.objects) {
     if (!entry || typeof entry !== 'object') return 'Invalid furniture item.'
     const item = entry as RoomObject; const asset = OBJECTS.find(o => o.id === item.id)
-    if (!asset || ids.has(item.id) || item.width !== asset.width || item.height !== asset.height || item.name !== asset.name || item.description !== asset.description) return 'Unknown or duplicate furniture item.'
+    if (!asset || ids.has(item.id) || item.width !== asset.width || item.height !== asset.height) return 'Unknown or duplicate furniture item.'
     if (!Number.isInteger(item.x) || !Number.isInteger(item.y) || item.x < 1 || item.y < 1 || item.x + item.width > ROOM.width - 1 || item.y + item.height > ROOM.height - 1) return `${asset.name} must fit inside the room.`
     ids.add(item.id)
     for (let y=item.y; y<item.y+item.height; y++) for (let x=item.x; x<item.x+item.width; x++) {
@@ -23,7 +23,13 @@ export function validateLayout(value: unknown): string | null {
   return null
 }
 export function parseLayout(raw: string): Layout | null {
-  try { const value: unknown = JSON.parse(raw); return validateLayout(value) ? null : value as Layout } catch { return null }
+  try {
+    const value = JSON.parse(raw) as Layout
+    if (validateLayout(value)) return null
+    // Display copy is not layout identity. Rehydrate catalog metadata while keeping
+    // the saved arrangement; never repair unknown assets or invalid geometry.
+    return {schemaVersion:1,objects:value.objects.map(item=>({...OBJECTS.find(o=>o.id===item.id)!,x:item.x,y:item.y}))}
+  } catch { return null }
 }
 export function placeObject(layout: Layout, item: RoomObject, x: number, y: number): {layout: Layout; error: string | null} {
   const placed = {...item, x, y}; const objects = layout.objects.some(o => o.id === item.id) ? layout.objects.map(o => o.id === item.id ? placed : o) : [...layout.objects, placed]

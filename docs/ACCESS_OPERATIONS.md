@@ -1,5 +1,9 @@
 # Access, messaging and moderation operations
 
+The later account-profile slice adds a private `realm-profiles` bucket, `realm-profile-media`, profile/media/note revisions/RLS and worker blob cleanup. Migration `20261029020000` and the new/updated functions remain undeployed. Review [ACCOUNT_PROFILES.md](ACCOUNT_PROFILES.md) before rollout; binary image upload, Storage policy/URL behavior and physical deletion require staging verification. Existing access, invitation and messaging implementations were preserved.
+
+29 October recheck: the linked migration ledger confirms `20261028000000`–`20261028070000` are applied. The deployment/configuration details below are historical records; this check did not revalidate current Edge Functions, Auth/mail, flags or scheduler health. Home-social/shared-hall migrations `20261029000000` and `20261029010000` are new, local and undeployed. Their exact additive rollout boundary, permissions and isolated verification are in [SHARED_WORLD.md](SHARED_WORLD.md). Do not reset hosted data or run destructive integration fixtures against the linked development project.
+
 Implemented locally and deployed to linked development project `rrprjxubfdixoqvquptq` on 28 October 2026. Migrations `20261028030000` through `20261028070000` have been applied in order. Edge Functions `realm-invitations`, `realm-onboarding`, `realm-privacy`, and `realm-worker` are deployed with `verify_jwt: false`. Feature flags `administration`, `account_invitations`, and `privacy_jobs` are active. First platform administrator (`c.lascuna.556171@umindanao.edu.ph`) has been bootstrapped and verified.
 
 ## What is implemented

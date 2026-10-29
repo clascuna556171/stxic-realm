@@ -4,6 +4,19 @@ import { composedRoomPixels, furniturePixels } from '../src/world/art.ts'
 import { OBJECTS, ROOM, canOccupy } from '../src/world/room.ts'
 import { parseLayout } from '../src/world/layout.ts'
 import { defaults, parseAppearance } from '../src/appearance.ts'
+import { roomLighting } from '../src/world/lighting.ts'
+
+test('room lighting follows moved furniture and removes its light when the source is removed', () => {
+ const lantern = OBJECTS.find(o => o.id === 'lantern')
+ const base = roomLighting('medieval', [])
+ const initial = roomLighting('medieval', [lantern])
+ const moved = roomLighting('medieval', [{ ...lantern, x: lantern.x + 2, y: lantern.y + 1 }])
+ assert.equal(initial.length, base.length + 1)
+ assert.equal(moved.at(-1).x - initial.at(-1).x, 64)
+ assert.equal(moved.at(-1).y - initial.at(-1).y, 32)
+ assert.deepEqual(roomLighting('medieval', []).slice(0, base.length), base)
+ assert.notEqual(roomLighting('tech', [])[0].color, base[0].color)
+})
 
 test('new defaults use obsidian while explicit saved accent choices survive',()=>{
  assert.equal(defaults.accent,'obsidian')

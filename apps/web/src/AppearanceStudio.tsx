@@ -16,6 +16,7 @@ import {
 import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels } from './character'
 import { WorkspaceNav } from './WorkspaceNav'
 import { Icon } from './Icon'
+import { CharacterAlcove } from './world/CharacterAlcove'
 import { useAccount } from './Account'
 import { appearanceFor, errorText } from './account-repository'
 
@@ -31,50 +32,6 @@ export function PixelCharacter({ value, portrait = false }: { value: Appearance;
    {characterPixels(value).map((p, i) => (
     <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} fill={p.color} />
    ))}
-  </svg>
- )
-}
-
-function StageBackdrop({ mood }: { mood: Appearance['mood'] }) {
- const sky = mood === 'medieval' ? '#1b1630' : mood === 'tech' ? '#101b2e' : '#1d1b30'
- const horizon = mood === 'medieval' ? '#352659' : mood === 'tech' ? '#1a3654' : '#3a2d54'
- const tower = mood === 'medieval' ? '#241b3d' : mood === 'tech' ? '#19283d' : '#26203b'
- const glow = mood === 'tech' ? '#5ce6dc' : '#f6d88b'
- return (
-  <svg className="stage-backdrop" viewBox="0 0 96 128" shapeRendering="crispEdges" aria-hidden="true">
-   <rect x="0" y="0" width="96" height="128" fill={sky} />
-   <rect x="0" y="54" width="96" height="40" fill={horizon} />
-   {/* Crescent moon & twinkling stars */}
-   <rect x="70" y="12" width="12" height="12" fill="#fff0b8" />
-   <rect x="67" y="10" width="8" height="8" fill={sky} />
-   <rect x="14" y="14" width="2" height="2" fill="#ffffff" />
-   <rect x="34" y="9" width="2" height="2" fill={glow} />
-   <rect x="52" y="18" width="1" height="1" fill="#ffffff" />
-   <rect x="22" y="28" width="1" height="1" fill="#d6bcfa" />
-   {/* Castle spires / twilight skyline silhouette */}
-   <rect x="6" y="42" width="14" height="52" fill={tower} />
-   <rect x="9" y="34" width="8" height="8" fill={tower} />
-   <rect x="12" y="29" width="2" height="5" fill={tower} />
-   <rect x="20" y="52" width="16" height="42" fill={tower} />
-   <rect x="62" y="46" width="16" height="48" fill={tower} />
-   <rect x="66" y="38" width="8" height="8" fill={tower} />
-   <rect x="69" y="32" width="2" height="6" fill={tower} />
-   <rect x="78" y="36" width="14" height="58" fill={tower} />
-   <rect x="81" y="28" width="8" height="8" fill={tower} />
-   {/* Lit pixel windows */}
-   <rect x="11" y="46" width="3" height="5" fill={glow} />
-   <rect x="11" y="56" width="3" height="4" fill={glow} />
-   <rect x="68" y="50" width="3" height="5" fill={glow} />
-   <rect x="83" y="42" width="3" height="5" fill={glow} />
-   <rect x="83" y="52" width="3" height="4" fill={glow} />
-   {/* Stage floor & glowing portal ring */}
-   <rect x="0" y="92" width="96" height="36" fill="#161521" />
-   <rect x="0" y="92" width="96" height="2" fill="#463b69" />
-   {/* Floating pixel companion sprite */}
-   <rect x="14" y="66" width="8" height="8" fill="#181520" />
-   <rect x="15" y="67" width="6" height="6" fill="#9f7aea" />
-   <rect x="16" y="69" width="1" height="2" fill="#ffffff" />
-   <rect x="19" y="69" width="1" height="2" fill="#ffffff" />
   </svg>
  )
 }
@@ -380,7 +337,7 @@ export default function AppearanceStudio() {
        <span>{dirty ? 'Unsaved' : 'Saved'}</span>
       </div>
       <div className="character-stage">
-       <StageBackdrop mood={value.mood} />
+       <CharacterAlcove mood={value.mood} />
        <div className="stage-orbit" aria-hidden="true" />
        <PixelCharacter value={value} />
        <span className="stage-caption">

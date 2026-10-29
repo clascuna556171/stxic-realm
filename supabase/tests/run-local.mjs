@@ -12,6 +12,12 @@ const setup=`create role anon;create role authenticated;create role service_role
  create function auth.jwt() returns jsonb language sql stable as $$select coalesce(nullif(current_setting('request.jwt.claims',true),''),'{}')::jsonb$$;
  grant usage on schema auth to anon,authenticated,service_role;
  grant execute on all functions in schema auth to anon,authenticated,service_role;
+ create schema storage;
+ create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);
+ alter table storage.objects enable row level security;
+ grant usage on schema storage to authenticated,service_role;
+ grant select,insert,update,delete on storage.objects to authenticated,service_role;
  create publication supabase_realtime;`
 const migrations=(await readdir(resolve(root,'supabase/migrations'))).filter(f=>f.endsWith('.sql')).sort()
 try{
@@ -19,7 +25,7 @@ try{
  for(const file of migrations){
   await db.exec(await readFile(resolve(root,'supabase/migrations',file),'utf8'));console.log('Applied',file)
  }
- for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql']){
+ for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql','world_social.sql','account_profiles.sql']){
   await db.exec(await readFile(resolve(root,'supabase/tests',file),'utf8'));console.log('PASS',file)
  }
  await db.exec(await readFile(resolve(root,'supabase/tests/integration_fixture_support.sql'),'utf8'))

@@ -4,65 +4,7 @@ import { errorText, rpc } from './account-repository'
 import { client, type Channel } from './data'
 import { listChannels, listSpaces, roleRank, membershipToken, type Space, type SpaceData } from './space-repository'
 import { WorkspaceNav } from './WorkspaceNav'
-
-function RealmCastleBanner() {
- return (
-  <svg className="castle-hero-art" viewBox="0 0 320 120" shapeRendering="crispEdges" aria-hidden="true">
-   {/* Deep night sky & stars */}
-   <rect x="0" y="0" width="320" height="120" fill="#171528" />
-   <rect x="0" y="42" width="320" height="44" fill="#241e3d" />
-   <rect x="0" y="76" width="320" height="44" fill="#1b1830" />
-   {/* Crescent moon */}
-   <rect x="152" y="16" width="16" height="16" fill="#e9d8fd" />
-   <rect x="158" y="14" width="12" height="12" fill="#171528" />
-   {/* Twinkling stars */}
-   <rect x="28" y="14" width="2" height="2" fill="#ffffff" />
-   <rect x="74" y="22" width="2" height="2" fill="#b794f4" />
-   <rect x="118" y="12" width="2" height="2" fill="#ffffff" />
-   <rect x="196" y="18" width="2" height="2" fill="#fbd38d" />
-   <rect x="234" y="10" width="2" height="2" fill="#ffffff" />
-   {/* Distant mountain silhouettes */}
-   <rect x="90" y="58" width="80" height="28" fill="#1f1b36" />
-   <rect x="110" y="50" width="44" height="8" fill="#1f1b36" />
-   {/* Grand Moonlit Pixel Castle on the right */}
-   <rect x="210" y="34" width="96" height="54" fill="#231d38" />
-   <rect x="224" y="20" width="24" height="68" fill="#2d2547" />
-   <rect x="230" y="10" width="12" height="10" fill="#3b305c" />
-   <rect x="234" y="4" width="4" height="6" fill="#554380" />
-   <rect x="256" y="14" width="28" height="74" fill="#282040" />
-   <rect x="262" y="6" width="16" height="8" fill="#3b305c" />
-   <rect x="268" y="1" width="4" height="5" fill="#6b539c" />
-   <rect x="288" y="26" width="18" height="62" fill="#1e1830" />
-   {/* Warm glowing castle windows */}
-   <rect x="233" y="26" width="3" height="6" fill="#fbd38d" />
-   <rect x="233" y="38" width="3" height="6" fill="#f6ad55" />
-   <rect x="266" y="22" width="4" height="7" fill="#fbd38d" />
-   <rect x="274" y="22" width="4" height="7" fill="#fbd38d" />
-   <rect x="268" y="36" width="6" height="8" fill="#f6ad55" />
-   <rect x="294" y="36" width="3" height="6" fill="#fbd38d" />
-   {/* Arched stone bridge & water reflections */}
-   <rect x="148" y="68" width="96" height="18" fill="#382e57" />
-   <rect x="148" y="66" width="96" height="3" fill="#5e4f87" />
-   <rect x="156" y="74" width="12" height="12" fill="#171528" />
-   <rect x="176" y="74" width="12" height="12" fill="#171528" />
-   <rect x="196" y="74" width="12" height="12" fill="#171528" />
-   <rect x="216" y="74" width="12" height="12" fill="#171528" />
-   {/* Shimmering moonlit lake */}
-   <rect x="110" y="86" width="210" height="34" fill="#141326" />
-   <rect x="164" y="92" width="38" height="2" fill="#554380" />
-   <rect x="172" y="98" width="26" height="2" fill="#805ad5" />
-   <rect x="228" y="94" width="46" height="2" fill="#b7791f" />
-   <rect x="236" y="100" width="30" height="2" fill="#f6ad55" />
-   {/* Foreground cliff & caped adventurer silhouette */}
-   <rect x="0" y="88" width="126" height="32" fill="#121020" />
-   <rect x="16" y="82" width="92" height="8" fill="#1d1930" />
-   <rect x="68" y="58" width="14" height="26" fill="#121020" />
-   <rect x="62" y="66" width="18" height="18" fill="#292242" />
-   <rect x="70" y="52" width="10" height="8" fill="#181426" />
-   <rect x="66" y="70" width="4" height="4" fill="#b794f4" />
-  </svg>
- )
-}
+import { ServerHall } from './ServerHall'
 
 export default function SpacesPage() {
  return (
@@ -87,37 +29,41 @@ function Spaces() {
   [error, setError] = useState(''),
   [notice, setNotice] = useState(''),
   [busy, setBusy] = useState(false),
-  [loading, setLoading] = useState(true)
- const serial = useRef(0),
-  alive = useRef(true)
+  [loading, setLoading] = useState(true),
+  [detailsLoading, setDetailsLoading] = useState(false)
+ const listSerial = useRef(0), detailSerial = useRef(0),
+  alive = useRef(true), management = useRef<HTMLDetailsElement>(null)
  const space = spaces.find(s => s.id === selected),
   myRole = data?.members.find(m => m.user_id === user)?.role,
   rank = roleRank(myRole),
   enabled = account.access?.administration === true,
   canManage = rank >= 3 && enabled && !space?.closed_at
  async function load() {
-  const ticket = ++serial.current
+  const ticket = ++listSerial.current
   const rows = await listSpaces(client!)
-  if (!alive.current || ticket !== serial.current) return
+  if (!alive.current || ticket !== listSerial.current) return
   setSpaces(rows)
   setSelected(current => (rows.some(s => s.id === current) ? current : (rows[0]?.id ?? '')))
   setLoading(false)
+  setError('')
  }
  async function detail() {
   if (!selected) return
-  const ticket = ++serial.current
+  const ticket = ++detailSerial.current
+  setDetailsLoading(true)
   try {
    const [rows, d] = await Promise.all([listChannels(client!, selected), rpc<SpaceData>(client!, 'space_admin_data', { p_space: selected })])
-   if (!alive.current || ticket !== serial.current) return
+   if (!alive.current || ticket !== detailSerial.current) return
    setChannels(rows)
    setData(d)
+   setError('')
   } catch (e) {
-   if (alive.current && ticket === serial.current) {
+   if (alive.current && ticket === detailSerial.current) {
     setData(null)
     setChannels([])
     setError(errorText(e))
    }
-  }
+  } finally { if (alive.current && ticket === detailSerial.current) setDetailsLoading(false) }
  }
  useEffect(() => {
   alive.current = true
@@ -137,7 +83,8 @@ function Spaces() {
   )
   return () => {
    alive.current = false
-   serial.current++
+   listSerial.current++
+   detailSerial.current++
    clearInterval(timer)
   }
  }, [])
@@ -191,28 +138,25 @@ function Spaces() {
   await action('manage_space', { p_action, p_space: selected, p_revision: space?.revision, ...extra }, 'Space updated.')
  }
  return (
-  <main className="workspace-page">
+  <main className="workspace-page halls-page">
    <WorkspaceNav current="spaces" />
    <header className="workspace-header">
-    <strong>Your spaces</strong>
+    <div><span>Realm</span><span className="header-divider">/</span><strong>Server Halls</strong></div>
     <a href="/">Back to chat</a>
    </header>
-   <div className="social-content admin-content">
-    <div className="castle-hero">
-     <RealmCastleBanner />
-     <div className="castle-hero-copy">
-      <span className="castle-eyebrow">WELCOME TO STXIC REALM</span>
-      <h1>Make room for your people.</h1>
-      <p>Chat. Build. Explore. Together.</p>
-     </div>
-    </div>
+   <div className="halls-content">
+    <ServerHall spaces={spaces} selected={selected} onSelect={setSelected} channels={channels} loading={loading} detailsLoading={detailsLoading} error={!spaces.length ? error : undefined} onManage={() => { if (management.current) management.current.open = true }} onRetry={() => { setError(''); setLoading(true); void load().catch(e => { setError(errorText(e)); setLoading(false) }) }} />
+    {error && spaces.length > 0 && <p className="error" role="alert">{error}</p>}
+    <p role="status">{notice}</p>
+    <details ref={management} className="hall-management" id="hall-management" open={token ? true : undefined}>
+    <summary>Manage spaces <span>Invitations, channels, members & server settings</span></summary>
+    <div className="admin-content">
     <nav className="admin-links" aria-label="Administration">
      <a href="/?privacy">Privacy & data</a>
      {account.access?.platform_admin && <a href="/?platform">Platform administration</a>}
     </nav>
     {!enabled && <p className="muted" role="status">Space administration is awaiting operator setup. Existing conversations remain available.</p>}
     {error && <p className="error" role="alert">{error}</p>}
-    <p role="status">{notice || (loading ? 'Loading spaces…' : '')}</p>
     <section className="admin-section">
      <h2>Join a space</h2>
      <form
@@ -247,21 +191,6 @@ function Spaces() {
     {!loading && !spaces.length && <p className="social-empty">You have no spaces yet. Create one or accept a membership invitation.</p>}
     {spaces.length > 0 && (
      <section className="admin-section">
-      <div className="space-cards-grid" aria-label="Your spaces">
-       {spaces.map((s, idx) => (
-        <button
-         key={s.id}
-         type="button"
-         className={`space-visual-card theme-${idx % 4}`}
-         aria-pressed={selected === s.id}
-         onClick={() => setSelected(s.id)}
-        >
-         <span className="space-card-scene" aria-hidden="true" />
-         <strong>{s.name}</strong>
-         <small>{s.archived_at ? 'Archived space' : 'Active space'}</small>
-        </button>
-       ))}
-      </div>
       <label>
        Manage space
        <select value={selected} onChange={e => setSelected(e.target.value)}>
@@ -404,6 +333,8 @@ function Spaces() {
       )}
      </section>
     )}
+    </div>
+    </details>
    </div>
   </main>
  )

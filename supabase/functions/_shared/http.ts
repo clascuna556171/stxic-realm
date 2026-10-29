@@ -1,7 +1,7 @@
 import {createClient} from 'npm:@supabase/supabase-js@2.49.8'
 export const service=()=>createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})
 export function allowedOrigins(){return (Deno.env.get('REALM_ALLOWED_ORIGINS')??'').split(',').map(v=>v.trim()).filter(Boolean)}
-export function headers(req:Request){const origin=req.headers.get('origin')??'';return {'Content-Type':'application/json','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Vary':'Origin',...(allowedOrigins().includes(origin)?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization, apikey, x-client-info, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'}:{})}}
+export function headers(req:Request){const origin=req.headers.get('origin')??'';return {'Content-Type':'application/json','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Vary':'Origin',...(allowedOrigins().includes(origin)?{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'authorization, apikey, x-client-info, content-type, x-realm-slot, x-realm-client','Access-Control-Allow-Methods':'POST, OPTIONS'}:{})}}
 export function response(req:Request,body:unknown,status=200){return new Response(JSON.stringify(body),{status,headers:headers(req)})}
 export async function body(req:Request){
  if(req.method!=='POST')throw {code:'PT405',message:'Use POST.'}

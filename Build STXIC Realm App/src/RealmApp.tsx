@@ -209,15 +209,15 @@ function Spaces({ setView }: { setView: (v: View) => void }) {
     <aside className="channel-side"><div className="space-name"><span className="space-icon">DL</span><strong>The Dev Lounge</strong><ChevronDown size={16}/></div>
       <Button className="hall-button" onClick={() => setView('home')}><DoorOpen size={16}/> Enter Server Hall</Button>
       <label>TEXT CHANNELS <Plus size={13}/></label>
-      {['general','projects','gaming','announcements'].map((c,i) => <button onClick={() => setChannel(c)} className={channel === c ? 'active' : ''}><Hash size={17}/>{c}{i===1 && <b>3</b>}</button>)}
+      {['general','projects','gaming','announcements'].map((c,i) => <button key={c} onClick={() => setChannel(c)} className={channel === c ? 'active' : ''}><Hash size={17}/>{c}{i===1 && <b>3</b>}</button>)}
       <div className="space-bottom"><Settings size={16}/> Space settings</div>
     </aside>
     <section className="space-chat"><header className="topbar"><Hash size={19}/><strong>{channel}</strong><span>Talk, share, and build together.</span><div className="head-actions"><Users size={18}/><Search size={18}/></div></header>
       <div className="messages"><div className="channel-intro"><div><Hash size={28}/></div><h2>Welcome to #{channel}</h2><p>This is the start of the #{channel} channel in The Dev Lounge.</p></div>
-        {initialMessages.slice(0,2).map((m,i) => <div className="message"><Avatar person={people[i]} size="sm"/><div className="message-body"><div><strong>{people[i].name}</strong><time>{m.time}</time></div><p>{i ? 'The new navigation pass is ready for feedback. I kept the interactions really lightweight.' : 'Hey everyone — cozy coding session tonight? I’ll be in the hall around nine.'}</p></div></div>)}
+        {initialMessages.slice(0,2).map((m,i) => <div key={m.id || i} className="message"><Avatar person={people[i]} size="sm"/><div className="message-body"><div><strong>{people[i].name}</strong><time>{m.time}</time></div><p>{i ? 'The new navigation pass is ready for feedback. I kept the interactions really lightweight.' : 'Hey everyone — cozy coding session tonight? I’ll be in the hall around nine.'}</p></div></div>)}
       </div><div className="composer"><Button tone="ghost"><Plus size={19}/></Button><input placeholder={`Message #${channel}`}/><button><Smile size={18}/></button><button className="send"><Send size={17}/></button></div>
     </section>
-    <aside className="members"><label>FRIENDS — 4</label>{people.map(p => <div className="member"><Avatar person={p} size="sm"/><span><strong>{p.name}</strong><small>{p.detail}</small></span></div>)}</aside>
+    <aside className="members"><label>FRIENDS — 4</label>{people.map(p => <div key={p.name} className="member"><Avatar person={p} size="sm"/><span><strong>{p.name}</strong><small>{p.detail}</small></span></div>)}</aside>
   </div>
 }
 
@@ -227,7 +227,7 @@ function Studio({ setView }: { setView: (v: View) => void }) {
   const items = [['Velvet couch','▰'],['Moonleaf plant','♠'],['Orbit lamp','◉'],['Project desk','▤'],['Realm portal','◌'],['Trophy shelf','▥']]
   return <div className="studio">
     <header className="topbar"><Button tone="ghost" onClick={() => setView('home')}>← Exit studio</Button><div className="title"><Palette size={18}/><strong>Home Studio</strong><span>{saved ? 'All changes saved' : 'Unsaved changes'}</span></div><div className="head-actions"><Button><Undo2 size={16}/></Button><Button disabled><RotateCcw size={16}/></Button><Button onClick={() => setView('home')}>Preview</Button><Button tone="primary" onClick={() => setSaved(true)}><Check size={16}/> Save changes</Button></div></header>
-    <div className="studio-body"><aside className="catalog"><div className="input"><Search size={15}/>Search furniture</div><div className="category-tabs"><button className="active">All</button><button>Furniture</button><button>Decor</button></div><label>MY ITEMS — 24</label><div className="catalog-grid">{items.map(([name,icon]) => <button onClick={() => {setSelected(name);setSaved(false)}} className={selected===name?'active':''}><span>{icon}</span><strong>{name}</strong><small>1 available</small></button>)}</div></aside>
+    <div className="studio-body"><aside className="catalog"><div className="input"><Search size={15}/>Search furniture</div><div className="category-tabs"><button className="active">All</button><button>Furniture</button><button>Decor</button></div><label>MY ITEMS — 24</label><div className="catalog-grid">{items.map(([name,icon]) => <button key={name} onClick={() => {setSelected(name);setSaved(false)}} className={selected===name?'active':''}><span>{icon}</span><strong>{name}</strong><small>1 available</small></button>)}</div></aside>
       <div className="editor-canvas"><div className="grid-overlay"/><PixelRoom onObject={setSelected}/><div className="zoom">− <span>100%</span> +</div></div>
       <aside className="inspector"><span>SELECTED OBJECT</span><div className="item-preview">▰</div><h3>{selected}</h3><p>A cozy statement piece with soft, low-profile cushions.</p><label>POSITION</label><div className="coords"><span>X <b>8</b></span><span>Y <b>6</b></span></div><div className="inspector-buttons"><Button><RotateCcw size={16}/> Rotate</Button><Button tone="danger"><Trash2 size={16}/> Remove</Button></div><small className="hint">Tip: drag an item on the canvas to reposition it.</small></aside>
     </div>
@@ -237,11 +237,11 @@ function Studio({ setView }: { setView: (v: View) => void }) {
 function SettingsView() {
   const [light, setLight] = useState(false)
   const [privacy, setPrivacy] = useState('Friends only')
-  return <div className={`settings-page ${light ? 'light-preview' : ''}`}><aside className="settings-nav"><strong>SETTINGS</strong>{['My Account','Profile','Appearance','Accessibility','Notifications','Privacy & Safety','Friends & Blocked','Home Privacy'].map((x,i)=><button className={i===2?'active':''}>{x}</button>)}</aside>
+  return <div className={`settings-page ${light ? 'light-preview' : ''}`}><aside className="settings-nav"><strong>SETTINGS</strong>{['My Account','Profile','Appearance','Accessibility','Notifications','Privacy & Safety','Friends & Blocked','Home Privacy'].map((x,i)=><button key={x} className={i===2?'active':''}>{x}</button>)}</aside>
     <div className="settings-content"><h2>Appearance</h2><p>Make Realm feel comfortable and familiar.</p>
       <section><h3>Theme</h3><div className="choice-grid"><button className={!light?'selected':''} onClick={()=>setLight(false)}><i className="theme dark"/><strong>Obsidian</strong><small>Easy on the eyes</small></button><button className={light?'selected':''} onClick={()=>setLight(true)}><i className="theme light"/><strong>Mist</strong><small>Bright and clean</small></button></div></section>
-      <section><h3>Accent color</h3><div className="swatches">{['#a78bfa','#65d6ad','#74b9ff','#f59eaf','#f4bf75'].map((x,i)=><button className={i===0?'active':''} style={{background:x}}/>)}</div></section>
-      <section><h3>Home privacy</h3><p>Choose who can visit your personal home.</p><div className="segmented">{['Private','Friends only','Invite only'].map(x=><button className={privacy===x?'active':''} onClick={()=>setPrivacy(x)}>{x}</button>)}<button disabled>Public <small>Alpha unavailable</small></button></div></section>
+      <section><h3>Accent color</h3><div className="swatches">{['#a78bfa','#65d6ad','#74b9ff','#f59eaf','#f4bf75'].map((x,i)=><button key={x} className={i===0?'active':''} style={{background:x}}/>)}</div></section>
+      <section><h3>Home privacy</h3><p>Choose who can visit your personal home.</p><div className="segmented">{['Private','Friends only','Invite only'].map(x=><button key={x} className={privacy===x?'active':''} onClick={()=>setPrivacy(x)}>{x}</button>)}<button disabled>Public <small>Alpha unavailable</small></button></div></section>
       <div className="settings-save"><span><Check size={15}/> Preferences update instantly in this demo</span><Button tone="primary">Save preferences</Button></div>
     </div></div>
 }

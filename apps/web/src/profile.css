@@ -1,0 +1,60 @@
+.profile-content { max-width:1280px; padding-top:38px; }
+.profile-page .appearance-intro { margin-bottom:32px; }
+.profile-page .appearance-intro h1 { font-size:clamp(30px,3.2vw,44px); line-height:1.15; }
+.profile-page .profile-layout { display:grid; grid-template-columns:minmax(0,1.08fr) minmax(300px,1fr); gap:clamp(32px,5vw,72px); align-items:start; }
+.profile-page .profile-summary { display:flex; flex-direction:column; border:1px solid var(--realm-line); border-radius:8px; padding:0; gap:0; align-items:stretch; text-align:left; overflow:hidden; background:var(--realm-surface); }
+.profile-setting { padding:12px 12px 0; background:#111923; border-bottom:1px solid var(--realm-line); }
+.profile-scene { width:100%; height:auto; display:block; image-rendering:pixelated; }
+.profile-setting > span { display:block; padding:12px 8px 16px; color:#b9cfc6; font-size:10px; line-height:1.6; }
+.profile-identity { display:flex; gap:14px; align-items:center; padding:22px 24px 14px; min-width:0; }
+.profile-identity > div:nth-child(2) { flex:1; min-width:0; }
+.profile-portrait { width:54px; height:54px; background:#2d3b38; border:1px solid #536b63; flex:none; overflow:hidden; }
+.profile-portrait svg { width:100%; height:100%; }
+.profile-page .profile-identity h2 { font-size:22px; line-height:1.25; margin:0 0 6px; }
+.profile-page .profile-identity p { color:#b4c4cf; font-size:12px; }
+.profile-identity > a { display:grid; place-items:center; width:44px; height:44px; border:1px solid #49596a; border-radius:5px; color:#c2dacf; flex:none; }
+.profile-identity > a:hover { background:#293a35; }
+.profile-identity > a svg { width:18px; height:18px; }
+.profile-page .profile-bio { padding:0 24px 22px; max-width:100%; line-height:1.8; color:#c0cbd7; font-size:13px; white-space:pre-wrap; }
+.profile-home-link { display:flex; align-items:center; gap:12px; margin:0 24px 24px; min-height:44px; color:#c5e5d7; text-decoration:none; border-top:1px solid var(--realm-line); padding-top:18px; }
+.profile-home-link svg { width:18px; height:18px; }
+.profile-home-link svg:last-child { margin-left:auto; width:15px; }
+.profile-home-link:hover { text-decoration:underline; text-underline-offset:4px; }
+.profile-page .profile-form { gap:22px; }
+.profile-form-heading h2 { font-size:20px; font-weight:500; margin:0 0 8px; }
+.profile-form-heading p { font-size:12px; color:var(--realm-muted); margin:0; line-height:1.7; }
+.profile-page .profile-form label { gap:9px; }
+.profile-page .profile-form input,.profile-page .profile-form textarea { background:#151c26; border-color:#485769; border-radius:5px; font-size:14px; }
+.profile-page .profile-form input:focus,.profile-page .profile-form textarea:focus { border-color:#a9d5c1; }
+.profile-page .profile-form label small { font-size:11px; }
+.profile-privacy { display:flex; align-items:start; gap:10px; margin:0; }
+.profile-privacy svg { width:17px; height:17px; flex:none; margin-top:3px; color:#a4c2b4; }
+.profile-page .social-actions button { min-height:44px; border-radius:5px; }
+.profile-page .social-actions button:not(.primary) { background:#222c38; border-color:#485769; }
+.profile-page button:disabled { opacity:.5; cursor:not-allowed; }
+.profile-page input:disabled,.profile-page textarea:disabled { opacity:.65; }
+.profile-workshops { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); column-gap:32px; margin-top:44px; padding-top:30px; border-top:1px solid var(--realm-line); }
+.profile-workshops h2 { grid-column:1/-1; font-family:'Realm Display',sans-serif; font-size:27px; font-weight:500; margin:0 0 16px; }
+.profile-workshops a { display:flex; gap:12px; align-items:center; min-height:78px; text-decoration:none; color:#e0e8ee; font-size:13px; border-bottom:1px solid var(--realm-line); }
+.profile-workshops a > svg { width:20px; height:20px; color:#b2d9c7; flex:none; }
+.profile-workshops a > svg:last-child { margin-left:auto; width:14px; }
+.profile-workshops small { display:block; color:var(--realm-muted); font-size:11px; margin-top:7px; line-height:1.6; }
+.profile-workshops a:hover { color:#c3ebd9; border-color:#8aab9a; }
+@media(max-width:900px) {
+ .profile-page .profile-layout { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:28px; }
+ .profile-content { padding-inline:24px; }
+ .profile-workshops { column-gap:20px; }
+}
+@media(max-width:650px) {
+ .profile-content { padding:26px 16px 32px; }
+ .profile-page .profile-layout { grid-template-columns:minmax(0,1fr); gap:32px; }
+ .profile-page .appearance-intro { margin-bottom:24px; }
+ .profile-page .profile-summary { display:flex; flex-direction:column; order:0; border-left:1px solid var(--realm-line); padding:0; }
+ .profile-page .profile-form { order:1; }
+ .profile-identity { padding:18px 18px 12px; }
+ .profile-page .profile-bio { padding:0 18px 18px; }
+ .profile-home-link { margin:0 18px 20px; }
+ .profile-workshops { grid-template-columns:1fr; margin-top:32px; padding-top:24px; }
+ .profile-workshops h2 { margin-bottom:8px; }
+ .profile-workshops a { min-height:76px; }
+}

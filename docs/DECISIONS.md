@@ -1,5 +1,7 @@
 # Decisions and open questions
 
+29 October account-profile decision: the owner explicitly requested Discord-style profiles with uploaded account photos/banners/photos and flexible customization. This authorizes the bounded profile-image implementation in [ACCOUNT_PROFILES.md](ACCOUNT_PROFILES.md). Account pictures are independent of pixel world characters. It does not expand chat attachments, arbitrary file execution, public anonymous discovery or unrelated upload scope.
+
 Source: specification v1.0, pp. 1, 4–6, 8, 12. This records the source's current direction, not user approval of untested implementation details. Update entries as decisions are made and record their rationale and date.
 
 ## Product direction in the PDF
