@@ -1,6 +1,8 @@
-type Name = 'home' | 'chat' | 'person' | 'profile' | 'settings' | 'more' | 'book' | 'link' | 'refresh' | 'people' | 'avatar' | 'studio' | 'arrow' | 'check' | 'back' | 'sparkle' | 'shuffle' | 'hall' | 'search' | 'plus' | 'compass' | 'sun' | 'shield' | 'close'
+type Name = 'home' | 'chat' | 'person' | 'profile' | 'settings' | 'more' | 'book' | 'link' | 'refresh' | 'people' | 'avatar' | 'studio' | 'arrow' | 'check' | 'back' | 'sparkle' | 'shuffle' | 'hall' | 'search' | 'plus' | 'compass' | 'sun' | 'shield' | 'close' | 'pencil' | 'edit'
 const paths: Record<Name, string> = {
  close:'M6 6l12 12M18 6 6 18',
+ pencil: 'M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Zm-2 2 4 4',
+ edit: 'M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Zm-2 2 4 4',
  profile: 'M4 3h16v18H4V3ZM10 6h4v4h-4V6ZM7 16v-2l2-2h6l2 2v2M8 18h8',
  settings: 'M9 3h6v3l3 2 3-1 2 5-3 2v3l-4 3-2-2h-4l-2 2-4-3v-3l-3-2 2-5 3 1 3-2V3ZM9 12a3 3 0 1 0 6 0 3 3 0 0 0-6 0Z',
  more: 'M4 6h16M4 12h16M4 18h16',
