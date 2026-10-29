@@ -4,7 +4,7 @@ This is a release checklist, not approval to deploy. The linked project's state 
 
 ## Local preflight
 
-Run `pnpm release:preflight`, `pnpm test:database`, `pnpm test`, `pnpm typecheck` and `pnpm build`. The preflight only inventories local files, hashes migrations and reports whether Git is dirty; it does not contact a server or certify safety. Review and freeze the exact source, function versions, lockfile and build outputs. Do not run `test:social:sql`: it explicitly targets the linked project. Existing integration scripts create and delete identities and require an independently verified disposable target.
+Run `pnpm release:preflight`, `pnpm test:database`, `pnpm test`, `pnpm typecheck` and `pnpm build`. The preflight only inventories local files, hashes migrations and reports whether Git is dirty; it does not contact a server or certify safety. Review and freeze the exact source, function versions, lockfile and build outputs. `test:social:sql` now refuses to run its old linked-project command. Existing integration scripts create and delete identities and require an independently verified disposable target; they reject the linked and known development project and require `REALM_DISPOSABLE_TEST_CONFIRM` to equal the test origin. These guards cannot prove a different target is disposable, especially with custom hostnames or proxies.
 
 ## Isolated staging
 

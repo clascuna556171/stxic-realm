@@ -86,7 +86,7 @@ try {
  await alice.goto(homeUrl);await alice.getByRole('heading',{name:'Guestbook',exact:true}).waitFor()
  await bob.goto(homeUrl);await bob.getByLabel('Leave a guestbook entry').fill('Hello from another account.');await bob.getByRole('button',{name:'Post entry',exact:true}).focus();await bob.keyboard.press('Enter')
  await bob.getByText('Guestbook entry saved.',{exact:true}).waitFor();await homeRefresh(alice);await alice.getByText('Hello from another account.',{exact:true}).waitFor()
- await alice.getByText('Guestbook & project link settings',{exact:true}).click();await alice.getByRole('button',{name:'Add project link',exact:true}).click()
+ await alice.getByRole('button',{name:'Home social settings',exact:true}).click();assert.equal(await alice.locator('.home-social-settings').evaluate(el=>el.open),true);assert.equal(await alice.locator('.home-social-settings summary').evaluate(el=>el===document.activeElement),true);await alice.getByRole('button',{name:'Add project link',exact:true}).click()
  await alice.getByLabel('Link title',{exact:true}).fill('My project');await alice.getByLabel('HTTPS address',{exact:true}).fill('javascript:alert(1)');await alice.getByRole('button',{name:'Save home social settings',exact:true}).click();await alice.getByText('Give each link a title and a full HTTPS address.',{exact:true}).waitFor()
  await alice.getByLabel('HTTPS address',{exact:true}).fill('https://example.com/project');await alice.getByLabel('Guestbook posting',{exact:true}).selectOption('closed');await alice.getByRole('button',{name:'Save home social settings',exact:true}).click();await alice.getByText('Home social settings saved.',{exact:true}).waitFor()
  await alice.getByLabel('Link title',{exact:true}).fill('Unsaved link draft')

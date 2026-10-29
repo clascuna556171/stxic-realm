@@ -14,6 +14,16 @@ create trigger track_profile_object after insert or update of state on public.pr
  for each row execute function realm_private.track_profile_object();
 revoke all on function realm_private.track_profile_object() from public,anon,authenticated;
 
+-- Deleting an account must restart the grace period even for an old reservation.
+create or replace function realm_private.queue_profile_objects() returns trigger
+language plpgsql security definer set search_path='' as $$
+begin
+ insert into realm_private.profile_object_gc(object_path,created_at)
+ select object_path,clock_timestamp() from public.profile_media where user_id=old.id
+ on conflict (object_path) do update set created_at=excluded.created_at;
+ return old;
+end $$;
+
 -- Include uploads already pending or being removed when upgrading.
 insert into realm_private.profile_object_gc(object_path)
  select object_path from public.profile_media where state in ('pending','deleting')

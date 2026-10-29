@@ -76,8 +76,9 @@ export default function AppearanceStudio() {
  const [value, setValue] = useState(readAppearance)
  const [saved, setSaved] = useState(value)
  const [notice, setNotice] = useState('')
- const [section, setSection] = useState<'character' | 'space'>('character')
+ const [section, setSection] = useState<'character' | 'space'>(new URLSearchParams(location.search).get('section')==='interface'?'space':'character')
  const dirty = JSON.stringify(value) !== JSON.stringify(saved)
+ useEffect(()=>{if(new URLSearchParams(location.search).get('section')==='interface'){const frame=requestAnimationFrame(()=>document.getElementById('interface-settings')?.scrollIntoView({block:'start'}));return()=>cancelAnimationFrame(frame)}},[])
 
  useEffect(() => {
   if (!dirty) return
@@ -172,7 +173,7 @@ export default function AppearanceStudio() {
      <section className="appearance-controls">
       <nav className="editor-tabs" aria-label="Appearance sections">
        <button aria-pressed={section === 'character'} onClick={() => setSection('character')}>
-        <Icon name="person" />
+        <Icon name="avatar" />
         Character
        </button>
        <button aria-pressed={section === 'space'} onClick={() => setSection('space')}>
@@ -305,7 +306,7 @@ export default function AppearanceStudio() {
           ))}
          </div>
         </fieldset>
-        <h2>Obsidian, with your accent.</h2>
+        <h2 id="interface-settings">Obsidian, with your accent.</h2>
         <p>The app stays neutral. Colors personalize actions and the orbital R mark.</p>
         <fieldset>
          <legend>Interface accent</legend>

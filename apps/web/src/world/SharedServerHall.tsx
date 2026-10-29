@@ -44,7 +44,7 @@ function SharedHall({ space }: { space: string }) {
   save: async (layout: HallLayout, revision: number) => { const next = await rpc<SharedHallState>(client!, 'manage_server_hall', { p_space: space, p_action: 'save', p_revision: revision, p_layout: layout }); apply(next); return editorState(next) },
   reload: async () => editorState(await refresh()),
  }}/>
- return <main className="workspace-page"><WorkspaceNav current="spaces"/><header className="workspace-header"><strong>Shared Server Hall</strong><a href={`/?space=${encodeURIComponent(space)}`}>Return to chat</a></header>
+ return <main className="workspace-page shared-hall-page"><WorkspaceNav current="spaces"/><header className="workspace-header"><strong>Shared Server Hall</strong><a href={`/?space=${encodeURIComponent(space)}`}>Return to chat</a></header>
   <div className="shared-hall-content"><a href="/?spaces">Back to your personal hub</a><h1>{data?.name ?? 'Server hall'}</h1>
    {error && <p role="alert" className="error">{error}</p>}<div className="social-actions"><button disabled={busy} onClick={() => void refresh().catch(() => {})}>Refresh shared hall</button>{data?.can_edit && data.layout && <button onClick={() => { editorInitial.current = data; setEditing(true) }}>Decorate shared hall</button>}{data?.owner && data.can_edit && <button disabled={busy} onClick={() => void mutate('enabled', { p_enabled: !data.enabled })}>{data.enabled ? 'Disable shared hall' : 'Enable shared hall'}</button>}</div>
    {data ? <><p>{data.enabled ? `Shared account arrangement · Revision ${data.revision}` : 'This server’s hall is disabled. Its saved arrangement is retained. Chat remains available.'}</p>

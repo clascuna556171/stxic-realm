@@ -1,0 +1,10 @@
+/* World destinations retain their pixel display hierarchy. App chrome lives in modern-shell.css. */
+.server-hall .hall-introduction h1 { font-size: clamp(42px,4vw,62px); }
+.server-hall .hall-introduction p { font-size: 15px; }
+.server-hall .hall-directory-heading h2 { font: 26px/1.15 'Realm Display',sans-serif; }
+.server-hall .hall-server-list strong { font-size: 14px; }
+.server-hall .hall-selected h3 { font: 24px/1.2 'Realm Display',sans-serif; }
+.server-hall .hall-selected > p { font-size: 12px; }
+.server-hall .hall-wayfinding strong { font: 21px/1.2 'Realm Display',sans-serif; }
+.server-hall .hall-wayfinding small { font-size: 12px; }
+@media(max-width:650px){.server-hall .hall-introduction h1 { font-size:42px; }.server-hall .hall-introduction p { font-size:13px; }}

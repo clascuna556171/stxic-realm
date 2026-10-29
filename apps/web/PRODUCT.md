@@ -16,6 +16,8 @@ The existing React/Vite client uses Supabase authentication, membership-scoped s
 
 ## Brand Commitments
 
+The latest owner-approved direction is a modern charcoal communication app with the user's private accent color, rounded chat bubbles and an optional server-details panel. Conventional app screens use readable modern type; pixel art and display lettering remain mainly in worlds and studios. Account portraits remain separate from world characters. This supersedes earlier pixel-lettering treatment of the chat shell.
+
 STXIC Realm retains its existing logo and personal theme settings. The owner's reference is `docs/images/realm-room-character-concept-v3.png`: detailed pixel art, warm lighting, rich materials and mature fantasy character silhouettes. Avoid anime, childish cartoons, generic dashboard compositions and unnecessary dependencies.
 
 ## Product Principles

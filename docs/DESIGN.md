@@ -1,5 +1,33 @@
 # Design and experience
 
+## Approved modern social shell — 29 October 2026
+
+The owner supplied a dark community/chat reference and explicitly selected: (1) modern app chrome with pixel artwork/display lettering mainly in worlds and studios, (2) charcoal surfaces with the user's chosen accent, and (3) rounded messages with the sender's own messages on the right plus server details on desktop. This supersedes the earlier pixel chat headings and sidebar character-alcove direction below.
+
+`modern-shell.css` owns the shared neutral surfaces, conventional app typography, navigation states, rounded controls and message-bubble geometry. Profile cards still use their saved personal colors/fonts, and world art/layout data is untouched. `realm-experience.css` now owns only world destination hierarchy. Settings, profile editing, People, privacy and administration use conventional app typography; Home/Server Halls and world studios retain their pixel headings.
+
+`MessageThread` owns the same bubble layout for channels and DMs, preserving chronological DOM order, visible authors, edits/tombstones, reporting, drafts and history. Own-message fill reads the existing private accent token and uses contrasting dark text. Message actions remain keyboard accessible rather than hover-only. Compact server-details mode keeps the thread mounted, preserves drafts and restores bottom scrolling when returning.
+
+`ServerDetails` uses the existing membership-scoped `space_admin_data` RPC plus authorized profile projections. It shows real server names, channels, membership roles and account photos/initials, with no invented online status, voice, attachment or reaction capability. It polls while visible and reconciles on focus/online, discards late reads and clears member records on failure. A full-width details view replaces the conversation area on compact screens while open; closing or Escape returns focus to the header control. Empty servers follow the same layout. Clipboard failure exposes the actual computed destination for manual copying. Profile/Settings shortcuts and the mobile More disclosure remain.
+
+Local verification: production build/typecheck and 37 unit tests pass; intercepted access contracts cover bubbles, membership-read failure isolation, keyboard dismissal and retained drafts; profile and world suites cover separate profile identity, old layouts, rendering failures and responsive flows. These use intercepted provider requests, not live Supabase evidence. A finish reviewer found the compact empty-server layout defect; the correction was independently verified at 390px.
+
+## Settings discovery and home navigation — 29 October 2026
+
+App settings has a dedicated `/?settings` destination grouped into Account & app and Your world. The desktop rail keeps labeled Profile and Settings icons visible. Phones retain Chat/Halls/People/Home and a More disclosure containing Profile, App settings, Character and Home Studio; Escape closes the disclosure and returns focus. Interface & colors links to the existing workbench with `section=interface` and the color section in view. Save ownership and account/character separation remain unchanged.
+
+Home social controls separate return/refresh from section shortcuts. Guestbook and Project desk have labeled icons, and owners can open/focus Guestbook & project link settings through Home social settings. Posting retains its existing permissions, limits, retry behavior and revision checks.
+
+## Character-led communication — 29 October 2026
+
+The owner found the prior refinement bland. Reference research: [Nixtio, Online Game Interface Design](https://dribbble.com/shots/26863301-Online-Game-Interface-Design) for world/character integration and [TheKoswog, Next-Gen Game Community UI](https://dribbble.com/shots/25852745-Next-Gen-Game-Community-UI-Dark-Sleek-Design) for navigation/content hierarchy. These are conceptual references; no external artwork or UI assets were copied.
+
+Chat now anchors its sidebar with the actual selected server name and an initial seal. Realm Display identifies the server/channel; conventional text remains in messages and forms. A desktop character alcove uses existing original artwork and account-backed character settings, explicitly separate from the account portrait and saved home layout. The character shortcut recedes on compact or short screens so the conversation and composer retain space. Server Halls uses stronger directory and destination hierarchy. Dark slate surfaces and user-selected accents remain; no invented presence, events or rewards are introduced.
+
+## Navigation and icons — 29 October 2026
+
+Chat, worlds and editors share the same labeled workspace navigation and current-page indicator. Compact, angular SVG glyphs take cues from Realm’s pixel world while retaining familiar, legible symbols; People and Avatar use different silhouettes. Chat keeps account profile and privacy links in its account area. At phone widths the navigation uses a safe-area-aware bottom bar; short landscape windows use a more compact side rail. Keyboard focus stays visible, and scene controls remain independent of the navigation. This is a local refinement of the existing obsidian interface and does not alter artwork or saved customization.
+
 ## Account profiles — 29 October 2026
 
 The owner's Discord profile reference supersedes the earlier character-preview treatment of account profiles. The card uses an uploaded banner, overlapping photo, status, name/handle/pronouns, actions and reorderable content. Account photos belong to the account; the pixel character belongs to rooms, halls and its character studio. Communication portraits use account photos or initials. Never silently use the world character as an account photo.

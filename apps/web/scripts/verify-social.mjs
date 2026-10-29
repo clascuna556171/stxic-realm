@@ -3,11 +3,13 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {requireDisposableTarget} from './disposable-target.mjs'
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 const env=Object.fromEntries(fs.readFileSync(path.join(root,'.env.local'),'utf8').split(/\r?\n/).filter(l=>l&&!l.startsWith('#')&&l.includes('=')).map(l=>{const i=l.indexOf('=');return[l.slice(0,i),l.slice(i+1)]}))
 const url=process.env.VITE_SUPABASE_URL||env.VITE_SUPABASE_URL,key=process.env.VITE_SUPABASE_ANON_KEY||env.VITE_SUPABASE_ANON_KEY,secret=process.env.SUPABASE_SERVICE_ROLE_KEY
 if(!url||!key||!secret)throw new Error('Supabase public config and an admin key in SUPABASE_SERVICE_ROLE_KEY are required. Never pass the admin key to the browser.')
 if(process.env.REALM_TEST_PROJECT_URL!==url)throw new Error('Set REALM_TEST_PROJECT_URL to the dedicated test project URL. Never run this suite incidentally against the linked project.')
+requireDisposableTarget(url)
 const options={auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(30000)})}},admin=createClient(url,secret,options),fixtures=path.resolve(root,'../../supabase/.temp/browser-fixtures.json')
 if(process.argv.includes('--cleanup-fixtures')){
  if(fs.existsSync(fixtures)){const saved=JSON.parse(fs.readFileSync(fixtures,'utf8'));for(const u of saved.users){const {error}=await admin.auth.admin.deleteUser(u.id);if(error)throw error}fs.unlinkSync(fixtures);console.log('Browser test accounts cleaned up.')}

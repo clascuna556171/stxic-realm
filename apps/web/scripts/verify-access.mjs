@@ -1,8 +1,10 @@
 // Dedicated Supabase integration only. Never sends real invitation/recovery mail.
 import {createClient} from '@supabase/supabase-js'
 import assert from 'node:assert/strict'
+import {requireDisposableTarget} from './disposable-target.mjs'
 const url=process.env.REALM_TEST_PROJECT_URL,key=process.env.SUPABASE_ANON_KEY,secret=process.env.SUPABASE_SERVICE_ROLE_KEY
 if(!url||!key||!secret)throw new Error('Provide REALM_TEST_PROJECT_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY for a dedicated disposable project with the test-only fixture SQL installed.')
+requireDisposableTarget(url)
 const options={auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.timeout(30000)})}}
 const admin=createClient(url,secret,options),users=[],clients=[];let space
 async function call(db,name,args){const {data,error}=await db.rpc(name,args);if(error)throw error;return data}

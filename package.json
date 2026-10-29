@@ -18,7 +18,7 @@
     "test:access:integration": "pnpm --filter @realm/web test:access",
     "test:integration": "pnpm --filter @realm/web test:integration",
     "test:social": "pnpm --filter @realm/web test:social",
-    "test:social:sql": "npx --yes supabase@2.122.0 db query --linked --file supabase/tests/social_homes.sql",
+    "test:social:sql": "node scripts/refuse-linked-sql.mjs",
     "setup:team": "powershell -ExecutionPolicy Bypass -File scripts/setup-team.ps1"
   },
   "devDependencies": {

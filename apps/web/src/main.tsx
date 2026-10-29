@@ -8,7 +8,10 @@ import './styles.css'
 import './social.css'
 import './administration.css'
 import './world/world-theme.css'
+import './navigation.css'
+import './modern-shell.css'
 import {AuthCallback,Recovery} from './Auth'
+const Settings=lazy(()=>import('./Settings'))
 const Spaces=lazy(()=>import('./Spaces'))
 const HallPreview=lazy(()=>import('./HallPreview'))
 const SharedServerHall=lazy(()=>import('./world/SharedServerHall'))
@@ -29,6 +32,7 @@ function Routes(){
  if(window.location.pathname==='/auth/recover')return <Recovery/>
  if(params.has('privacy'))return <Privacy key={account.session?.user.id??'signed-out'}/>
  if(account.loading)return <main className="setup" role="status">Loading your account…</main>
+ if(params.has('settings'))return <Settings/>
  if(params.has('appearance'))return account.session?<AccountGate><AppearanceStudio key={account.session.user.id}/></AccountGate>:<AppearanceStudio key="local"/>
  if(params.has('room-studio'))return account.session?<AccountGate><HomeStudio key={account.session.user.id}/></AccountGate>:<HomeStudio key="local"/>
  if(params.has('room-preview'))return <RoomPreview/>

@@ -1,0 +1,52 @@
+/* One navigation system across chat, worlds and editors. */
+.workspace-nav { padding-top: 18px; padding-bottom: 16px; }
+.workspace-nav nav { gap: 4px; margin-top: 32px; }
+.workspace-nav nav a { position: relative; min-height: 58px; gap: 5px; font-size: 11px; line-height: 1.2; font-weight: 500; }
+.workspace-nav nav a[aria-current=page]::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 3px; border-radius: 2px; background: currentColor; }
+.workspace-local { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; font-size: 11px; letter-spacing: 0; text-decoration: none; }
+.workspace-local:hover, .workspace-local[aria-current=page] { color: var(--realm-text); text-decoration: underline; }
+.shell > .sidebar { grid-column: 2; min-width: 0; }
+.shell > .chat { grid-column: 3; }
+.account-profile-link { display: block; color: var(--realm-text); font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account small a { color: var(--realm-muted); }
+.sidebar-heading > a, .space-switcher, .side-section { font-size: 12px; }
+.message-actions button, .text-button { font-size: 12px; }
+.message-actions button { min-height: 40px; }
+.chat-header a { font-size: 12px; }
+textarea:focus-visible { outline: 2px solid var(--realm-accent); outline-offset: 4px; }
+.workspace-nav .workspace-account { margin-top: auto; gap: 4px; }
+.workspace-nav .workspace-account a { min-height: 54px; }
+.workspace-more { display: none; }
+@media (min-width: 651px) and (max-height: 600px) {
+ .workspace-nav { overflow-y: auto; padding-top: 8px; padding-bottom: 8px; }
+ .workspace-nav nav { margin-top: 8px; gap: 0; }
+ .workspace-nav nav a { min-height: 44px; padding: 3px 0; gap: 2px; }
+ .workspace-nav nav svg { width: 18px; height: 18px; }
+ .workspace-nav nav a[aria-current=page]::before { top: 8px; bottom: 8px; }
+}
+@media (max-width: 800px) {
+ .shell { grid-template-columns: 68px minmax(0, 1fr); }
+ .shell > .sidebar, .shell > .chat { grid-column: 2; }
+ .account small { display: block; }
+}
+@media (max-width: 650px) {
+ .workspace-nav > nav.workspace-account { display: none; }
+ .workspace-nav nav > a.workspace-secondary { display: none; }
+ .workspace-more { display: block; flex: 1; min-width: 0; position: relative; }
+ .workspace-more > summary { list-style: none; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; min-height: 60px; margin: 4px 0; font-size: 10px; cursor: pointer; color: var(--realm-muted); }
+ .workspace-more > summary::-webkit-details-marker { display: none; }
+ .workspace-more > summary svg { width: 20px; height: 20px; }
+ .workspace-more[open] > summary, .workspace-more > summary[data-active=true] { background: var(--realm-raised); color: var(--realm-text); border-radius: 7px; }
+ .workspace-more > nav { position: absolute; bottom: calc(100% + 8px); right: 0; display: flex; flex-direction: column; gap: 4px; width: min(260px,85vw); margin: 0; padding: 8px; border: 1px solid var(--realm-line); border-radius: 8px; background: var(--realm-surface); box-shadow: 0 8px 24px #0006; }
+ .workspace-more > nav > a { flex-direction: row; justify-content: flex-start; gap: 12px; padding: 10px 14px; margin: 0; min-height: 48px; font-size: 14px; }
+ .workspace-nav { height: calc(68px + env(safe-area-inset-bottom, 0px)); padding: 0 6px env(safe-area-inset-bottom, 0px); }
+ .workspace-nav nav { gap: 0; margin: 0; }
+ .workspace-nav nav a { min-height: 60px; margin: 4px 0; padding: 6px 2px; font-size: 10px; }
+ .workspace-nav nav a[aria-current=page]::before { left: 25%; right: 25%; top: 1px; bottom: auto; width: auto; height: 2px; }
+ .workspace-page { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+ .shell { height: calc(100dvh - 68px - env(safe-area-inset-bottom, 0px)); grid-template-columns: minmax(0, 1fr); }
+ .shell > .sidebar, .shell > .chat { grid-column: 1; }
+ .account { gap: 8px; }
+ .account small { margin-top: 2px; }
+ .account button { min-height: 44px; }
+}

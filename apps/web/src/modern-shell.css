@@ -1,0 +1,174 @@
+/* Approved direction: a charcoal social app, with pixel identity in worlds/studios. */
+:root {
+ --realm-bg:#101012; --realm-surface:#1b1b1f; --realm-raised:#27272d;
+ --realm-line:#35353d; --realm-text:#efeff3; --realm-muted:#b0b0bc;
+ --realm-ui-font:Inter,"Segoe UI",sans-serif;
+ --realm-selected:color-mix(in srgb,var(--realm-accent) 13%,var(--realm-surface));
+}
+body { background:var(--realm-bg); }
+::selection { background:var(--realm-accent); color:#17171c; }
+* { scrollbar-color:#4a4a55 #19191d; }
+.workspace-page:not(.room-app):not(.appearance-page):not(.halls-page):not(.hall-studio-page):not(.shared-hall-page) h1 { font-family:var(--realm-ui-font); font-weight:650; letter-spacing:-.03em; line-height:1.18; }
+.workspace-header { background:var(--realm-surface); border-color:var(--realm-line); min-height:72px; height:auto; padding-block:14px; }
+.workspace-header strong { font-weight:600; color:var(--realm-text); }
+.workspace-header > a { color:var(--realm-text); }
+.workspace-nav { background:#1b1b1f; border-color:var(--realm-line); }
+.workspace-nav nav a { color:var(--realm-muted); border-radius:12px; }
+.workspace-nav nav a:hover { background:#2c2c33; color:var(--realm-text); }
+.workspace-nav nav a[aria-current=page] { background:var(--realm-selected); color:var(--realm-accent); }
+.workspace-nav nav a[aria-current=page]::before { display:none; }
+.workspace-more > summary[data-active=true], .workspace-more[open] > summary { background:var(--realm-selected); color:var(--realm-accent); }
+.workspace-nav > a[aria-label="Realm chat"] { display:grid; place-items:center; min-height:48px; }
+.shell.realm-chat { grid-template-columns:84px 252px minmax(0,1fr); background:var(--realm-bg); }
+.shell.realm-chat > .sidebar { background:var(--realm-surface); border-color:var(--realm-line); min-width:0; }
+.realm-chat .sidebar-heading { padding:22px 18px 18px; border-bottom:1px solid var(--realm-line); }
+.chat-server-identity { display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+.realm-chat .chat-server-identity h1 { font:600 16px/1.4 var(--realm-ui-font); margin:0; }
+.chat-server-seal { display:grid; place-items:center; flex:none; width:44px; height:44px; border-radius:50%; background:var(--realm-selected); color:var(--realm-accent); font-size:19px; font-weight:600; }
+.realm-chat .space-switcher { font-size:12px; }
+.realm-chat .space-switcher select { background:#131316; border:1px solid #46464e; border-radius:10px; color:var(--realm-text); }
+.realm-chat .sidebar-heading > a { display:inline-flex; align-items:center; min-height:36px; margin-top:8px; font-size:12px; color:var(--realm-muted); text-decoration:none; }
+.realm-chat .side-section { font-size:11px; padding:20px 20px 12px; letter-spacing:.06em; }
+.realm-chat .sidebar nav { flex:1; min-height:46px; }
+.realm-chat .sidebar nav button { border-radius:10px; gap:4px; font-size:13px; margin-bottom:4px; }
+.realm-chat .sidebar nav button.selected { background:var(--realm-selected); color:var(--realm-text); }
+.realm-chat .sidebar nav button:hover { background:#2b2b32; }
+.realm-chat .sidebar nav button .unread-count { display:grid; place-items:center; min-width:22px; height:22px; margin-left:auto; margin-right:0; padding-inline:5px; border-radius:11px; background:var(--realm-accent); color:#17171c; font:600 11px/1 var(--realm-ui-font); }
+.realm-chat .account { background:#202025; padding:12px; border-color:var(--realm-line); }
+.realm-chat .account .avatar { border-radius:50%; }
+.realm-chat .account small a { font-size:11px; }
+.realm-chat .chat { background:var(--realm-bg); }
+.realm-chat .chat-header { flex:none; min-height:80px; height:auto; padding:14px 24px; gap:16px; background:#151518; border-color:var(--realm-line); }
+.chat-channel-title { display:flex; align-items:center; gap:12px; min-width:0; }
+.chat-channel-glyph { display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; background:var(--realm-selected); color:var(--realm-accent); }
+.chat-channel-glyph svg { width:21px; height:21px; }
+.chat-channel-title h2 { font:600 18px/1.35 var(--realm-ui-font); margin:0 0 4px; }
+.chat-channel-title p { margin:0; color:var(--realm-muted); font-size:12px; }
+.chat-header-actions { display:flex; align-items:center; gap:8px; flex:none; }
+.chat-header-actions a, .chat-header-actions button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:44px; min-height:44px; border:0; border-radius:10px; background:transparent; color:var(--realm-muted); font:500 12px var(--realm-ui-font); cursor:pointer; }
+.chat-header-actions a:hover, .chat-header-actions button:hover, .chat-header-actions button[aria-expanded=true] { background:var(--realm-selected); color:var(--realm-accent); }
+.chat-body { flex:1; min-height:0; display:grid; grid-template-columns:minmax(0,1fr); }
+.chat-body.details-open { grid-template-columns:minmax(0,1fr) 280px; }
+.chat-body > .conversation { min-width:0; padding:0 24px 16px; }
+.conversation .dm-toolbar { padding:12px 0; font-size:11px; }
+.conversation .dm-thread { padding:12px 2px; scrollbar-gutter:stable; }
+.conversation .message { position:relative; display:flex; align-items:flex-start; gap:10px; padding:10px 0 14px; border:0; }
+.conversation .message.is-own { flex-direction:row-reverse; }
+.conversation .message > .member-portrait { width:34px; height:34px; border:0; border-radius:50%; padding:0; background:#303038; margin-top:3px; }
+.conversation .message-content { display:flex; flex-direction:column; flex:0 1 auto; min-width:0; max-width:min(80%,640px); align-items:flex-start; }
+.conversation .is-own .message-content { align-items:flex-end; }
+.conversation .message-meta { display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 10px; margin:0 4px 7px; }
+.conversation .message-meta strong { font-size:12px; font-weight:600; }
+.conversation .message-meta time { font-size:10px; color:var(--realm-muted); }
+.conversation .is-own .message-meta { justify-content:flex-end; }
+.message-bubble { min-width:0; max-width:100%; padding:12px 15px; border-radius:16px 16px 16px 4px; background:#26262d; color:var(--realm-text); }
+.conversation .is-own .message-bubble { background:var(--realm-accent); color:#17171c; border-radius:16px 16px 4px 16px; }
+.conversation .message .message-bubble p { margin:0; font-size:14px; line-height:1.65; color:inherit; white-space:pre-wrap; overflow-wrap:anywhere; }
+.conversation .message .message-bubble .muted { opacity:.75; }
+.message-bubble .message-edit { padding:0; min-width:min(280px,55vw); max-width:100%; }
+.message-bubble .message-edit textarea { width:100%; min-height:100px; }
+.conversation .message-actions { gap:14px; margin-top:2px; padding-inline:4px; }
+.conversation .message-actions button { min-height:36px; font-size:11px; }
+.conversation .composer { flex:none; min-height:56px; padding:6px 8px 6px 12px; border-radius:18px; background:#242429; border:1px solid #45454f; }
+.conversation .composer:focus-within { border-color:var(--realm-accent); }
+.conversation .composer input { min-height:44px; padding:0 8px; font-size:14px; color:var(--realm-text); }
+.conversation .composer button { min-height:42px; min-width:64px; padding:10px 14px; border-radius:12px; font-size:12px; }
+.conversation .dm-note { font-size:11px; margin-top:8px; }
+.dm-page .dm-content { max-width:1100px; }
+.server-details { min-width:0; overflow-y:auto; border-left:1px solid var(--realm-line); background:var(--realm-surface); padding:0 18px 24px; }
+.server-details-top { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 0; }
+.server-details-top h2 { font:600 13px var(--realm-ui-font); margin:0; }
+.server-details button { font:inherit; cursor:pointer; }
+.server-details-top button { width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:10px; background:transparent; color:var(--realm-muted); }
+.server-details-top button:hover { background:var(--realm-raised); color:var(--realm-text); }
+.server-summary { text-align:center; padding:12px 0 22px; border-bottom:1px solid var(--realm-line); }
+.server-summary-mark { display:grid; place-items:center; width:76px; height:76px; border-radius:50%; margin:0 auto 18px; font-size:25px; font-weight:600; background:var(--realm-selected); color:var(--realm-accent); }
+.server-summary h3 { font-size:20px; line-height:1.4; margin:0 0 8px; overflow-wrap:anywhere; }
+.server-summary p { color:var(--realm-muted); font-size:12px; margin:8px 0; }
+.server-summary .copy-channel-link { display:flex; justify-content:center; align-items:center; gap:9px; min-height:44px; width:100%; border:0; border-radius:12px; background:var(--realm-raised); color:var(--realm-text); font-size:12px; margin-top:20px; }
+.copy-channel-link:hover { filter:brightness(1.15); }
+.server-link-field { width:100%; margin-top:12px; padding:10px; background:var(--realm-bg); color:var(--realm-text); border:1px solid var(--realm-line); font-size:12px; }
+.server-detail-links { display:grid; gap:8px; padding:20px 0; border-bottom:1px solid var(--realm-line); }
+.server-detail-links a { display:flex; align-items:center; gap:10px; min-height:44px; padding:8px 12px; border-radius:12px; background:#26262c; font-size:12px; text-decoration:none; }
+.server-detail-links a:hover { background:#32323b; }
+.server-detail-links a > svg:last-child { margin-left:auto; width:14px; }
+.server-details-section { padding-top:22px; }
+.server-details-section h3 { display:flex; justify-content:space-between; gap:8px; font-size:13px; margin:0 0 12px; }
+.server-details-section h3 > span { color:var(--realm-muted); font-weight:400; }
+.server-details-section nav { display:grid; gap:4px; }
+.server-details-section nav button { display:flex; align-items:center; gap:9px; width:100%; min-height:44px; text-align:left; font-size:13px; padding:8px 10px; border:0; background:transparent; color:var(--realm-muted); border-radius:10px; overflow-wrap:anywhere; }
+.server-details-section nav button[aria-current=page] { color:var(--realm-accent); background:var(--realm-selected); }
+.server-details-section nav button:hover { background:var(--realm-raised); }
+.server-details-section nav small { font-size:10px; }
+.server-member-list { margin:0; padding:0; list-style:none; }
+.server-member-list a { display:flex; align-items:center; gap:10px; min-height:60px; padding:8px 4px; text-decoration:none; border-radius:10px; }
+.server-member-list a:hover { background:var(--realm-raised); }
+.server-member-photo { width:36px; height:36px; flex:none; border-radius:50%; overflow:hidden; }
+.server-member-list a > span:nth-child(2) { flex:1; min-width:0; }
+.server-member-list strong { display:block; font-size:12px; font-weight:500; overflow-wrap:anywhere; }
+.server-member-list small { display:block; margin-top:4px; color:var(--realm-muted); text-transform:capitalize; font-size:11px; }
+.server-member-list svg { width:14px; height:14px; color:var(--realm-muted); }
+.server-details-error { font-size:12px; }
+.server-details-error button { min-height:44px; padding:8px 12px; border:1px solid var(--realm-line); background:var(--realm-raised); border-radius:10px; color:var(--realm-text); }
+.server-details-loading { font-size:12px; color:var(--realm-muted); }
+/* Carry the chrome through existing task surfaces while retaining profile customization. */
+.settings-page .settings-destinations > a { border-radius:10px; padding-inline:12px; }
+.settings-page .settings-content h1, .account-profile-page .account-profile-intro h1 { font-size:clamp(28px,3.2vw,38px); }
+.account-profile-page .account-profile-editor button, .account-profile-page .profile-mobile-switch button { border-radius:10px; }
+.account-profile-page .profile-editor-tabs { border:0; background:var(--realm-surface); padding:6px; border-radius:12px; }
+.account-profile-page .profile-editor-tabs button[aria-selected=true] { background:var(--realm-raised); }
+.account-profile-page .account-profile-editor :is(input:not([type=color]):not([type=range]):not([type=checkbox]),textarea,select) { background:#19191e; border-color:#45454e; border-radius:10px; }
+.social-content .friend-request-form { background:var(--realm-surface); }
+.social-content .person-row { border-color:var(--realm-line); }
+.social-content .social-actions :is(a,button), .admin-content button { border-radius:10px; }
+.social-content .person-info h3 { font-weight:600; }
+.workspace-header .admin-links { margin:0; align-items:center; }
+/* Worlds keep their art and lettering, with the same neutral application controls. */
+.room-app .room-inspector, .appearance-page .appearance-preview, .server-hall .hall-world, .server-hall .hall-directory { background:var(--realm-surface); border-color:var(--realm-line); }
+.room-app .room-object-list button[aria-pressed=true], .appearance-page .choice-row button[aria-pressed=true], .appearance-page .mood-choices button[aria-pressed=true], .server-hall .hall-server-list > button[aria-pressed=true] { background:var(--realm-selected); border-color:var(--realm-accent); color:var(--realm-text); }
+.appearance-page .editor-tabs button[aria-pressed=true] { color:var(--realm-accent); border-color:var(--realm-accent); }
+.appearance-page .starter-looks button[aria-pressed=true] > div { outline-color:var(--realm-accent); }
+.appearance-page .choice-row button, .appearance-page .stage-toolbar button, .appearance-page .GhostButton { background:var(--realm-raised); border-color:var(--realm-line); color:var(--realm-text); }
+.server-hall .hall-search { background:var(--realm-bg); border-color:var(--realm-line); }
+.server-hall .hall-world-top, .server-hall .hall-world-bottom { color:var(--realm-muted); }
+@media (max-width:1200px) and (min-width:1101px) { .chat-body.details-open { grid-template-columns:minmax(0,1fr) 250px; } .chat-body > .conversation { padding-inline:18px; } }
+@media (max-width:1100px) {
+ .chat-body.details-open { grid-template-columns:minmax(0,1fr); }
+ .chat-body.details-open > .conversation, .chat-body.details-open > .empty { display:none; }
+ .server-details { border-left:0; }
+ .server-details .server-summary, .server-details .server-detail-links, .server-details-section { max-width:620px; margin-inline:auto; }
+}
+@media (max-width:800px) {
+ .shell.realm-chat { grid-template-columns:68px minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); }
+ .realm-chat .sidebar-heading { padding:10px 14px 4px; border:0; }
+ .chat-server-identity { display:none; }
+ .realm-chat .sidebar-heading > a { display:none; }
+ .realm-chat .sidebar nav { flex:0 1 auto; }
+ .realm-chat .sidebar nav button { margin:0; }
+ .realm-chat .sidebar nav button .unread-count { margin-left:8px; }
+ .realm-chat .account { padding:8px 12px; }
+ .realm-chat .chat-header { min-height:64px; padding:10px 16px; gap:10px; }
+ .chat-channel-title h2 { font-size:15px; }
+ .chat-channel-title p { font-size:11px; }
+ .chat-channel-glyph { display:none; }
+ .chat-body > .conversation { padding:0 16px 10px; }
+}
+@media (max-width:650px) {
+ .workspace-nav > a[aria-label="Realm chat"] { display:none; }
+ .shell.realm-chat { grid-template-columns:minmax(0,1fr); }
+ .chat-header-actions { gap:2px; }
+ .realm-chat .chat-header { padding-inline:12px; }
+ .chat-header-actions button { font-size:11px; padding-inline:8px; }
+ .chat-header-actions button svg { width:16px; }
+ .conversation .message-content { max-width:calc(100% - 42px); }
+ .conversation .message { gap:8px; }
+ .conversation .message > .member-portrait { width:28px; height:28px; }
+ .conversation .message-bubble { padding:10px 12px; }
+ .conversation .message .message-bubble p { font-size:13px; }
+ .conversation .composer { padding-left:8px; }
+ .conversation .composer input { font-size:13px; padding-inline:4px; }
+ .conversation .composer button { min-width:56px; padding-inline:10px; }
+ .conversation .dm-note { font-size:10px; }
+ .conversation .message-meta { gap:4px 8px; }
+ .server-details { padding-inline:16px; }
+}

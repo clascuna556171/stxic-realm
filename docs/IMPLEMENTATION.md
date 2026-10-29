@@ -1,8 +1,14 @@
 # Implementation and local setup
 
+## Modern social shell — 29 October 2026
+
+The approved reference direction now spans the shared app chrome through `modern-shell.css`: charcoal surfaces, chosen private accents, conventional app typography, rounded channel/DM messages (own messages right) and membership-scoped `ServerDetails`. Compact details mode retains the mounted thread and device draft, with close/Escape returning focus. Real channels/members/roles come from existing RPCs; unavailable details clear protected member content without disabling chat. World/studio lettering and artwork remain separate, as do account-photo/profile customization and saved world data. This is local frontend work; no new schema, hosted configuration, deployment or dependencies. Current design contract: [DESIGN.md](DESIGN.md).
+
 ## Phase 5 release preparation — 29 October 2026
 
 The source includes three 29 October feature migrations plus the new forward-only `20261029030000_profile_media_cleanup_safety.sql`. The latest handoff claims the feature migrations and profile/worker functions were deployed, while earlier local records say pending. Hosted state and SQL equivalence are unverified; check the actual target before any rollout. `pnpm release:preflight` is a read-only local inventory, not a hosted or release certification. [Alpha release rehearsal](ALPHA_RELEASE.md) specifies isolated verification, backup/restore, rollout and rollback gates. The cleanup migration tracks pending and deleting upload paths and delays collection for one hour; real Storage, Edge and concurrency behavior remains to be tested. The proposed Tauri desktop shell does not exist yet.
+
+Current checks: 37 unit tests, five PGlite SQL/RLS suites and legacy upgrade checks, production build, local release preflight, and intercepted profile, access, hall, world and world-social browser suites passed. The world-social suite sends a message after a deliberately failed renderer. Its first concurrent rerun timed out before this check; the subsequent isolated run passed. Browser providers were intercepted; none of these checks establishes live Supabase, signed-URL expiry, real Storage cleanup or concurrent HTTP behavior. Docker engine and Deno were unavailable in this pass. The Windows shell and installer, hosted web configuration, live isolated integration suite and recovery rehearsal remain open.
 
 
 ## Flexible account profiles — 29 October 2026
@@ -27,7 +33,7 @@ The account/profile layout, shared hall/room shelf, room materials and editor th
 
 The 29 October visual update adds [Server Halls](SERVER_HALLS.md): `/?spaces` for membership-scoped server navigation and `/?hall-preview` for the anonymous illustration preview. Existing administration is in **Manage spaces** below the hall. Run `pnpm test:world:ui` for local world interaction checks, alongside `pnpm test:access:ui` for simulated authenticated contracts.
 
-The working app is in `apps/web`; `Build STXIC Realm App` remains a separate UI-only sample. The latest slice adds invitation/recovery, space/channel/membership administration, journal-backed messaging/unread/edit/remove, moderation, limits and privacy jobs. Read [Access operations](ACCESS_OPERATIONS.md) for setup and release gates. All migrations `20261028000000` through `20261028070000` and all Edge Functions are deployed to linked development project `stxic-realm` (`rrprjxubfdixoqvquptq`). First administrator account `c.lascuna.556171@umindanao.edu.ph` is bootstrapped.
+The working app is in `apps/web`; `Build STXIC Realm App` remains a separate UI-only sample. The latest slice adds invitation/recovery, space/channel/membership administration, journal-backed messaging/unread/edit/remove, moderation, limits and privacy jobs. Read [Access operations](ACCESS_OPERATIONS.md) for setup and release gates. Historical records report that migrations through `20261028070000` and earlier functions were deployed and an administrator bootstrapped; current hosted function/configuration status was not revalidated in this pass.
 
 ## Requirements
 
@@ -60,9 +66,12 @@ Verified on 28 October 2026 against linked Supabase project `stxic-realm` (`rrpr
 - **Realtime**: `supabase_realtime` publication delivers `postgres_changes` events to authenticated members. (Note: in server/Node.js runners, `client.realtime.setAuth(token)` is required to carry the user's JWT context across the WebSocket).
 - **Membership Revocation**: Deleting a user's `space_members` entry immediately halts read visibility and write permissions.
 
-Run the automated integration verification suite anytime via:
+Run the automated integration verification suite only against a separately verified disposable project, after applying its test-only fixture SQL and setting `REALM_TEST_PROJECT_URL` and `REALM_DISPOSABLE_TEST_CONFIRM` to that exact origin, plus the disposable public and service keys. The suites create and delete test identities. For example:
 ```powershell
-$env:SUPABASE_SERVICE_ROLE_KEY="<key>"; pnpm test:integration
+$env:REALM_TEST_PROJECT_URL="<disposable-project-origin>"
+$env:REALM_DISPOSABLE_TEST_CONFIRM=$env:REALM_TEST_PROJECT_URL
+$env:SUPABASE_SERVICE_ROLE_KEY="<disposable-service-key>"
+pnpm test:integration
 ```
 
 ## Remaining blockers and next work

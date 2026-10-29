@@ -26,4 +26,24 @@
 .world-social :is(input, select, textarea):focus-visible, .world-social button:focus-visible, .shared-hall-content button:focus-visible { outline: 2px solid var(--realm-accent, #b1c8bd); outline-offset: 3px; }
 .world-social textarea { line-height: 1.6; }
 .shared-hall-content select { max-width: 100%; }
+.home-social-panel { scroll-margin-top: 24px; }
+.home-social-toolbar { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+.home-social-toolbar > a { display:inline-flex; align-items:center; gap:8px; min-height:44px; font-size:13px; text-decoration:none; }
+.home-social-toolbar > a svg { width:18px; height:18px; }
+.home-social-panel button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; }
+.home-social-panel button svg, .home-social-settings summary svg { width:18px; height:18px; flex:none; }
+.home-social-toolbar > button { background:transparent; }
+.home-social-navigation { display:flex; flex-wrap:wrap; gap:8px; padding:18px 0; border-bottom:1px solid var(--realm-line); }
+.home-social-panel > section { padding:24px 0; margin-top:0; border-bottom:1px solid var(--realm-line); }
+.home-social-panel h2 { display:flex; align-items:center; gap:12px; font:26px/1.3 'Realm Display',sans-serif; margin:0 0 12px; }
+.home-social-panel h2 svg { width:22px; height:22px; color:var(--realm-muted); }
+.home-social-panel section > p { font-size:13px; max-width:72ch; }
+.home-social-panel .guestbook-post { justify-self:start; min-width:140px; background:var(--realm-accent); color:#17212b; font-weight:600; }
+.home-social-panel .guestbook-post:hover:not(:disabled) { background:var(--realm-accent); filter:brightness(1.08); }
+.home-social-settings { scroll-margin-top:24px; }
+.home-social-settings summary { display:flex; align-items:center; gap:10px; min-height:48px; font-size:14px; }
+.home-social-settings summary::after { content:'+'; margin-left:auto; font-size:20px; }
+.home-social-settings[open] summary::after { content:'−'; }
+.home-social-settings form { padding:18px; background:var(--realm-surface); border-radius:6px; }
+.workspace-more summary:focus-visible, .home-social-settings summary:focus-visible { outline:2px solid var(--realm-accent); outline-offset:3px; }
 @media (max-width: 600px) { .shared-hall-content { padding: 20px 14px; } .world-social { padding-top: 18px; } .shared-hall-portals button { flex: 1 1 140px; } }

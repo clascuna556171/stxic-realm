@@ -1,0 +1,12 @@
+.settings-content { max-width: 960px; margin: auto; padding: 40px 32px 64px; }
+.settings-content > h1 { font-size: clamp(32px,4vw,48px); margin: 0 0 12px; }
+.settings-content > p { max-width: 68ch; }
+.settings-content section { margin-top: 36px; }
+.settings-content h2 { font-size: 18px; margin-bottom: 8px; }
+.settings-destinations > a { display: flex; align-items: center; gap: 18px; padding: 20px 8px; min-height: 84px; border-bottom: 1px solid var(--realm-line); text-decoration: none; }
+.settings-destinations > a:hover { background: var(--realm-surface); }
+.settings-destinations > a > svg { width: 24px; height: 24px; color: var(--realm-muted); flex: none; }
+.settings-destinations > a > svg:last-child { width: 18px; margin-left: auto; }
+.settings-destinations strong { display: block; font-size: 15px; }
+.settings-destinations small { display: block; margin-top: 6px; font-size: 13px; line-height: 1.6; color: var(--realm-muted); }
+@media(max-width:650px){.settings-content { padding: 28px 20px 40px; }.settings-destinations > a { gap: 12px; }}

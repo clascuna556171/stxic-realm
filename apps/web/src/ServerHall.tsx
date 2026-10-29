@@ -108,6 +108,6 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
     <div className="hall-directory-foot"><Icon name="shield" /><p>Only servers you belong to appear here.<br />Have an invitation? <a href="#hall-management" onClick={onManage}>Join your people.</a></p></div>
    </aside>
   </div>
-  <nav className="hall-wayfinding" aria-label="Around the Realm"><a href={session ? `/?home=${session.user.id}` : '/?room-preview'}><Icon name="home" /><span><strong>A room of your own</strong><small>Step away from the great hall</small></span><Icon name="arrow" /></a><a href="/?appearance"><Icon name="person" /><span><strong>Dress for the journey</strong><small>Make your traveler your own</small></span><Icon name="arrow" /></a></nav>
+  <nav className="hall-wayfinding" aria-label="Around the Realm"><a href={session ? `/?home=${session.user.id}` : '/?room-preview'}><Icon name="home" /><span><strong>A room of your own</strong><small>Step away from the great hall</small></span><Icon name="arrow" /></a><a href="/?appearance"><Icon name="avatar" /><span><strong>Dress for the journey</strong><small>Make your traveler your own</small></span><Icon name="arrow" /></a></nav>
  </section>
 }

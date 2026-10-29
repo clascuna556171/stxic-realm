@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import {requireDisposableTarget} from './disposable-target.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..')
@@ -37,6 +38,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
 }
 
 if(process.env.REALM_TEST_PROJECT_URL!==SUPABASE_URL)throw new Error('Set REALM_TEST_PROJECT_URL to the dedicated disposable test project URL.')
+requireDisposableTarget(SUPABASE_URL)
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },

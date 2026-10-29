@@ -7,17 +7,19 @@ import {WorkspaceNav} from './WorkspaceNav'
 import {Icon} from './Icon'
 import {ReportForm} from './Safety'
 import {normalizeProfileImage,profileImageUrl} from './profile-media'
-import {moveSection,profileContrast,profileFonts,readableInk,sectionNames,type ProfileCard,type ProfileMedia,type ProfileStyle,type Section} from './profile-model'
+import {IMAGE_LIMIT,moveSection,profileContrast,profileFonts,readableInk,sectionNames,type ProfileCard,type ProfileMedia,type ProfileStyle,type Section} from './profile-model'
 import {safeProjectUrl} from './world/project-links'
 import './account-profile.css'
 
 type Snapshot={profile:Profile;card:ProfileCard;media:ProfileMedia[];own:boolean;friends:boolean;roles:string[];note:{note:string;revision:number}}
 type Draft={profile:Profile;card:ProfileCard}
+type UploadAttempt={kind:ProfileMedia['kind'];clientId:string;fingerprint:string;blob:Blob}
 export default function ProfilePage(){const {session}=useAccount();const requested=new URLSearchParams(location.search).get('profile');return <AccountGate><ProfileStudio key={`${session?.user.id}:${requested}`} user={requested||session?.user.id||''}/></AccountGate>}
 function ProfileStudio({user}:{user:string}){
  const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space')
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Draft|null>(null),[baseline,setBaseline]=useState(''),[media,setMedia]=useState<ProfileMedia[]>([]),[urls,setUrls]=useState<Record<string,string>>({})
  const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
+ const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null)
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
  const dirty=!!draft&&JSON.stringify(draft)!==baseline,own=user===viewer
  latest.current={dirty,noteDirty:note!==noteBase.note}
@@ -34,7 +36,18 @@ function ProfileStudio({user}:{user:string}){
  if(draft.card.connections.some(c=>!c.title.trim()||!safeProjectUrl(c.url))||draft.card.details.some(d=>!d.label.trim())){setTab('sections');throw new Error('Give every detail a label and every connection a title and full HTTPS link.')}
 const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:draft.card,p_revision:draft.card.revision,p_identity_revision:draft.profile.revision});serial.current++;const value={profile:next.profile,card:next.card};setSnapshot(next);setDraft(value);setBaseline(JSON.stringify(value));setMedia(next.media);await account.reload();setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function reload(){if((dirty||note!==noteBase.note)&&!confirm('Discard unsaved profile edits and reload?'))return;setBusy(true);await read(true);setBusy(false)}
- async function upload(file:File|undefined,kind:ProfileMedia['kind']){if(!file||uploading||busy)return;setUploading(kind);setError('');try{const blob=await normalizeProfileImage(file),result=await invoke<ProfileMedia>(client!,'realm-profile-media',blob,{'x-realm-slot':kind,'x-realm-client':crypto.randomUUID()});if(!alive.current)return;serial.current++;setMedia(ms=>[...ms.filter(m=>m.id!==result.id),result]);if(kind==='avatar')card({avatar_id:result.id});else if(kind==='banner')card({banner_id:result.id});else if(draft)card({gallery:[...draft.card.gallery,result.id].slice(0,6)});setNotice('Image uploaded privately. Save your profile to share it.')}catch(e){setError(errorText(e))}finally{setUploading('')}}
+ async function sendUpload(attempt:UploadAttempt){
+  try{const result=await invoke<ProfileMedia>(client!,'realm-profile-media',attempt.blob,{'x-realm-slot':attempt.kind,'x-realm-client':attempt.clientId});if(!alive.current)return;setRetryUpload(null);serial.current++;setMedia(ms=>[...ms.filter(m=>m.id!==result.id),result]);if(attempt.kind==='avatar')card({avatar_id:result.id});else if(attempt.kind==='banner')card({banner_id:result.id});else card({gallery:[...(draft?.card.gallery??[]),result.id].slice(0,6)});setNotice('Image uploaded privately. Save your profile to share it.')}
+  catch(e){if(alive.current){setRetryUpload(attempt);setError(errorText(e))}}
+ }
+ async function upload(file:File|undefined,kind:ProfileMedia['kind']){if(!file||uploading||busy)return;setUploading(kind);setError('');try{
+  // Compare original bytes, not names or timestamps, and reuse the exact normalized payload.
+  if(!file.size||file.size>IMAGE_LIMIT)throw new Error('Choose an image up to 8 MiB.')
+  const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),fingerprint=kind+':'+file.type+':'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')
+  const attempt=retryUpload?.fingerprint===fingerprint?retryUpload:{kind,clientId:crypto.randomUUID(),fingerprint,blob:await normalizeProfileImage(file)}
+  await sendUpload(attempt)
+ }catch(e){if(alive.current)setError(errorText(e))}finally{if(alive.current)setUploading('')}}
+ async function retryImage(){if(!retryUpload||uploading||busy)return;setUploading(retryUpload.kind);setError('');try{await sendUpload(retryUpload)}finally{if(alive.current)setUploading('')}}
  async function removeUpload(m:ProfileMedia){if(busy||uploading||!confirm('Permanently delete this unused upload?'))return;setBusy(true);try{await invoke(client!,'realm-profile-media',{action:'delete',id:m.id});serial.current++;setMedia(ms=>ms.filter(x=>x.id!==m.id));setNotice('Unused upload deleted.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function social(action:'message'|'friend'|'block'){if(busy||!snapshot)return;setBusy(true);try{if(action==='message'){const id=await rpc<string>(client!,'open_direct',{p_user:user});location.assign('/?dm='+encodeURIComponent(id))}else if(action==='friend'){await rpc(client!,'request_friend',{p_handle:snapshot.profile.username});setNotice('Friend request sent.')}else{await rpc(client!,'set_block',{p_user:user,p_block:true});await read();setNotice('Account blocked.')}}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function saveNote(e:FormEvent){e.preventDefault();setBusy(true);try{const next=await rpc<{note:string;revision:number}>(client!,'save_profile_note',{p_user:user,p_note:note,p_revision:noteBase.revision});setNoteBase(next);setNotice('Your private note is saved.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
@@ -62,6 +75,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
       </div>
       <div id="profile-panel-images" role="tabpanel" aria-labelledby="profile-tab-images" hidden={tab!=='images'}><h3>Account photos</h3><p>Upload your own images. Your character’s look stays in the character studio.</p><p className="muted">PNG, JPEG, WebP, GIF or AVIF · up to 8 MiB each. Static images are processed before upload. GIF animation is preserved within the server budget.</p>
        {(['avatar','banner','photo'] as const).map(kind=><label className="profile-file-control" key={kind}>{kind==='avatar'?'Upload account photo':kind==='banner'?'Upload banner':'Upload gallery photo'}<input aria-label={kind==='avatar'?'Upload account photo':kind==='banner'?'Upload banner':'Upload gallery photo'} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],kind);e.target.value=''}} disabled={kind==='photo'&&draft.card.gallery.length>=6}/></label>)}
+       {retryUpload&&<p className="muted">The last upload can be retried while this page stays open. <button type="button" disabled={busy||!!uploading||(retryUpload.kind==='photo'&&draft.card.gallery.length>=6)} onClick={()=>void retryImage()}>Retry image upload</button></p>}
        <div className="social-actions"><button type="button" onClick={()=>card({avatar_id:null})}>Remove account photo</button><button type="button" onClick={()=>card({banner_id:null})}>Remove banner</button></div>
        <h3>Crop & framing</h3>{(['avatar_x','avatar_y','banner_x','banner_y'] as const).map(key=><label key={key}>{({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]}<input type="range" aria-label={({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]} min={0} max={100} value={draft.card.style[key]} onChange={e=>style({[key]:Number(e.target.value)})}/></label>)}
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
