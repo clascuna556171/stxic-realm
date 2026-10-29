@@ -1,5 +1,6 @@
 // Intercepted Auth/PostgREST transport backed by local PGlite SQL/RLS, never the linked project.
 // No real GoTrue, HTTP database connections, mail or Realtime is exercised here.
+import {frameCatalog,frameShapes} from '../src/profile-frames.ts'
 import {inspectProfileImage} from '../../../supabase/functions/_shared/profile-images.ts'
 import { chromium } from 'playwright'
 import { PGlite } from '@electric-sql/pglite'
@@ -11,6 +12,7 @@ const root=resolve(import.meta.dirname,'../../..'),origin=process.env.REALM_UI_O
 await mkdir(output,{recursive:true})
 const env=await readFile(resolve(root,'apps/web/.env.local'),'utf8'),backend=env.match(/^VITE_SUPABASE_URL=(.*)$/m)?.[1]?.trim()
 assert.ok(backend,'Public backend URL needed only to intercept the configured client')
+const frameOutput=resolve(root,'.impeccable/review/profile-frames');await mkdir(frameOutput,{recursive:true})
 const storageKey=`sb-${new URL(backend).hostname.split('.')[0]}-auth-token`
 const users={alice:'10000000-0000-4000-8000-000000000001',bob:'20000000-0000-4000-8000-000000000002',moderator:'30000000-0000-4000-8000-000000000003',outsider:'40000000-0000-4000-8000-000000000004'}
 const space='70000000-0000-4000-8000-000000000007',channel='80000000-0000-4000-8000-000000000008'
@@ -104,18 +106,68 @@ try{
  loseNextUploadResponse=true;await alice.getByLabel('Upload account photo',{exact:true}).setInputFiles({name:'my-photo.png',mimeType:'image/png',buffer:avatar});await alice.getByRole('button',{name:'Retry image upload',exact:true}).waitFor();await alice.getByLabel('Upload account photo',{exact:true}).setInputFiles({name:'same-content-renamed.png',mimeType:'image/png',buffer:avatar});await alice.getByText('Image uploaded privately. Save your profile to share it.',{exact:true}).waitFor();assert.equal(uploadAttempts[0].client,uploadAttempts[1].client);assert.deepEqual(uploadAttempts[0].bytes,uploadAttempts[1].bytes);assert.equal(await serialized(()=>db.query('select count(*)::int n from public.profile_media where user_id=$1',[users.alice]).then(r=>r.rows[0].n)),1);await alice.getByAltText('Stxic account photo',{exact:true}).waitFor();await alice.waitForFunction(()=>document.querySelector('.account-profile-photo img')?.naturalWidth>0)
  loseNextUploadResponse=true;await alice.getByLabel('Upload banner',{exact:true}).setInputFiles({name:'my-banner.png',mimeType:'image/png',buffer:banner});await alice.getByRole('button',{name:'Retry image upload',exact:true}).waitFor();await alice.getByRole('button',{name:'Retry image upload',exact:true}).click();await alice.getByAltText('Stxic profile banner',{exact:true}).waitFor();assert.equal(uploadAttempts[2].client,uploadAttempts[3].client);assert.deepEqual(uploadAttempts[2].bytes,uploadAttempts[3].bytes);assert.notEqual(uploadAttempts[0].client,uploadAttempts[2].client)
  await alice.getByLabel('Upload gallery photo',{exact:true}).setInputFiles({name:'my-gallery.png',mimeType:'image/png',buffer:photo});await alice.getByAltText('Stxic shared photo 1',{exact:true}).waitFor()
- await alice.getByLabel('Upload account photo',{exact:true}).setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg onload="alert(1)"/>')});await alice.getByRole('alert').filter({hasText:'Choose a PNG, JPEG, WebP, GIF or AVIF image.'}).waitFor()
  await alice.getByRole('tab',{name:'Style',exact:true}).click();await alice.getByLabel('Profile background',{exact:true}).fill('#24272c');await alice.getByLabel('Profile accent',{exact:true}).fill('#b1b8db');await alice.getByLabel('Photo shape',{exact:true}).selectOption('rounded')
+ await alice.getByRole('tab',{name:'Profile frames',exact:true}).click()
+ assert.equal(await alice.getByRole('button',{name:/^Select /}).count(),6)
+ await alice.getByRole('button',{name:'Select Nature Spirit',exact:true}).click()
+ await alice.getByRole('radio',{name:'Square',exact:true}).check()
+ await alice.getByRole('checkbox',{name:'Animated effects',exact:true}).uncheck()
+ assert.equal(await alice.locator('.account-profile-photo').getAttribute('data-frame'),'nature-spirit')
+ assert.equal(await alice.locator('.account-profile-photo').getAttribute('data-shape'),'square')
+ await alice.getByRole('button',{name:'Reset frame changes',exact:true}).click()
+ assert.equal(await alice.locator('.account-profile-photo').getAttribute('data-frame'),'none')
+ assert.equal(await alice.getByLabel('Photo shape',{exact:true}).inputValue(),'circle')
+ await alice.getByRole('radio',{name:'Circle',exact:true}).focus();await alice.keyboard.press('ArrowRight');assert.equal(await alice.getByRole('radio',{name:'Rounded square',exact:true}).isChecked(),true)
+ await alice.getByRole('button',{name:'Select Dark Realm',exact:true}).click()
+ await alice.getByRole('radio',{name:'Rounded square',exact:true}).check()
+ await alice.getByRole('checkbox',{name:'Animated effects',exact:true}).check()
+ const selectedFrame=alice.getByRole('button',{name:'Select Dark Realm',exact:true})
+ await selectedFrame.scrollIntoViewIfNeeded()
+ await alice.waitForFunction(()=>document.querySelector('.frame-collection[aria-pressed=true] .profile-frame')?.getAttribute('data-motion')==='running')
+ assert.equal(await selectedFrame.locator('.frame-energy-chase').evaluate(e=>getComputedStyle(e).animationPlayState),'running')
+ const royalFrame=alice.getByRole('button',{name:'Select Royal Legend',exact:true})
+ assert.equal(await royalFrame.locator('.frame-energy-chase').evaluate(e=>getComputedStyle(e).animationPlayState),'paused')
+ await selectedFrame.focus();await alice.keyboard.press('Tab')
+ assert.equal(await royalFrame.evaluate(e=>e===document.activeElement),true)
+ assert.equal(await royalFrame.locator('.frame-energy-chase').evaluate(e=>getComputedStyle(e).animationPlayState),'running','keyboard focus previews effects')
+ await alice.getByRole('checkbox',{name:'Animated effects',exact:true}).uncheck()
+ assert.equal(await alice.locator('.frame-workshop .frame-energy').count(),0,'toggle clears preview effects')
+ await alice.getByRole('checkbox',{name:'Animated effects',exact:true}).check()
+ await alice.getByText(/Preview .*not saved yet/).waitFor()
+ await alice.waitForFunction(()=>[...document.querySelectorAll('.frame-workshop img')].every(i=>i.complete&&i.naturalWidth>0))
+ await alice.evaluate(()=>{window.scrollTo(0,0);document.activeElement?.blur()})
+ await alice.screenshot({animations:'disabled',path:resolve(frameOutput,'desktop.png'),fullPage:true})
+ for(const width of [390,320]){await alice.setViewportSize({width,height:844});await alice.evaluate(()=>window.scrollTo(0,0));await overflow(alice);await alice.screenshot({animations:'disabled',path:resolve(frameOutput,`mobile-${width}.png`),fullPage:true});await alice.getByRole('button',{name:'Save profile & equip',exact:true}).scrollIntoViewIfNeeded();assert.equal(await alice.getByRole('button',{name:'Save profile & equip',exact:true}).evaluate(e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===e}),true,'bottom save reachable above phone navigation')}
+ await alice.setViewportSize({width:1440,height:1000})
+ const alpha=await alice.evaluate(async catalog=>{
+  const result=[]
+  for(const item of catalog)for(const [shape,src] of Object.entries(item.assets)){
+   const image=new Image();image.src=src;await image.decode()
+   const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0)
+   const center=ctx.getImageData(96,96,64,64).data,all=ctx.getImageData(0,0,256,256).data
+   result.push({id:item.id,shape,clear:[...center].every((v,i)=>i%4!==3||v===0),painted:[...all].some((v,i)=>i%4===3&&v>0)})
+  }return result
+ },frameCatalog)
+ assert.equal(alpha.length,18);assert.ok(alpha.every(a=>a.clear&&a.painted),'all independent artwork centers are transparent')
+ await alice.getByRole('tab',{name:'Photos & banner',exact:true}).click()
+ await alice.getByLabel('Upload account photo',{exact:true}).setInputFiles({name:'bad.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg onload="alert(1)"/>')});await alice.getByRole('alert').filter({hasText:'Choose a PNG, JPEG, WebP, GIF or AVIF image.'}).waitFor()
  await alice.getByRole('tab',{name:'Sections',exact:true}).click();await alice.getByRole('button',{name:'Add detail',exact:true}).click();await alice.getByLabel('Detail label 1',{exact:true}).fill('Currently reading');await alice.getByLabel('Detail text 1',{exact:true}).fill('A book worth staying up for')
  await alice.getByRole('button',{name:'Add connection',exact:true}).click();await alice.getByLabel('Connection name 1',{exact:true}).fill('My website');await alice.getByLabel('Connection URL 1',{exact:true}).fill('https://example.com');await alice.getByRole('button',{name:'Move Photos up',exact:true}).click()
  await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
  assert.equal(await asUser(users.alice,()=>sqlRpc('get_identity',{}).then(v=>JSON.stringify(v.character))),beforeCharacter,'account photos never replace world character')
+ assert.equal(await asUser(users.alice,()=>sqlRpc('get_profile_card',{}).then(v=>v.card.style.frame_id)),'dark-realm')
  const dm=await asUser(users.alice,()=>sqlRpc('open_direct',{p_user:users.bob})),aliceDm=await a.context.newPage(),bobDm=await b.context.newPage();await aliceDm.goto(`${origin}/?dm=${dm}`);await bobDm.goto(`${origin}/?dm=${dm}`);await aliceDm.locator('#stream-body').fill('A direct conversation with rounded messages.');await aliceDm.getByRole('button',{name:'Send',exact:true}).click();await aliceDm.getByText('A direct conversation with rounded messages.',{exact:true}).waitFor();await bobDm.getByRole('button',{name:'Refresh messages',exact:true}).click();await bobDm.getByText('A direct conversation with rounded messages.',{exact:true}).waitFor();assert.equal(await aliceDm.locator('.message.is-own .message-bubble').count(),1);assert.equal(await bobDm.locator('.message.is-peer .message-bubble').count(),1);await bobDm.setViewportSize({width:390,height:844});await bobDm.locator('#stream-body').fill('x'.repeat(1000));await bobDm.getByRole('button',{name:'Send',exact:true}).click();await bobDm.locator('.message.is-own .message-bubble').waitFor();await overflow(bobDm);await bobDm.screenshot({path:resolve(output,'direct-message-phone.png')});await aliceDm.close();await bobDm.close()
  await alice.screenshot({animations:'disabled',path:resolve(output,'editor-desktop.png'),fullPage:true});await alice.reload();await alice.getByLabel('Display name',{exact:true}).waitFor();assert.equal(await alice.getByLabel('Display name',{exact:true}).inputValue(),'Stxic');await alice.waitForFunction(()=>document.querySelector('.account-profile-photo img')?.naturalWidth>0)
+ await alice.getByRole('tab',{name:'Profile frames',exact:true}).click();await alice.getByText('Currently equipped',{exact:true}).waitFor()
+ assert.equal(await alice.getByRole('button',{name:'Select Dark Realm',exact:true}).getAttribute('aria-pressed'),'true')
+ assert.equal(await alice.getByRole('radio',{name:'Rounded square',exact:true}).isChecked(),true)
+ await alice.getByRole('button',{name:'No frame',exact:true}).click();await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
+ await alice.reload();await alice.getByRole('tab',{name:'Profile frames',exact:true}).click();assert.equal(await alice.getByRole('button',{name:'No frame',exact:true}).getAttribute('aria-pressed'),'true')
+ await alice.getByRole('button',{name:'Select Dark Realm',exact:true}).click();await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
  await bob.goto(peerUrl);await bob.getByRole('heading',{name:'Stxic',exact:true}).waitFor();await bob.getByAltText('Stxic account photo',{exact:true}).waitFor();await bob.getByRole('heading',{name:'Server roles',exact:true}).waitFor();assert.equal(await bob.getByRole('button',{name:'Save profile',exact:true}).count(),0)
  await bob.getByLabel('Private profile note',{exact:true}).fill('Only I can read this note.');await bob.getByRole('button',{name:'Save private note',exact:true}).click();await bob.getByText('Your private note is saved.',{exact:true}).waitFor();await bob.reload();await bob.getByLabel('Private profile note',{exact:true}).waitFor();assert.equal(await bob.getByLabel('Private profile note',{exact:true}).inputValue(),'Only I can read this note.')
  await o.page.goto(peerUrl);await o.page.getByLabel('Private profile note',{exact:true}).waitFor();assert.equal(await o.page.getByLabel('Private profile note',{exact:true}).inputValue(),'');assert.equal(await o.page.getByRole('heading',{name:'Server roles',exact:true}).count(),0)
- await bob.screenshot({animations:'disabled',path:resolve(output,'member-desktop.png'),fullPage:true});await bob.emulateMedia({reducedMotion:'reduce'});await bob.waitForFunction(()=>[...document.querySelectorAll('.account-profile-card img')].every(img=>img.getAttribute('data-reduced-motion')==='true'&&img.src.startsWith('data:image/png')));await bob.emulateMedia({reducedMotion:'no-preference'})
+ await bob.screenshot({animations:'disabled',path:resolve(output,'member-desktop.png'),fullPage:true});await bob.emulateMedia({reducedMotion:'reduce'});await bob.waitForFunction(()=>[...document.querySelectorAll('.account-profile-card img:not(.profile-frame-art)')].every(img=>img.getAttribute('data-reduced-motion')==='true'&&img.src.startsWith('data:image/png')));await bob.emulateMedia({reducedMotion:'no-preference'})
  for(const width of [390,320]){await bob.setViewportSize({width,height:844});await overflow(bob);await bob.screenshot({animations:'disabled',path:resolve(output,`member-${width}.png`),fullPage:true});await alice.setViewportSize({width,height:844});await overflow(alice);await alice.screenshot({animations:'disabled',path:resolve(output,`editor-${width}.png`),fullPage:true});await alice.getByRole('button',{name:'Preview profile',exact:true}).click();await overflow(alice);await alice.screenshot({animations:'disabled',path:resolve(output,`owner-preview-${width}.png`),fullPage:true});await alice.getByRole('button',{name:'Edit profile',exact:true}).click()}
  await alice.getByRole('tab',{name:'Identity',exact:true}).click();await alice.getByLabel('Profile status',{exact:true}).fill('Unsaved reconnect draft')
  failedReads.add(`${users.alice}:get_profile_card`);await alice.evaluate(()=>window.dispatchEvent(new Event('online')));await alice.getByRole('alert').filter({hasText:'Temporary connection failure.'}).waitFor();failedReads.delete(`${users.alice}:get_profile_card`);await alice.getByRole('button',{name:'Try opening profile again',exact:true}).click();await alice.getByLabel('Profile status',{exact:true}).waitFor();assert.equal(await alice.getByLabel('Profile status',{exact:true}).inputValue(),'Unsaved reconnect draft')
@@ -124,5 +176,5 @@ try{
  await asUser(users.alice,()=>sqlRpc('set_block',{p_user:users.bob,p_block:true}));await bob.reload();await bob.getByRole('alert').filter({hasText:'Profile unavailable.'}).waitFor();assert.equal(await bob.locator('.account-profile-card').count(),0)
  // Account portrait is used in communication; avatar editor still draws the independent character.
  await alice.goto(origin);await alice.waitForFunction(()=>document.querySelector('.account .account-portrait img')?.naturalWidth>0);await alice.goto(origin+'/?appearance');await alice.locator('.pixel-character').first().waitFor()
- assert.deepEqual(pageErrors,[]);const result={passed:true,transport:'Intercepted Auth/PostgREST/Storage/Edge with actual local PGlite SQL/RLS and image parser; not hosted Supabase',checks:['two-user DM bubbles and long-message phone layout','lost-response upload retry via file selection and button','image uploads and publish/reload','separate character identity','private notes','shared roles','hidden media','blocked access','stale saves','failed-read draft recovery','desktop/390/320px']};await writeFile(resolve(output,'verification.json'),JSON.stringify(result,null,2));console.log('PASS',JSON.stringify(result))
+ assert.deepEqual(pageErrors,[]);const result={passed:true,transport:'Intercepted Auth/PostgREST/Storage/Edge with actual local PGlite SQL/RLS and image parser; not hosted Supabase',checks:['six frame collections and three shapes','all eighteen centers transparent','frame preview, reset, no-frame, save and reload','two-user DM bubbles and long-message phone layout','lost-response upload retry via file selection and button','image uploads and publish/reload','separate character identity','private notes','shared roles','hidden media','blocked access','stale saves','failed-read draft recovery','desktop/390/320px']};await writeFile(resolve(output,'verification.json'),JSON.stringify(result,null,2));console.log('PASS',JSON.stringify(result))
 }catch(e){for(const [i,c]of browser.contexts().entries())for(const [j,p]of c.pages().entries()){console.error('PAGE',i,j,(await p.locator('body').innerText().catch(()=>'' )).slice(-1800));await p.screenshot({animations:'disabled',path:resolve(output,`failure-${i}-${j}.png`),fullPage:true}).catch(()=>{})}throw e}finally{await browser.close();await queue;await db.close()}

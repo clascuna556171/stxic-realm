@@ -1,4 +1,7 @@
 import {ProfileImage} from './ProfileImage'
+import {ProfileFrame} from './ProfileFrame'
+import {FrameGallery} from './FrameGallery'
+import {frameSelection} from './profile-frames'
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react'
 import {AccountGate,useAccount} from './Account'
 import {rpc,invoke,errorText,type Profile} from './account-repository'
@@ -18,7 +21,7 @@ export default function ProfilePage(){const {session}=useAccount();const request
 function ProfileStudio({user}:{user:string}){
  const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space')
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Draft|null>(null),[baseline,setBaseline]=useState(''),[media,setMedia]=useState<ProfileMedia[]>([]),[urls,setUrls]=useState<Record<string,string>>({})
- const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
+ const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'frames'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
  const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null)
  const avatarInputRef=useRef<HTMLInputElement>(null),bannerInputRef=useRef<HTMLInputElement>(null),photoInputRef=useRef<HTMLInputElement>(null)
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
@@ -65,7 +68,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
     {own&&draft&&<form className="account-profile-editor profile-form" onSubmit={save} noValidate>
      <div className="profile-editor-top"><h2>Profile details</h2><div className="social-actions"><button type="button" disabled={busy||!!uploading} onClick={()=>void reload()}>Reload from account</button><button className="primary" disabled={busy||!!uploading||!dirty||stale}>Save profile</button></div></div>
      <p className="profile-save-state" role="status">{stale?'Profile changed on another device. Reload before saving.':uploading?'Uploading image…':dirty?'Unsaved profile changes.':'Your current profile is saved.'}</p>
-     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['identity','images','style','sections'] as const;const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[3]:tabs[(i+(e.key==='ArrowRight'?1:3))%4];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{(['identity','images','style','sections'] as const).map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',style:'Style',sections:'Sections'})[t]}</button>)}</div>
+     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['identity','images','frames','style','sections'] as const;const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[4]:tabs[(i+(e.key==='ArrowRight'?1:4))%5];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{(['identity','images','frames','style','sections'] as const).map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',frames:'Profile frames',style:'Style',sections:'Sections'})[t]}</button>)}</div>
      <fieldset disabled={busy||!!uploading} className="profile-editor-fields"><legend className="sr-only">Profile customization fields</legend>
       <div id="profile-panel-identity" role="tabpanel" aria-labelledby="profile-tab-identity" hidden={tab!=='identity'}>
        <label>Display name<input aria-label="Display name" required value={draft.profile.display_name} maxLength={40} onChange={e=>field('display_name',e.target.value)}/></label>
@@ -105,6 +108,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
        <h3>Your upload library <small>{media.length}/30 files</small></h3><p>Unused uploads stay private. Remove an image from your saved profile before deleting its file.</p><ul className="profile-upload-library">{media.map(m=><li key={m.id}>{urls[m.id]&&<ProfileImage src={urls[m.id]} alt={`${m.kind} upload`} loading="lazy"/>}<span>{m.kind} · {m.width} × {m.height}{m.state!=='ready'?` · ${m.state}`:''}</span><div className="social-actions">{m.state==='ready'&&<button type="button" onClick={()=>{if(m.kind==='avatar')card({avatar_id:m.id});else if(m.kind==='banner')card({banner_id:m.id});else card({gallery:draft.card.gallery.includes(m.id)?draft.card.gallery.filter(id=>id!==m.id):[...draft.card.gallery,m.id].slice(0,6)})}}>{m.kind==='photo'?(draft.card.gallery.includes(m.id)?'Hide photo':'Show photo'):'Use image'}</button>}<button type="button" onClick={()=>void removeUpload(m)}>Delete upload</button></div></li>)}</ul>
       </div>
+      <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale}/></div>
       <div id="profile-panel-style" role="tabpanel" aria-labelledby="profile-tab-style" hidden={tab!=='style'}><h3>Make it yours</h3><div className="profile-color-fields">{(['surface','text','accent'] as const).map(key=><label key={key}>{({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]}<input type="color" aria-label={({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]} value={draft.card.style[key]} onChange={e=>style({[key]:e.target.value})}/><code>{draft.card.style[key]}</code></label>)}</div>
        <label>Profile font<select aria-label="Profile font" value={draft.card.style.font} onChange={e=>style({font:e.target.value as ProfileStyle['font']})}><option value="sans">Clean sans serif</option><option value="serif">Classic serif</option><option value="mono">Monospace</option></select></label>
        <label>Photo shape<select aria-label="Photo shape" value={draft.card.style.avatar_shape} onChange={e=>style({avatar_shape:e.target.value as ProfileStyle['avatar_shape']})}><option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="square">Square</option></select></label>
@@ -134,9 +138,7 @@ function AccountCard({profile,card,urls,roles,children,onEditAvatar,onEditBanner
   <div className="account-profile-card-body">
    <div className="account-profile-topline">
     <div className="account-profile-avatar-wrap">
-     <div className={`account-profile-photo shape-${theme.avatar_shape}`}>
-      {avatar?<ProfileImage src={avatar} alt={`${profile.display_name} account photo`} style={{objectPosition:`${theme.avatar_x}% ${theme.avatar_y}%`}}/>:<span aria-label="No account photo">{profile.display_name.trim().slice(0,2).toUpperCase()||'R'}</span>}
-     </div>
+     <ProfileFrame className="account-profile-photo" avatarSrc={avatar} {...frameSelection(theme)} focusX={theme.avatar_x} focusY={theme.avatar_y} initials={profile.display_name.trim().slice(0,2).toUpperCase()||'R'} label={`${profile.display_name} account photo`}/>
      {onEditAvatar&&<button type="button" className="profile-avatar-pencil-btn" aria-label="Edit profile photo" title="Edit profile photo" onClick={onEditAvatar}><Icon name="pencil"/></button>}
     </div>
     {card.status&&<p className="account-profile-status">{card.status}</p>}

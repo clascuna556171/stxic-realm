@@ -1,5 +1,13 @@
 # Design and experience
 
+## Account profile frames — 30 October 2026
+
+Profile frames extend the existing obsidian profile editor with six original material collections, each with separate circle, rounded-square and square SVG artwork. Frames surround the account photo or initials; world characters remain separate. Selection previews a draft, while the equipped marker reflects the saved collection. The bottom **Save profile & equip** action saves the whole profile; **Reset frame changes** restores only the saved frame, shape and effects. Compact portraits and reduced-motion views suppress optional effects. Frame art is independent of the private app palette; the interface remains dark. See [profile frames](PROFILE_FRAMES.md) for implementation, local verification and pending hosted rollout.
+
+The owner requested more visible effects after the first pass felt plain. Each collection now has shape-following animated edge light and its own particle treatment: crimson embers, gold/jewel glints, woodland fireflies, cyan/violet circuits, fine white sparkles or floating pastel charms. The **Animated effects** preference controls both the fitting and gallery previews; gallery motion runs for the equipped, hovered or keyboard-focused sample. Motion pauses offscreen and in background documents, and the full static artwork remains for compact and reduced-motion views.
+
+The owner subsequently rejected subtle edge motion and named Discord decorations as the reference. The current effect layer therefore adds larger animated objects: flames, sapphire starbursts, butterflies, lightning shards, monochrome star flares and playful cat/bunny companions. These original motifs extend around the silhouette and keep the central face clear. Preserve this pronounced motion direction when refining cosmetics; the earlier restrained glint-only treatment was not accepted.
+
 ## Approved modern social shell — 29 October 2026
 
 The owner supplied a dark community/chat reference and explicitly selected: (1) modern app chrome with pixel artwork/display lettering mainly in worlds and studios, (2) charcoal surfaces with the user's chosen accent, and (3) rounded messages with the sender's own messages on the right plus server details on desktop. This supersedes the earlier pixel chat headings and sidebar character-alcove direction below.

@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { parseAppearance, type Appearance } from './appearance.ts'
 
 export type Character = Omit<Appearance,'accent'|'logo'|'mood'> & {version:1}
-export type Profile = { id:string; username:string; display_name:string; bio:string; revision:number; updated_at:string;avatar_path?:string;avatar_shape?:string;avatar_x?:number;avatar_y?:number }
+export type Profile = { id:string; username:string; display_name:string; bio:string; revision:number; updated_at:string;avatar_path?:string;avatar_shape?:string;avatar_x?:number;avatar_y?:number;frame_id?:string;frame_effects?:boolean }
 export type Identity = { profile:Profile; character:Character; theme:Pick<Appearance,'accent'|'logo'>; mood:Appearance['mood'] }
 export type PublicIdentity = Profile & {character?:Character}
 export type Friendship = {id:string;requester:string;addressee:string;status:'pending'|'accepted'}
@@ -46,9 +46,9 @@ export const saveIdentity=(db:SupabaseClient,p:Profile,a:Appearance)=>rpc<Identi
 export async function publicIdentities(db:SupabaseClient,ids:string[]):Promise<Record<string,PublicIdentity>>{
  if(!ids.length)return {}
  const unique=[...new Set(ids)]
- const [profiles,characters,portraits]=await Promise.all([db.from('profiles').select('id,username,display_name,bio,revision,updated_at').in('id',unique),db.from('profile_appearances').select('user_id,character').in('user_id',unique),db.from('account_portraits').select('user_id,object_path,shape,x,y').in('user_id',unique)])
+ const [profiles,characters,portraits]=await Promise.all([db.from('profiles').select('id,username,display_name,bio,revision,updated_at').in('id',unique),db.from('profile_appearances').select('user_id,character').in('user_id',unique),db.from('account_portraits').select('*').in('user_id',unique)])
  if(profiles.error)throw profiles.error;if(characters.error)throw characters.error
- return Object.fromEntries((profiles.data as Profile[]).map(p=>{const photo=portraits.data?.find(a=>a.user_id===p.id);return [p.id,{...p,...(photo?{avatar_path:photo.object_path,avatar_shape:photo.shape,avatar_x:Number(photo.x),avatar_y:Number(photo.y)}:{}),character:characters.data.find(c=>c.user_id===p.id)?.character as Character|undefined}]}))
+ return Object.fromEntries((profiles.data as Profile[]).map(p=>{const photo=portraits.data?.find(a=>a.user_id===p.id);return [p.id,{...p,...(photo?{avatar_path:photo.object_path,avatar_shape:photo.shape,avatar_x:Number(photo.x),avatar_y:Number(photo.y),frame_id:photo.frame_id,frame_effects:photo.frame_effects}:{}),character:characters.data.find(c=>c.user_id===p.id)?.character as Character|undefined}]}))
 }
 export async function getOwnHome(db:SupabaseClient,id:string):Promise<Home>{
  const {data,error}=await db.from('homes').select('owner_id,privacy,mood,layout,revision').eq('owner_id',id).single()
