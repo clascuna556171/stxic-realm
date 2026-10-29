@@ -1,4 +1,4 @@
-# STXIC Realm project knowledge
+# STXIC Realm project knowledge 
 
 This folder is the working information source for STXIC Realm. The [original project specification](STXIC_Realm_Project_Documentation_v1.0.pdf) is the baseline; these Markdown documents organize its contents for planning and implementation. The PDF is version 1.0, dated 26 October 2026, and describes a **planning specification**, not a built or validated product.
 
