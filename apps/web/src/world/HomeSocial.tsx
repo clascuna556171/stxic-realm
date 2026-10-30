@@ -6,7 +6,7 @@ import { safeProjectUrl, useSocialSnapshot, type HomeSocialState, type ProjectLi
 import './social-world.css'
 import {Icon} from '../Icon'
 
-export function HomeSocial({ owner, selected }: { owner: string; selected: string }) {
+export function HomeSocial({ owner, selected, section }: { owner: string; selected: string; section?: 'guestbook' }) {
  const user = useAccount().session!.user.id, own = owner === user
  const load = useCallback(() => rpc<HomeSocialState>(client!, 'home_social', { p_owner: owner }), [owner])
  const { data, error, refresh, apply } = useSocialSnapshot(load)
@@ -27,20 +27,20 @@ export function HomeSocial({ owner, selected }: { owner: string; selected: strin
   if (busy) return; setBusy(true)
   try { await rpc(client!, 'remove_guestbook', { p_entry: id }); await refresh(); setNotice('Entry removed.') } catch (e) { setNotice(errorText(e)) } finally { setBusy(false) }
  }
- return <section ref={root} id="home-social" className="world-social home-social-panel" aria-label="Home social features">
+ return <section ref={root} id={section?'item-home-social':'home-social'} className="world-social home-social-panel" aria-label="Home social features">
   <div className="home-social-toolbar"><a href="/"><Icon name="back"/>Return to chat</a><button disabled={busy} onClick={() => void refresh().catch(() => {})}><Icon name="refresh"/>Refresh home social</button></div>
-  <div className="home-social-navigation" role="group" aria-label="Home sections"><button onClick={() => book.current?.focus()}><Icon name="book"/>Open guestbook</button><button onClick={() => desk.current?.focus()}><Icon name="link"/>Open project links</button>{own&&data&&<button onClick={openSettings}><Icon name="settings"/>Home social settings</button>}</div>
+  <div hidden={section==='guestbook'} className="home-social-navigation" role="group" aria-label="Home sections"><button onClick={() => book.current?.focus()}><Icon name="book"/>Open guestbook</button><button onClick={() => desk.current?.focus()}><Icon name="link"/>Open project links</button>{own&&data&&<button onClick={openSettings}><Icon name="settings"/>Home social settings</button>}</div>
   {error && <p className="error" role="alert">{error}</p>}
   {data ? <>
-   <section ref={desk} tabIndex={-1} aria-labelledby="project-heading"><h2 id="project-heading"><Icon name="link"/>Project desk</h2><p>Links shared by this home’s owner. External sites open in a new tab.</p>
+   <section hidden={section==='guestbook'} ref={desk} tabIndex={-1} aria-labelledby={section?'item-project-heading':'project-heading'}><h2 id={section?'item-project-heading':'project-heading'}><Icon name="link"/>Project desk</h2><p>Links shared by this home’s owner. External sites open in a new tab.</p>
     {data.links.length ? <ul>{data.links.map((link, i) => { const url = safeProjectUrl(link.url); return url ? <li key={i}><a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{link.title} <small>({new URL(url).hostname})</small></a></li> : null })}</ul> : <p className="muted">No project links shared yet.</p>}
    </section>
-   <section ref={book} tabIndex={-1} aria-labelledby="guestbook-heading"><h2 id="guestbook-heading"><Icon name="book"/>Guestbook</h2><p className="muted">Visible to people who can currently visit this home. Up to 100 entries; 5 new posts per hour per account.</p>
+   <section ref={book} tabIndex={-1} aria-labelledby={section?'item-guestbook-heading':'guestbook-heading'}><h2 id={section?'item-guestbook-heading':'guestbook-heading'}><Icon name="book"/>Guestbook</h2><p className="muted">Visible to people who can currently visit this home. Up to 100 entries; 5 new posts per hour per account.</p>
     {data.can_post ? <form onSubmit={post}><label>Leave a guestbook entry<textarea aria-label="Leave a guestbook entry" required maxLength={1000} value={body} disabled={busy} onChange={e => setBody(e.target.value)}/></label><button className="guestbook-post" disabled={busy || !body.trim()}>Post entry<Icon name="arrow"/></button></form> : <p>The owner has closed guestbook posting.</p>}
     <ol className="world-entry-list">{data.entries.map(entry => <li key={entry.id}><strong>{entry.display_name}</strong><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString()}</time><p>{entry.body}</p>{(data.can_moderate || entry.author_id === user) && <button disabled={busy} onClick={() => void remove(entry.id)}>Remove entry by {entry.display_name}</button>}</li>)}</ol>{!data.entries.length && <p className="muted">No entries yet.</p>}
    </section>
   </> : !error && <p role="status">Opening the guestbook…</p>}
-  {own && settings.current && <div hidden={!data}><HomeSocialSettings key={owner} state={data ?? settings.current} onSaved={apply} reload={refresh}/></div>}
+  {!section && own && settings.current && <div hidden={!data}><HomeSocialSettings key={owner} state={data ?? settings.current} onSaved={apply} reload={refresh}/></div>}
   {notice && <p role="status">{notice}</p>}
  </section>
 }

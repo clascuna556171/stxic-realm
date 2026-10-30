@@ -1,12 +1,14 @@
 # Direct interaction — 30 October 2026
 
+Subsequent [Home/Hall polish](WORLD_POLISH.md) fixes click-induced scene resizing and consolidates movement/arrival controls into a stable toolbar. Arrows and secondary positioning are now disclosed under labeled controls; the original verification commands below remain available.
+
 Home and Halls now accept mouse/touch destinations and object approaches. This work builds on the existing room grid, saved layouts, original pixel character, viewport workspaces and Studio history. It adds no dependencies, schema changes or hosted writes.
 
 ## Movement and actions
 
 `world/navigation.ts` finds cardinal routes with breadth-first search. Furniture footprints and room/hall bounds remain blocked. Objects resolve to the nearest reachable adjacent floor tile; unreachable destinations stop with a message and retain the last valid position. A single serialized walker replaces destinations, waits for an outstanding step to settle, suppresses obsolete arrival actions, and supports Stop/Escape and unmount cancellation. Routes recheck current geometry at each step.
 
-Home offers Sit at PC / Sit on sofa on arrival. Sitting is a local pose at the adjacent floor tile, not a teleport into a blocked furniture cell. Other objects expose their existing description/social controls. Hall entrances offer entry after arrival; directory search, direct server/channel links and text alternatives remain available. Halls also list their placed objects under Movement & objects. Arrow keys/WASD, movement buttons and labeled column/row forms provide non-spatial alternatives. Arrival actions stay in the Scene view on narrow windows, without changing focus automatically.
+Home offers Sit at PC / Sit on sofa on arrival. Sitting keeps the accepted adjacent floor tile for navigation and RPCs; the renderer places the sprite at the furniture chair/cushion anchor with a seated pose and foreground occlusion. See [furniture pose polish](ITEM_INTERACTIONS.md#furniture-pose-polish). Other objects now expose their named [item actions](ITEM_INTERACTIONS.md), including notebooks, lighting, plant care, bookshelves and rest. Hall entrances offer entry after arrival; directory search, direct server/channel links and text alternatives remain available. Halls also list their placed objects under Movement & objects. Arrow keys/WASD, movement buttons and labeled column/row forms provide non-spatial alternatives. Arrival actions stay in the Scene view on narrow windows, without changing focus automatically.
 
 Shared Home sends every route step through the unchanged `move_home` RPC and renders only accepted coordinates. Server bounds, one-tile steps, rate limits, collision, visit tokens, expiry and access rules remain authoritative. Stale own-sequence snapshots are discarded; polling and movement reads are serialized so older responses cannot rewind the visitor roster. Saving a home or losing access ends the route/visit. Sitting and facing add no position or permission claims to the database.
 

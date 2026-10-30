@@ -1,11 +1,12 @@
 import Phaser from 'phaser'
 import { readAppearance, type Appearance } from '../appearance'
 import type { Visitor } from '../account-repository'
-import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, type Pixel } from '../character'
-import { ROOM, type Direction, type Point, type RoomObject } from './room'
+import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, type Pixel } from '../character'
+import { ROOM, type Direction, type Point, type RoomObject, type RoomAction } from './room'
 import { facingFrom, samePoint } from './navigation'
-import { furniturePixels, roomPixels } from './art'
+import { furniturePixels, roomPixels, furnitureActionForeground } from './art'
 import { roomLighting } from './lighting'
+import { furniturePose } from './furniture-pose'
 
 const tile = 32
 export function createRoom(
@@ -13,7 +14,7 @@ export function createRoom(
  onInspect: (id: string) => void,
  getPosition: () => Point,
  getObjects: () => RoomObject[],
- options?: { appearance?: Appearance; people?: () => Visitor[]; onWalk?: (point:Point) => void; editor?: { enabled:()=>boolean; error:(id:string,x:number,y:number)=>string|null; place:(id:string,x:number,y:number)=>void; status:(message:string)=>void } },
+ options?: { action?:()=>RoomAction|null; lights?:()=>Record<string,boolean>; appearance?: Appearance; people?: () => Visitor[]; onWalk?: (point:Point) => void; editor?: { enabled:()=>boolean; error:(id:string,x:number,y:number)=>string|null; place:(id:string,x:number,y:number)=>void; status:(message:string)=>void } },
 ) {
  class RoomScene extends Phaser.Scene {
   constructor() {
@@ -30,9 +31,10 @@ export function createRoom(
    draw(this.add.graphics(), roomPixels(appearance.mood))
 
    let lighting: Phaser.GameObjects.Image[] = []
+   let enabledLights:Record<string,boolean> = options?.lights?.()??{}
    const drawLighting = (objects: RoomObject[]) => {
     lighting.forEach(light => light.destroy())
-    lighting = roomLighting(appearance.mood, objects).map(light => {
+    lighting = roomLighting(appearance.mood, objects, enabledLights).map(light => {
      const key = `realm-light-${light.color}`
      if (!this.textures.exists(key)) {
       const texture = this.textures.createCanvas(key, 128, 128)!
@@ -49,6 +51,8 @@ export function createRoom(
     })
    }
 
+   const onLights=(enabled:Record<string,boolean>)=>{enabledLights=enabled;drawLighting(getObjects())}
+   this.game.events.on('room:lights',onLights)
    let furnishings: Phaser.GameObjects.GameObject[] = []
    let zones: Phaser.GameObjects.Zone[] = []
    const drawObjects = (objects: RoomObject[]) => {
@@ -143,14 +147,14 @@ export function createRoom(
    this.game.events.on('room:cancel-placement',cancelPlacement)
 
    const motion=matchMedia('(prefers-reduced-motion: reduce)')
-   type Actor={container:Phaser.GameObjects.Container;art:Phaser.GameObjects.Graphics;point:Point;direction:Direction;appearance:Appearance;until:number;sequence:number}
+   type Actor={container:Phaser.GameObjects.Container;art:Phaser.GameObjects.Graphics;shadow:Phaser.GameObjects.Ellipse;point:Point;direction:Direction;appearance:Appearance;until:number;sequence:number;seated:boolean}
    const baseY=-CHARACTER_HEIGHT*.66
-   const paint=(actor:Actor,frame=0)=>{actor.art.clear();draw(actor.art,characterPixels(actor.appearance,actor.direction,frame))}
+   const paint=(actor:Actor,frame=0)=>{actor.art.clear();draw(actor.art,actor.seated?seatedCharacterPixels(actor.appearance,actor.direction):characterPixels(actor.appearance,actor.direction,frame))}
    const makeActor=(p:Point,value:Appearance):Actor=>{
     const art=this.add.graphics().setScale(.66).setPosition(-CHARACTER_WIDTH*.33,baseY)
     const shadow=this.add.ellipse(0,-2,22,7,0x12191a,.5)
     const container=this.add.container(p.x*tile+16,p.y*tile+27,[shadow,art]).setDepth((p.y+1)*tile)
-    const actor={container,art,point:{...p},direction:'down' as Direction,appearance:value,until:0,sequence:-1};paint(actor);return actor
+    const actor={container,art,shadow,point:{...p},direction:'down' as Direction,appearance:value,until:0,sequence:-1,seated:false};paint(actor);return actor
    }
    const avatar=makeActor(getPosition(),appearance)
    const moveActor=(actor:Actor,p:Point,reset=false)=>{
@@ -165,16 +169,32 @@ export function createRoom(
     actor.until=this.time.now+220
     this.tweens.add({targets:actor.container,x,y,duration:220,ease:'Linear',onUpdate:()=>actor.container.setDepth(actor.container.y+5),onComplete:()=>{actor.container.setDepth(depth);actor.until=0;paint(actor)}})
    }
-   const position=(p:Point)=>moveActor(avatar,p)
+   const position=(p:Point)=>{if(activeAction&&!samePoint(avatar.point,p))onAction(null);moveActor(avatar,p)}
    this.game.events.on('room:move',position)
+   let activeAction:RoomAction|null=null
    let actionBadge:Phaser.GameObjects.Text|null=null
-   const onAction=(action:{label:string}|null)=>{
+   let furnitureFront:Phaser.GameObjects.Graphics|null=null
+   const onAction=(action:RoomAction|null)=>{
     actionBadge?.destroy();actionBadge=null
-    // Sitting is a local pose at the validated adjacent floor tile; it never changes coordinates.
-    avatar.art.y=baseY+(action?4:0)
-    if(action){actionBadge=this.add.text(0,-52,action.label,{fontFamily:'Inter, sans-serif',fontSize:'8px',color:'#f3f4f8',backgroundColor:'#191b24',padding:{x:4,y:3}}).setOrigin(.5,1);avatar.container.add(actionBadge)}
+    furnitureFront?.destroy();furnitureFront=null
+    const pose=furniturePose(avatar.point,action,getObjects())
+    activeAction=pose?action:null
+    this.tweens.killTweensOf(avatar.container);avatar.until=0
+    avatar.seated=pose?.type==='sit';avatar.shadow.setVisible(!pose)
+    avatar.art.setPosition(-CHARACTER_WIDTH*.33,baseY).setRotation(0)
+    if(pose){
+     avatar.direction=pose.direction
+     avatar.container.setPosition(pose.x,pose.y).setDepth(pose.depth)
+     furnitureFront=this.add.graphics({x:pose.object.x*tile,y:pose.object.y*tile}).setDepth(pose.depth+1)
+     draw(furnitureFront,furnitureActionForeground(pose.kind,appearance.mood,appearance.skin))
+     actionBadge=this.add.text(0,-48,pose.type==='rest'?'zZz':action!.label,{fontFamily:'Inter, sans-serif',fontSize:'8px',color:'#f3f4f8',backgroundColor:'#191b24',padding:{x:4,y:3}}).setOrigin(.5,1);avatar.container.add(actionBadge)
+    }else avatar.container.setPosition(avatar.point.x*tile+16,avatar.point.y*tile+27).setDepth((avatar.point.y+1)*tile)
+    paint(avatar)
    }
    this.game.events.on('room:action',onAction)
+   onAction(options?.action?.()??null)
+   const reconcilePose=()=>{if(activeAction)onAction(activeAction)}
+   this.game.events.on('room:layout',reconcilePose)
    const guests=new Map<string,Actor>()
    const drawPeople=(people:Visitor[])=>{
     const ids=new Set(people.map(p=>p.id))
@@ -189,13 +209,15 @@ export function createRoom(
    drawPeople(options?.people?.()??[])
    this.game.events.on('room:people',drawPeople)
    const animation=this.time.addEvent({delay:85,loop:true,callback:()=>{for(const actor of [avatar,...guests.values()])if(actor.until>this.time.now&&!motion.matches)paint(actor,Math.floor(this.time.now/85)%2+1)}})
-   const reduce=()=>{for(const actor of [avatar,...guests.values()]){this.tweens.killTweensOf(actor.container);actor.container.setPosition(actor.point.x*tile+16,actor.point.y*tile+27).setDepth((actor.point.y+1)*tile);actor.until=0;paint(actor)}}
+   const reduce=()=>{for(const actor of [avatar,...guests.values()]){this.tweens.killTweensOf(actor.container);actor.container.setPosition(actor.point.x*tile+16,actor.point.y*tile+27).setDepth((actor.point.y+1)*tile);actor.until=0;paint(actor)}reconcilePose()}
    motion.addEventListener('change',reduce)
 
    this.events.once('shutdown', () => {
     this.game.events.off('room:layout', drawObjects)
+    this.game.events.off('room:layout', reconcilePose)
     this.game.events.off('room:move', position)
     this.game.events.off('room:action', onAction)
+    this.game.events.off('room:lights',onLights)
     this.game.events.off('room:people', drawPeople)
     this.game.events.off('room:cancel-placement',cancelPlacement)
     this.game.canvas.removeEventListener('pointercancel',cancelPlacement)

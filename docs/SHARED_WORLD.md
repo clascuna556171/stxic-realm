@@ -10,7 +10,7 @@ The two world migrations and `20261029020000_account_profiles.sql` exist locally
 
 ## Personal home social features
 
-Visit `/?home=<owner UUID>`. The object list remains the conventional selection path; project desk selection exposes **Open project links**, the coffee table describes the guestbook, and **Open guestbook** and **Return to chat** are always available without operating the canvas. Home Studio links to these settings. Movement, privacy, ten-item catalog, saved positions and editor history stay intact. Sitting, uploads, playlists and achievements remain future interactions.
+Visit `/?home=<owner UUID>`. The object list remains the conventional selection path; project desk selection exposes **Open project links**, the coffee table describes the guestbook, and **Open guestbook** and **Return to chat** are always available without operating the canvas. Home Studio links to these settings. Movement, privacy, ten-item catalog, saved positions and editor history stay intact. Sitting and [furniture interactions](ITEM_INTERACTIONS.md) are now implemented locally. Uploads, playlists and achievements remain future interactions.
 
 - `home_social` checks current admission, owner admission, friendship, privacy and blocks on each read. Visitors see entries only from visible authors. Owners can moderate their entire guestbook, including blocked authors (displayed as “Unavailable account”), so hidden entries cannot trap the capacity limit.
 - `save_home_social` changes only the caller's own posting setting and up to five titled external HTTPS links. It has its own expected revision, separate from the home layout, and does not end visits. Owners choose friends-and-owner or owner-only posting; private homes remain private regardless of this choice.

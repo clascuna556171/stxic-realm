@@ -18,7 +18,7 @@ Build one room with a small original sprite set, movement, join/leave, privacy c
 
 ## Phase 3 — Home Studio (weeks 6–7)
 
-The editor supports anonymous browser drafts and signed-in account homes, ten furniture items, server validation, owner-only saving, revision conflicts, privacy and explicit draft import. Persistent guestbooks, owner posting controls, safe project-desk links and return-to-chat controls are now implemented locally, with SQL/RLS and browser verification. The new additive migration is not deployed. Sitting, uploads and other optional object actions remain future work. See [shared world status and release gates](SHARED_WORLD.md).
+The editor supports anonymous browser drafts and signed-in account homes, ten furniture items, server validation, owner-only saving, revision conflicts, privacy and explicit draft import. Persistent guestbooks, owner posting controls, safe project-desk links and return-to-chat controls are now implemented locally, with SQL/RLS and browser verification. The new additive migration is not deployed. Adjacent sitting and interactive notebooks, workstations, lights, rest, reading lists and plant care are implemented locally; see [item interactions](ITEM_INTERACTIONS.md). Generic uploads remain future scope. See [shared world status and release gates](SHARED_WORLD.md).
 
 Add the initial furniture catalog, bounded editor, server validation, versioned save/load and guestbook. **Exit:** owners can edit and reload their home; invalid or unauthorized changes fail, and stale revisions produce a visible conflict.
 

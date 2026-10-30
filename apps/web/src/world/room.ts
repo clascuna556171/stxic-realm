@@ -1,7 +1,7 @@
 export type Point = { x: number; y: number }
 export type Direction = 'up' | 'down' | 'left' | 'right'
 export type RoomObject = { id: string; name: string; description: string; x: number; y: number; width: number; height: number }
-export type RoomAction = { type: 'sit'; target: 'desk' | 'sofa' | string; label: string }
+export type RoomAction = { type: 'sit' | 'rest'; target: 'desk' | 'sofa' | string; label: string }
 
 export const ROOM = { width: 16, height: 12, spawn: { x: 8, y: 9 } } as const
 export const OBJECTS: RoomObject[] = [

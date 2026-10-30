@@ -40,7 +40,7 @@ export function createWalker(options: {
   try{while(active&&goal){
    const requested=goal,generation=version,path=findRoute(options.position(),requested,options.walkable)
    if(path===null){goal=null;report({moving:false,arrived:null,message:'That destination cannot be reached. Choose another floor tile or object.'});break}
-   if(!path.length){goal=null;report({moving:false,arrived:requested.id??null,message:requested.label?`Arrived at ${requested.label}. Choose an available action.`:'Destination reached.'});break}
+   if(!path.length){goal=null;report({moving:false,arrived:requested.id??null,message:requested.label?`Arrived at ${requested.label}.`:'Destination reached.'});break}
    report({moving:true,arrived:null,message:requested.label?`Walking to ${requested.label}…`:'Walking…'})
    const before=options.position()
    try{await options.step(path[0]);if(generation===version&&samePoint(before,options.position()))throw new Error('Movement did not complete. Choose the destination again.')}catch(e){if(generation===version){goal=null;report({moving:false,arrived:null,message:e instanceof Error?e.message:'Movement stopped. Try again.'})}}

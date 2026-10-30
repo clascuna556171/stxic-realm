@@ -1,3 +1,7 @@
+import {ItemActionModal,itemActionLabel} from './world/ItemActionModal'
+import {useWorldItems} from './world/useWorldItems'
+import {ItemLightLayer} from './world/ItemLightLayer'
+import {beside} from './world/navigation'
 import {WorldViewSwitch} from './WorldViewSwitch'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from './Icon'
@@ -48,6 +52,7 @@ export function ServerCrest({ theme }: { theme: string }) {
 }
 
 export function ServerHall({ spaces, selected, onSelect, channels: allChannels, loading, detailsLoading = false, error, onRetry, preview = false, onManage }: HallProps) {
+ const items=useWorldItems()
  const [view,setView]=useState<'scene'|'details'>('scene')
  const [query, setQuery] = useState('')
  const [page, setPage] = useState(0)
@@ -65,13 +70,13 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
   ? `/?space=${encodeURIComponent(selectedSpace.id)}${activeChannels[0] ? `&channel=${encodeURIComponent(activeChannels[0].id)}` : ''}` : null
 
  const walk=useWalk({position:()=>positionRef.current,walkable:p=>canWalkHall(p,layout),step:p=>{setAction(null);setFacing(facingFrom(positionRef.current,p,facing));positionRef.current=p;setPosition(p)}})
- const objects=hallObjects(layout),arrivedObject=objects.find(o=>o.id===walk.arrived)
+ const objects=hallObjects(layout),arrivedObject=objects.find(o=>o.id===walk.arrived&&beside(position,o))
  const arrivedSpace=walk.arrived===`server:${selected}`?selectedSpace:null
- function floor(p:Point){setAction(null);walk.go({point:p})}
- function approachObject(id:string){setAction(null);const object=objects.find(o=>o.id===id);if(object)walk.go({object,id,label:object.name})}
+ function floor(p:Point){items.close();setAction(null);walk.go({point:p})}
+ function approachObject(id:string){items.close();setAction(null);const object=objects.find(o=>o.id===id);if(object)walk.go({object,id,label:object.name})}
  function entrance(space:Space,index:number){setAction(null);onSelect(space.id);walk.go({point:hallDoorPoint(index),id:`server:${space.id}`,label:space.name})}
- useEffect(()=>{walk.cancel('Hall arrangement loaded. Click or tap the floor to walk.');if(!canWalkHall(positionRef.current,layout)){positionRef.current={...HALL_SPAWN};setPosition(positionRef.current)}},[layout])
- useEffect(()=>{walk.cancel('Hall wing changed. Select an entrance or floor tile.')},[page])
+ useEffect(()=>{walk.cancel('Click the floor to walk, or choose an entrance.');if(!canWalkHall(positionRef.current,layout)){positionRef.current={...HALL_SPAWN};setPosition(positionRef.current)}},[layout])
+ useEffect(()=>{walk.cancel(page?'Hall wing changed. Choose an entrance.':'Click the floor to walk, or choose an entrance.')},[page])
 
  useEffect(() => {
   const index = spaces.findIndex(s => s.id === selected)
@@ -91,9 +96,9 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
   <div className="hall-layout">
    <div className="hall-world">
     <div className="hall-scene-stage"><div className={`hall-scene ${ambient ? 'has-ambience' : ''}`} tabIndex={0} onKeyDown={walk.key} aria-label="A pixel-art gathering hall. Select a server entrance or use the directory.">
-     <HallCanvas layout={layout} onWalk={floor} onObject={approachObject}/>
-     <div className="hall-firelight" aria-hidden="true" />
-     {ambient && <div className="hall-embers" aria-hidden="true"><WorldAmbience width={768} height={512} hearths={layout.pieces.filter(p=>p.kind==='hearth').map(p=>({x:p.x*32,y:p.y*32}))}/></div>}
+     <ItemLightLayer layout={layout} lights={items.lights}/><HallCanvas layout={layout} onWalk={floor} onObject={approachObject}/>
+     {layout.pieces.some(p=>p.kind==='hearth'&&items.lights[p.id]!==false)&&<div className="hall-firelight" aria-hidden="true" />}
+     {ambient && <div className="hall-embers" aria-hidden="true"><WorldAmbience width={768} height={512} hearths={layout.pieces.filter(p=>p.kind==='hearth'&&items.lights[p.id]!==false).map(p=>({x:p.x*32,y:p.y*32}))}/></div>}
      <div className="hall-entrances" aria-label="Server entrances" aria-busy={loading}>
       {visible.map((space, i) => <button key={space.id} type="button" className={`hall-entrance entrance-${i} ${hallTheme(space.id)}`} aria-pressed={selected === space.id} aria-label={`Select ${space.name}${space.closed_at ? ', closed' : space.archived_at ? ', archived' : ''}`} onClick={() => entrance(space,i)}>
        <span className="entrance-outline" aria-hidden="true" />
@@ -102,14 +107,13 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
      </div>
      {!loading && !error && !spaces.length && <div className="hall-scene-message"><Icon name="hall" /><strong>Your story starts here.</strong><span>Create a server or bring an invitation.</span></div>}
      {loading && <div className="hall-scene-message" role="status"><Icon name="hall" /><strong>Lighting the lanterns…</strong><span>Finding your servers.</span></div>}
-     <HallTraveler position={position} direction={facing} moving={walk.moving} seated={!!action}/>
+     <HallTraveler position={position} direction={facing} moving={walk.moving} action={action} objects={objects}/>
      {pages > 1 && <div className="hall-scene-pagination" aria-label="Hall wings"><button aria-label="Previous hall wing" disabled={page === 0} onClick={() => setPage(p => p - 1)}><Icon name="back" /></button><span>Wing {page + 1} / {pages}</span><button aria-label="Next hall wing" disabled={page + 1 === pages} onClick={() => setPage(p => p + 1)}><Icon name="arrow" /></button></div>}
     </div></div>
-    <div className="scene-arrival">{arrivedSpace&&(preview?<a href="/">Sign in to enter</a>:destination&&!detailsLoading?<a href={destination}>Enter server</a>:<span>{detailsLoading?'Loading channels...':'Server closed'}</span>)}{arrivedObject&&<><strong>{arrivedObject.name}</strong>{['desk','sofa'].includes(arrivedObject.kind)?<button onClick={()=>setAction({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}>{action?'Sitting':arrivedObject.kind==='desk'?'Sit at PC':'Sit on sofa'}</button>:<span>{arrivedObject.description}</span>}</>}{action&&<button onClick={()=>setAction(null)}>Stand up</button>}</div>
-    <WalkControls position={position} moving={walk.moving} message={walk.message} onStep={walk.step} onStop={()=>walk.cancel()}/>
+    <WalkControls position={position} moving={walk.moving} message={action?action.label:walk.message} onStep={walk.step} onStop={()=>walk.cancel()} onWalk={floor}>{arrivedSpace&&(preview?<a href="/">Sign in to enter</a>:destination&&!detailsLoading?<a href={destination}>Enter server</a>:<span>{detailsLoading?'Loading channels...':'Server closed'}</span>)}{arrivedObject&&<>{['desk','sofa'].includes(arrivedObject.kind)?(!action&&<button onClick={()=>setAction({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}>{arrivedObject.kind==='desk'?'Sit at PC':'Sit on sofa'}</button>):<button onClick={()=>items.open(arrivedObject)}>{itemActionLabel(arrivedObject.kind)}</button>}</>}{action&&<button onClick={()=>setAction(null)}>Stand up</button>}</WalkControls>
    </div>
    <aside className="hall-directory" aria-label="Server directory">
-    <details className="hall-movement-details"><summary>Movement & objects</summary><WalkControls position={position} moving={walk.moving} message={walk.message} onStep={walk.step} onStop={()=>walk.cancel()} onWalk={floor} showSteps={false}/><div className="hall-object-list">{objects.map(o=><button key={o.id} onClick={()=>approachObject(o.id)}>{o.name}</button>)}</div>{arrivedObject&&<p>{arrivedObject.description}</p>}</details><div className="hall-directory-heading"><h2>Your servers</h2><span>{loading ? '…' : spaces.length}</span></div>
+    <div className="hall-directory-heading"><h2>Your servers</h2><span>{loading ? '…' : spaces.length}</span></div>
     <label className="hall-search"><Icon name="search" /><span className="sr-only">Find a server</span><input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Find a server…" /></label>
     <div className="hall-server-list" aria-label="Your servers" aria-busy={loading}>
      {loading ? <p className="hall-state" role="status">Finding your servers…</p> : error ? <div className="hall-state"><p role="alert">{error}</p><button onClick={onRetry}>Try again</button></div> : filtered.length ? filtered.map(space => <button type="button" key={space.id} aria-pressed={space.id === selected} onClick={() => onSelect(space.id)}><ServerCrest theme={hallTheme(space.id)} /><span><strong>{space.name}</strong><small>{space.closed_at ? 'Permanently closed' : space.archived_at ? 'Archived · history available' : 'Member server'}</small></span><Icon name="arrow" /></button>) : <p className="hall-state">{query ? 'No servers match. Try another name.' : 'No servers yet. Join with an invitation or create your first.'}</p>}
@@ -120,7 +124,8 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
      {channels.length > 0 && <div className="hall-channel-preview" aria-label="Channels in selected server">{channels.slice(0, 3).map(c => preview ? <span key={c.id}># {c.name}</span> : <a key={c.id} href={`/?space=${encodeURIComponent(selectedSpace.id)}&channel=${encodeURIComponent(c.id)}`}># {c.name}{c.archived_at ? ' · archived' : ''}</a>)}{channels.length > 3 && <span>+{channels.length - 3} more</span>}</div>}
      {preview ? <a className="hall-enter" href="/">Sign in to enter<Icon name="arrow" /></a> : destination && !detailsLoading ? <a className="hall-enter" href={destination}>Enter server<Icon name="arrow" /></a> : <span className="hall-enter is-disabled">{detailsLoading ? 'Opening the way…' : 'Server closed'}</span>}
     </div>}
+    <details className="hall-movement-details"><summary>Hall objects</summary><div className="hall-object-list">{objects.map(o=><button key={o.id} onClick={()=>approachObject(o.id)}>{o.name}</button>)}</div>{arrivedObject&&<><p>{arrivedObject.description}</p><button onClick={()=>items.open(arrivedObject)}>{itemActionLabel(arrivedObject.kind)}</button></>}</details>
    </aside>
   </div>
- </section>
+ <ItemActionModal items={items} scope={`${session?.user.id??'guest'}:hall`} hall onRest={()=>{}} onSit={()=>{if(arrivedObject)setAction({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}} chat={destination??'/'} resources={selectedSpace&&<><h4>{selectedSpace.name}</h4>{channels.map(c=><p key={c.id}><a className="item-link-action" href={`/?space=${selectedSpace.id}&channel=${c.id}`}>#{c.name}</a></p>)}</>}/></section>
 }

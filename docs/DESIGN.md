@@ -116,3 +116,9 @@ Access/admin/privacy additions inherit these surfaces: space switching in chat, 
 ## Direct world interaction - 30 October 2026
 
 Home and Halls now support click/tap routes around furniture, adjacent object actions, directional character artwork and editor-only drag placement. Existing obsidian controls, saved layouts and permissions remain the authority. Arrival controls remain in the scene on narrow windows; keyboard, position forms and directories remain available. Shared Home sends each step to the server; Hall walking has no multiplayer presence. See [direct interaction](DIRECT_INTERACTION.md) for behavior, checks and limits.
+
+The subsequent Apple-guided polish keeps scene geometry stable throughout interactions. One movement toolbar holds feedback and arrival actions; Movement discloses secondary controls, Home coordinates are collapsed, and Hall search/directory precede object controls. Appearance alignment, target sizes and focus handling are refined within the existing theme. See [review and verification](WORLD_POLISH.md).
+
+## Furniture actions
+
+Home/Hall item tasks use one named native dialog above the Scene/Details workspace, centered on desktop and a bottom sheet on phones. Use the existing obsidian semantic tokens, normal interface type, controls and standalone action links with at least 44px targets, explicit focus rings, Tab containment, Close/Escape and return focus to the opener. Keep the fixed movement toolbar and canvas geometry stable; notes, timers and links belong in the dialog. See [item interactions](ITEM_INTERACTIONS.md) for storage, permissions and local effects.

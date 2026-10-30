@@ -499,3 +499,16 @@ export function characterPixels(a:Appearance,direction:Direction='down',frame=0)
  // Opposing foot/arm phases stay on the same body grid and never change identity.
  return pixels.map(b=>{const leg=b.y>=54,arm=b.y>=39&&b.y<53&&(b.x<13||b.x>34);const dy=leg?(b.x<24?1:-1)*(frame===1?1:-1):arm?(b.x<24?-1:1)*(frame===1?1:-1):0;return {...b,y:Math.max(0,Math.min(CHARACTER_HEIGHT-b.h,b.y+dy))}})
 }
+
+/** Bent knees and short, forward feet replace the standing legs; identity stays intact. */
+export function seatedCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{
+ const upper=characterPixels(a,direction).filter(p=>p.y<49).map(p=>({...p,h:Math.min(p.h,49-p.y)}))
+ const ink='#181520',trousers=a.outfit==='medieval'?'#453b37':a.outfit==='tech'?'#273545':'#31374d'
+ const boot=a.outfit==='everyday'?'#ded7c8':a.outfit==='medieval'?'#63422d':'#2f3d4c'
+ return [...upper,
+  {x:11,y:47,w:26,h:8,color:ink},{x:13,y:48,w:22,h:5,color:trousers},
+  {x:12,y:52,w:9,h:6,color:ink},{x:27,y:52,w:9,h:6,color:ink},
+  {x:13,y:52,w:7,h:4,color:trousers},{x:28,y:52,w:7,h:4,color:trousers},
+  {x:10,y:56,w:12,h:5,color:ink},{x:26,y:56,w:12,h:5,color:ink},
+  {x:11,y:57,w:10,h:3,color:boot},{x:27,y:57,w:10,h:3,color:boot}]
+}
