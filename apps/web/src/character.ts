@@ -1,4 +1,5 @@
 import { eyeColors, outfits, type Appearance } from './appearance.ts'
+import type { Direction } from './world/room.ts'
 
 export type Pixel = { x: number; y: number; w: number; h: number; color: string }
 export const CHARACTER_WIDTH = 48
@@ -17,7 +18,7 @@ function mix(a: string, b: string, ratio: number): string {
  * High-detail 48x64 pixel-art RPG character sprite, shared by SVG portraits,
  * the Appearance Studio stage, and the Phaser room renderer.
  */
-export function characterPixels(a: Appearance): Pixel[] {
+function frontCharacterPixels(a: Appearance): Pixel[] {
  const p: Pixel[] = []
  const block = (x: number, y: number, w: number, h: number, color: string) => {
   const x0 = Math.max(0, Math.floor(x))
@@ -444,4 +445,57 @@ export function characterPixels(a: Appearance): Pixel[] {
  }
 
  return p
+}
+
+/** Original rear/profile layers use the same palette, equipment and 48×64 body grid. */
+export function characterPixels(a:Appearance,direction:Direction='down',frame=0):Pixel[]{
+ let pixels=frontCharacterPixels(a)
+ const p:Pixel[]=[],ink='#181520',hair=a.hair,hairShade=mix(hair,ink,.32),hairLight=mix(hair,'#f5dec2',.28),cloth=outfits[a.outfit],shade=mix(cloth,ink,.32),light=mix(cloth,'#e8e4f2',.25),skin=a.skin,skinShade=mix(skin,'#613931',.28)
+ const r=(x:number,y:number,w:number,h:number,color:string)=>p.push({x,y,w,h,color})
+ if(direction==='up'){
+  // Retain matching boots, sleeves, hands and shoulder equipment; replace the front panels.
+  pixels=pixels.filter(b=>b.y>=34)
+  r(12,36,24,15,ink);r(13,37,22,13,shade);r(15,37,18,11,cloth);r(16,38,2,9,light);r(13,49,22,2,mix(cloth,ink,.5))
+  if(a.outfit==='medieval'){r(6,35,36,20,ink);r(7,36,34,18,'#344238');r(9,37,4,16,'#495c4e');r(32,37,4,16,'#29352d');r(20,39,2,14,'#627866')}
+  if(a.outfit==='tech'){r(15,37,18,11,'#273545');r(18,38,12,9,ink);r(19,39,10,7,'#384759');r(21,41,6,1,'#5ce6dc');r(14,48,20,2,'#1a222c')}
+  r(19,31,10,5,ink);r(20,32,8,3,skinShade)
+  const top=a.hairStyle==='curly'?3:5,bottom=a.hairStyle==='long'?45:a.hairStyle==='curly'?34:31
+  r(13,top,22,bottom-top,ink);r(10,top+3,28,bottom-top-5,ink);r(9,top+7,30,bottom-top-12,ink)
+  r(13,top+1,22,bottom-top-2,hairShade);r(11,top+4,26,bottom-top-7,hair);r(15,top+3,7,3,hairLight);r(27,top+5,6,2,hairLight)
+  for(const x of [12,19,29,34])r(x,top+12,2,bottom-top-14,hairShade)
+  if(a.hairStyle==='short'){r(18,3,6,3,ink);r(19,4,4,2,hair);r(31,7,6,4,hair)}
+  if(a.hairStyle==='swept'){r(6,13,8,4,ink);r(7,13,7,3,hairLight);r(12,11,12,2,hairLight)}
+  if(a.hairStyle==='curly')for(const [x,y] of [[8,11],[34,12],[12,27],[29,28]]){r(x,y,6,6,ink);r(x+1,y+1,4,4,hairShade);r(x+1,y+1,2,1,hairLight)}
+  if(a.accessory==='glasses'){r(9,20,3,2,ink);r(36,20,3,2,ink)}
+  if(a.accessory==='headphones'){r(12,4,24,3,ink);r(14,5,20,1,'#7c859e');for(const x of [6,37]){r(x,16,5,10,ink);r(x+1,17,3,8,'#8d99bc');r(x+2,19,1,4,'#b8faf5')}}
+  if(a.accessory==='crown'){r(13,1,22,7,ink);r(14,4,20,3,'#e5c168');for(const x of [14,18,22,27,31])r(x,x===22?1:2,x===22?4:3,3,'#e5c168');r(15,6,18,1,'#9e7836')}
+  pixels.push(...p)
+ }else if(direction==='left'||direction==='right'){
+  // Draw a real profile (nose, single eye, ear and back hair), rather than flipping a front face.
+  const long=a.hairStyle==='long',curly=a.hairStyle==='curly'
+  if(a.outfit==='medieval'){r(11,35,24,20,ink);r(12,36,22,18,'#344238');r(13,38,4,15,'#627866')}
+  r(16,49,9,13,ink);r(23,49,9,13,ink);r(17,50,7,9,'#31374d');r(24,50,7,9,'#404863')
+  const boot=a.outfit==='everyday'?'#ded7c8':a.outfit==='medieval'?'#63422d':'#2f3d4c'
+  r(15,58,11,5,ink);r(23,58,12,5,ink);r(16,59,9,3,boot);r(24,59,10,3,boot)
+  if(a.outfit==='tech'){r(17,60,6,1,'#5ce6dc');r(26,60,6,1,'#5ce6dc')}
+  if(a.outfit==='medieval'){r(18,57,3,2,'#e5c168');r(27,57,3,2,'#e5c168')}
+  r(19,31,9,7,ink);r(20,32,7,4,skinShade);r(14,36,19,15,ink);r(15,37,17,13,shade);r(19,37,11,12,cloth);r(29,38,2,11,light)
+  r(17,38,8,13,ink);r(18,39,6,9,cloth);r(19,40,2,7,light);r(18,48,6,5,ink);r(19,48,4,4,skin);r(20,48,2,1,mix(skin,'#fff4df',.26))
+  if(a.outfit==='everyday'){r(29,38,2,10,'#f2ead8');r(16,49,16,2,shade);r(19,46,5,2,'#f2ead8')}
+  if(a.outfit==='medieval'){r(16,35,11,6,ink);r(17,36,9,4,'#e5c168');r(18,36,5,1,'#fff0b8');r(18,44,6,4,'#6e4930');r(26,47,6,3,'#6e4930')}
+  if(a.outfit==='tech'){r(16,35,11,6,ink);r(17,36,9,3,'#7b91a8');r(18,37,6,1,'#c7d8e8');r(19,44,5,1,'#5ce6dc');r(29,40,2,5,'#5ce6dc')}
+  r(14,8,18,26,ink);r(12,12,22,18,ink);r(16,10,14,22,skinShade);r(20,12,12,18,skin);r(30,21,6,5,ink);r(30,21,5,4,skin);r(30,26,3,4,skinShade)
+  r(28,19,4,1,hairShade);r(29,21,3,4,ink);r(29,21,2,3,eyeColors[a.eyes]);r(29,21,1,1,'#f2ead8');r(29,29,3,1,ink)
+  r(12,curly?3:5,19,8,ink);r(10,9,24,9,ink);r(11,10,22,7,hair);r(13,curly?4:6,17,6,hair);r(12,14,9,long?30:17,ink);r(13,14,7,long?29:16,hairShade);r(14,15,3,long?26:13,hair);r(15,8,12,2,hairLight)
+  if(a.hairStyle==='swept'){r(28,11,7,6,ink);r(28,12,6,4,hair);r(30,16,3,3,hair)}
+  if(curly)for(const [x,y] of [[10,6],[26,5],[9,16],[11,26]]){r(x,y,7,7,ink);r(x+1,y+1,5,5,hair);r(x+2,y+1,2,1,hairLight)}
+  r(18,20,5,7,ink);r(19,21,3,5,skinShade);r(20,21,2,3,skin)
+  if(a.accessory==='glasses'){r(26,19,8,1,ink);r(26,25,8,1,ink);r(26,20,1,5,ink);r(33,20,1,5,ink);r(20,20,6,1,ink);r(28,20,2,1,'#d8f6ff')}
+  if(a.accessory==='headphones'){r(18,4,5,17,ink);r(19,5,2,12,'#7c859e');r(17,17,8,11,ink);r(18,18,6,9,'#3b4254');r(19,19,4,7,'#8d99bc');r(20,20,2,4,'#b8faf5')}
+  if(a.accessory==='crown'){r(12,1,21,7,ink);r(13,4,19,3,'#e5c168');for(const x of [13,20,28])r(x,2,3,3,'#e5c168');r(29,5,2,1,'#e0485c')}
+  pixels=direction==='left'?p.map(b=>({...b,x:CHARACTER_WIDTH-b.x-b.w})):p
+ }
+ if(!frame)return pixels
+ // Opposing foot/arm phases stay on the same body grid and never change identity.
+ return pixels.map(b=>{const leg=b.y>=54,arm=b.y>=39&&b.y<53&&(b.x<13||b.x>34);const dy=leg?(b.x<24?1:-1)*(frame===1?1:-1):arm?(b.x<24?-1:1)*(frame===1?1:-1):0;return {...b,y:Math.max(0,Math.min(CHARACTER_HEIGHT-b.h,b.y+dy))}})
 }

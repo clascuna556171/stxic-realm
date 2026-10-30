@@ -1,0 +1,7 @@
+import { useState } from 'react'
+import type { Direction, Point } from './room'
+
+export function WalkControls({position,moving,message,onStep,onStop,onWalk,disabled=false,showSteps=true}:{position:Point;moving:boolean;message:string;onStep:(d:Direction)=>void;onStop:()=>void;onWalk?:(p:Point)=>void;disabled?:boolean;showSteps?:boolean}){
+ const [column,setColumn]=useState(''),[row,setRow]=useState('')
+ return <div className="walk-controls"><div className="walk-summary"><p role="status">{message} <span>Column {position.x+1} · Row {position.y+1}</span></p><button type="button" onClick={onStop} disabled={!moving}>Stop walking</button></div><div className="walk-alternatives">{showSteps&&<div className="direction-pad" role="group" aria-label="Movement controls">{(['up','left','down','right'] as const).map((d,i)=><button key={d} className={`move-${d}`} aria-label={`Move ${d}`} disabled={disabled} onClick={()=>onStep(d)}>{['↑','←','↓','→'][i]}</button>)}</div>}{onWalk&&<form onSubmit={e=>{e.preventDefault();onWalk({x:Number(column)-1,y:Number(row)-1})}}><label>Walk to column<input aria-label="Walk to column" type="number" step="1" required value={column} onChange={e=>setColumn(e.target.value)}/></label><label>Walk to row<input aria-label="Walk to row" type="number" step="1" required value={row} onChange={e=>setRow(e.target.value)}/></label><button disabled={disabled}>Walk here</button></form>}</div></div>
+}

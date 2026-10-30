@@ -35,7 +35,7 @@ insert into public.friendships(requester,addressee,status) values('${users.alice
 begin;insert into public.spaces(id,name) values('${space}','The shared conservatory');
 insert into public.space_members(space_id,user_id,role) values('${space}','${users.alice}','owner'),('${space}','${users.bob}','member'),('${space}','${users.moderator}','moderator');
 insert into public.channels(id,space_id,name) values('${channel}','${space}','general');commit;`)
-let queue=Promise.resolve(),requests=[],pageErrors=[]
+let queue=Promise.resolve(),requests=[],pageErrors=[],moveDelay=0
 const failedReads=new Set()
 function serialized(task) { const next=queue.then(task); queue=next.catch(()=>{}); return next }
 async function asUser(id,task) {
@@ -64,10 +64,11 @@ async function contextFor(name,brokenRenderer=false) {
   try {
    if(url.pathname.includes('/rpc/')) {
     const name=url.pathname.split('/').pop(),args=req.postDataJSON()??{};requests.push({user:user.id,name,args})
+    if(name==='move_home'&&moveDelay)await new Promise(r=>setTimeout(r,moveDelay))
     if(failedReads.has(`${user.id}:${name}`))return reply({code:'fixture_offline',message:'Temporary connection failure.'},503)
     return reply(await asUser(user.id,()=>sqlRpc(name,args)))
    }
-   const table=url.pathname.split('/').pop();assert.ok(['spaces','channels','homes','profiles','profile_appearances','user_blocks'].includes(table),`Unhandled fixture table ${table}`)
+   const table=url.pathname.split('/').pop();assert.ok(['spaces','channels','homes','profiles','profile_appearances','user_blocks','account_portraits','direct_conversations'].includes(table),`Unhandled fixture table ${table}`)
    const values=[],filters=[]
    for(const [column,value] of url.searchParams)if(value.startsWith('eq.')){assert.match(column,/^[a-z_]+$/);values.push(value.slice(3));filters.push(`"${column}"=$${values.length}`)}
    const rows=await asUser(user.id,()=>db.query(`select * from public."${table}"${filters.length?' where '+filters.join(' and '):''}`,values).then(r=>r.rows))
@@ -79,11 +80,33 @@ async function contextFor(name,brokenRenderer=false) {
 }
 const hallUrl=origin+'/?server-hall='+space,homeUrl=origin+'/?home='+users.alice
 const refresh=page=>page.getByRole('button',{name:'Refresh shared hall',exact:true}).click()
+const openHallDetails=async page=>{await page.getByRole('button',{name:'Refresh shared hall',exact:true}).waitFor();const toggle=page.getByRole('button',{name:'Board & settings',exact:true});if(await toggle.isVisible())await toggle.click()}
 const homeRefresh=page=>page.getByRole('button',{name:'Refresh home social',exact:true}).click()
 const overflow=async page=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
 try {
  const a=await contextFor('alice'),b=await contextFor('bob'),m=await contextFor('moderator'),o=await contextFor('outsider'),alice=a.page,bob=b.page,mod=m.page,outsider=o.page
  await alice.goto(homeUrl);await alice.getByRole('heading',{name:'Guestbook',exact:true}).waitFor()
+ // New direct movement is exercised against the actual local SQL function/RLS.
+ await bob.goto(homeUrl);await bob.locator('.room-canvas canvas').waitFor()
+ const clickHomeTile=async(page,x,y)=>{const box=await page.locator('.room-canvas canvas').boundingBox();await page.mouse.click(box.x+(x+.5)*box.width/16,box.y+(y+.5)*box.height/12)}
+ await clickHomeTile(bob,2,2);await bob.locator('.scene-arrival').getByRole('button',{name:'Sit at PC',exact:true}).waitFor()
+ const readBob=()=>serialized(()=>db.query('select x,y,sequence from public.home_visits where user_id=$1',[users.bob]).then(r=>r.rows[0]))
+ const besideDesk=await readBob();assert.ok(besideDesk.sequence>1,'arrival uses multiple validated moves')
+ assert.ok((besideDesk.x===1||besideDesk.x===5)&&besideDesk.y>=2&&besideDesk.y<4 || (besideDesk.y===1||besideDesk.y===4)&&besideDesk.x>=2&&besideDesk.x<5)
+ await bob.locator('.scene-arrival').getByRole('button',{name:'Sit at PC',exact:true}).click();assert.deepEqual(await readBob(),besideDesk,'sitting never invents a shared coordinate')
+ await alice.locator('.visitor-list li').filter({hasText:'Bob'}).getByText(`Column ${besideDesk.x+1}, row ${besideDesk.y+1}`,{exact:true}).waitFor()
+ moveDelay=350;const beforeRequests=requests.filter(r=>r.user===users.bob&&r.name==='move_home').length
+ await clickHomeTile(bob,14,10)
+ for(let i=0;i<100&&requests.filter(r=>r.user===users.bob&&r.name==='move_home').length===beforeRequests;i++)await new Promise(r=>setTimeout(r,10))
+ await clickHomeTile(bob,8,5);await bob.locator('.room-main .walk-summary').getByText('Destination reached.',{exact:false}).waitFor();moveDelay=0
+ assert.deepEqual({x:(await readBob()).x,y:(await readBob()).y},{x:8,y:5})
+ // A new owner revision ends this active route; no remaining queued steps may bypass it.
+ await clickHomeTile(bob,14,10)
+ await asUser(users.alice,async()=>{const home=await db.query('select * from public.homes where owner_id=$1',[users.alice]).then(r=>r.rows[0]);return sqlRpc('save_home',{p_layout:home.layout,p_privacy:'private',p_revision:home.revision})})
+ await bob.getByRole('heading',{name:'This visit has ended.',exact:true}).waitFor()
+ const stopped=requests.filter(r=>r.user===users.bob&&r.name==='move_home').length;await new Promise(r=>setTimeout(r,700));assert.equal(requests.filter(r=>r.user===users.bob&&r.name==='move_home').length,stopped,'revoked route stops')
+ await asUser(users.alice,async()=>{const home=await db.query('select * from public.homes where owner_id=$1',[users.alice]).then(r=>r.rows[0]);return sqlRpc('save_home',{p_layout:home.layout,p_privacy:'friends',p_revision:home.revision})})
+ await alice.reload();await alice.getByRole('heading',{name:'Guestbook',exact:true}).waitFor();await bob.reload()
  await bob.goto(homeUrl);await bob.getByLabel('Leave a guestbook entry').fill('Hello from another account.');await bob.getByRole('button',{name:'Post entry',exact:true}).focus();await bob.keyboard.press('Enter')
  await bob.getByText('Guestbook entry saved.',{exact:true}).waitFor();await homeRefresh(alice);await alice.getByText('Hello from another account.',{exact:true}).waitFor()
  await alice.getByRole('button',{name:'Home social settings',exact:true}).click();assert.equal(await alice.locator('.home-social-settings').evaluate(el=>el.open),true);assert.equal(await alice.locator('.home-social-settings summary').evaluate(el=>el===document.activeElement),true);await alice.getByRole('button',{name:'Add project link',exact:true}).click()
@@ -103,11 +126,11 @@ try {
  await alice.screenshot({path:resolve(output,'home-desktop.png'),fullPage:true})
  await outsider.goto(homeUrl);await outsider.getByRole('heading',{name:'This visit has ended.'}).waitFor();assert.equal(await outsider.getByText('My project',{exact:true}).count(),0)
  // Optional shared state starts disabled; owners opt in without changing the personal hub.
- await alice.goto(hallUrl);await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await alice.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
+ await alice.goto(hallUrl);await openHallDetails(alice);await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await alice.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
  await alice.getByRole('button',{name:'Grant decorator: Bob',exact:true}).click();await alice.getByRole('button',{name:'Revoke decorator: Bob',exact:true}).waitFor()
  await alice.getByLabel('West portal destination',{exact:true}).selectOption(channel);await alice.getByRole('button',{name:'Save channel portals',exact:true}).click();await alice.getByRole('button',{name:'Save channel portals',exact:true}).waitFor({state:'visible'});await alice.waitForFunction(()=>document.querySelector('.shared-hall-portals button')?.disabled===false);assert.equal(await alice.getByText('The hall changed. Reload destinations before saving.',{exact:true}).count(),0)
  await alice.getByLabel('New announcement',{exact:true}).fill('Welcome to our shared hall.');await alice.getByRole('button',{name:'Publish announcement',exact:true}).click();await alice.getByText('Announcement saved.',{exact:true}).waitFor()
- await bob.goto(hallUrl);await bob.getByText('Welcome to our shared hall.',{exact:true}).waitFor();assert.equal(await bob.getByLabel('New announcement',{exact:true}).count(),0)
+ await bob.goto(hallUrl);await openHallDetails(bob);await bob.getByText('Welcome to our shared hall.',{exact:true}).waitFor();assert.equal(await bob.getByLabel('New announcement',{exact:true}).count(),0)
  await alice.screenshot({path:resolve(output,'hall-desktop.png'),fullPage:true})
  await bob.setViewportSize({width:320,height:780});await overflow(bob);await bob.screenshot({path:resolve(output,'hall-phone.png'),fullPage:true})
  await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Remove component',exact:true}).click();await bob.getByRole('button',{name:'Undo',exact:true}).click();await bob.getByRole('button',{name:'Redo',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()
@@ -126,17 +149,64 @@ try {
  failedReads.add(`${users.moderator}:get_server_hall`);await refresh(mod);await mod.getByRole('alert').filter({hasText:'Temporary connection failure.'}).waitFor();assert.equal(await mod.getByLabel('New announcement',{exact:true}).isVisible(),false)
  failedReads.delete(`${users.moderator}:get_server_hall`);await refresh(mod);await mod.getByLabel('New announcement',{exact:true}).waitFor();assert.equal(await mod.getByLabel('New announcement',{exact:true}).inputValue(),'Unsaved announcement draft')
  await mod.getByRole('button',{name:'Edit announcement',exact:true}).click();await mod.getByLabel('Edit announcement',{exact:true}).fill('Moderator revised this announcement.');await mod.getByRole('button',{name:'Save announcement edit',exact:true}).click();await mod.getByText('Moderator revised this announcement.',{exact:true}).waitFor()
- await alice.goto(hallUrl);await alice.getByRole('button',{name:'Revoke decorator: Bob',exact:true}).click();await bob.evaluate(()=>window.dispatchEvent(new Event('online')));await bob.getByText('Editing permission changed. Your draft is still open. Reload to check current access.',{exact:true}).waitFor();assert.equal(await bob.getByRole('button',{name:'Save hall',exact:true}).isDisabled(),true)
+ await alice.goto(hallUrl);await openHallDetails(alice);await alice.getByRole('button',{name:'Revoke decorator: Bob',exact:true}).click();await bob.evaluate(()=>window.dispatchEvent(new Event('online')));await bob.getByText('Editing permission changed. Your draft is still open. Reload to check current access.',{exact:true}).waitFor();assert.equal(await bob.getByRole('button',{name:'Save hall',exact:true}).isDisabled(),true)
  await alice.getByRole('button',{name:'Disable shared hall',exact:true}).click();await mod.getByRole('button',{name:'Refresh shared hall',exact:true}).click();await mod.getByText('This server’s hall is disabled. Its saved arrangement is retained. Chat remains available.',{exact:true}).waitFor();assert.equal(await mod.locator('.hall-pixel-canvas').count(),0);assert.ok(await mod.getByRole('link',{name:'Return to chat',exact:true}).getAttribute('href'))
  await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await mod.reload();await mod.getByText('Moderator revised this announcement.',{exact:true}).waitFor()
  await outsider.goto(hallUrl);await outsider.getByRole('alert').filter({hasText:'Space unavailable or permission changed.'}).waitFor();assert.equal(await outsider.locator('.hall-pixel-canvas').count(),0)
  const broken=await contextFor('alice',true);await broken.page.goto(hallUrl);await broken.page.getByText('The hall scene could not load. Channel controls, announcements and chat are still available.',{exact:true}).waitFor();await broken.page.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
- await broken.page.getByRole('button',{name:'West channel portal · #general',exact:true}).click();await broken.page.getByRole('textbox',{name:'Message #general',exact:true}).fill('Chat survives the renderer failure.');await broken.page.getByRole('button',{name:'Send',exact:true}).click();await broken.page.getByText('Chat survives the renderer failure.',{exact:true}).waitFor();await broken.page.goto(hallUrl)
+ await broken.page.getByRole('button',{name:'West channel portal · #general',exact:true}).click();await broken.page.locator('.scene-arrival').getByRole('button',{name:'Enter channel #general',exact:true}).click();await broken.page.getByRole('textbox',{name:'Message #general',exact:true}).fill('Chat survives the renderer failure.');await broken.page.getByRole('button',{name:'Send',exact:true}).click();await broken.page.getByText('Chat survives the renderer failure.',{exact:true}).waitFor();await broken.page.goto(hallUrl)
  await broken.page.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await broken.page.getByText('The hall preview could not load. You can still arrange components using the list and position fields.',{exact:true}).waitFor();await broken.page.getByLabel('Column',{exact:true}).fill('8');await broken.page.getByRole('button',{name:'Move component',exact:true}).click();assert.ok(await broken.page.getByRole('link',{name:'Back to the hall',exact:true}).getAttribute('href'))
- await mod.getByRole('button',{name:'West channel portal · #general',exact:true}).focus();await mod.keyboard.press('Enter');await mod.waitForURL('**/?space=*&channel=*');await mod.getByRole('textbox',{name:'Message #general',exact:true}).waitFor()
+ await mod.getByRole('button',{name:'West channel portal · #general',exact:true}).focus();await mod.keyboard.press('Enter');await mod.locator('.scene-arrival').getByRole('button',{name:'Enter channel #general',exact:true}).click();await mod.waitForURL('**/?space=*&channel=*');await mod.getByRole('textbox',{name:'Message #general',exact:true}).waitFor()
  // Simulated reconnect reloads persisted SQL state, and later revocation clears protected views.
  await asUser(users.alice,()=>sqlRpc('manage_space',{p_action:'remove',p_space:space,p_target:users.moderator,p_revision:0}))
  await mod.goto(hallUrl);await mod.getByRole('alert').filter({hasText:'Space unavailable or permission changed.'}).waitFor()
+ // Viewport regression: stress only this disposable local fixture, never hosted data.
+ const workspaceOutput=resolve(root,'.impeccable/review/workspace-layout');await mkdir(workspaceOutput,{recursive:true})
+ await serialized(()=>db.query("insert into public.channels(space_id,name) select $1,'topic-'||n from generate_series(1,40) n",[space]))
+ await serialized(async()=>{await db.exec('begin');try{await db.query("select set_config('request.jwt.claim.sub',$1,true)",[users.alice]);await db.exec("update realm_private.settings set value='1000' where key='send_burst'");await db.query("insert into public.messages(channel_id,author_id,client_id,body) select $1,$2,gen_random_uuid(),'A conversation with enough history to scroll. Message '||n from generate_series(1,45) n",[channel,users.alice]);await db.exec('commit')}catch(e){await db.exec('rollback');throw e}})
+ const viewportFit=async(page,label)=>{const b=await page.evaluate(()=>({x:document.documentElement.scrollWidth-innerWidth,y:document.documentElement.scrollHeight-innerHeight}));assert.ok(b.x<=1&&b.y<=1,`${label}: ${JSON.stringify(b)}`)}
+ const visibleInViewport=async(page,selector,label)=>assert.ok(await page.locator(selector).evaluate(e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&r.top>=0&&r.bottom<=innerHeight+1}),label)
+ for(const [label,width,height]of [['desktop',1440,900],['laptop',1280,720],['narrow',663,844],['phone',390,844],['landscape',844,390]]){
+  await alice.setViewportSize({width,height});await alice.goto(`${origin}/?space=${space}&channel=${channel}`)
+  await alice.locator('#stream-body').waitFor();await alice.getByText('A conversation with enough history to scroll. Message 45',{exact:true}).waitFor({state:'attached'})
+  await viewportFit(alice,`chat ${label}`);await visibleInViewport(alice,'.composer',`composer ${label}`)
+  const before=await alice.locator('.chat-header').boundingBox()
+  await alice.locator('.dm-thread').evaluate(e=>e.scrollTop=0)
+  assert.equal((await alice.locator('.chat-header').boundingBox()).y,before.y,'chat heading stays in place')
+  await visibleInViewport(alice,'.composer',`composer after scroll ${label}`)
+  if(width>800){
+   const heading=await alice.locator('.sidebar-heading').boundingBox()
+   assert.ok(await alice.locator('.sidebar>nav').evaluate(e=>e.scrollHeight>e.clientHeight),'long channels scroll inside their list')
+   await alice.locator('.sidebar>nav').evaluate(e=>e.scrollTop=e.scrollHeight)
+   assert.equal((await alice.locator('.sidebar-heading').boundingBox()).y,heading.y)
+   await visibleInViewport(alice,'.account',`account controls ${label}`)
+  }else await visibleInViewport(alice,'.account',`compact account controls ${label}`)
+  await alice.locator('.dm-thread').evaluate(e=>e.scrollTop=e.scrollHeight)
+  await alice.screenshot({path:resolve(workspaceOutput,`chat-${label}.png`),fullPage:true})
+  await alice.goto(homeUrl);await alice.locator('.room-canvas canvas').waitFor();await viewportFit(alice,`shared home ${label}`);await visibleInViewport(alice,'.room-main .direction-pad',`home controls ${label}`)
+  if(width<=900)await alice.getByRole('button',{name:'People, objects & guestbook',exact:true}).click()
+  await alice.getByRole('button',{name:'Home social settings',exact:true}).click();await alice.getByRole('button',{name:'Save home social settings',exact:true}).scrollIntoViewIfNeeded();await viewportFit(alice,`home social ${label}`)
+  if(width<=900)await alice.getByRole('button',{name:'Room',exact:true}).click()
+  await alice.waitForFunction(()=>{const h=document.querySelector('.room-canvas')?.getBoundingClientRect(),c=document.querySelector('.room-canvas canvas')?.getBoundingClientRect();return h&&c&&c.width>=h.width*.9&&c.height>=h.height*.9})
+  await alice.screenshot({path:resolve(workspaceOutput,`shared-home-${label}.png`),fullPage:true})
+  await alice.goto(hallUrl);await alice.locator('.shared-hall-scene .hall-pixel-canvas').waitFor();await viewportFit(alice,`shared hall ${label}`)
+  await openHallDetails(alice);await alice.getByLabel('West portal destination',{exact:true}).scrollIntoViewIfNeeded();await viewportFit(alice,`hall settings ${label}`)
+  if(width<=900)await alice.getByRole('button',{name:'Hall',exact:true}).click()
+  await alice.screenshot({path:resolve(workspaceOutput,`shared-hall-${label}.png`),fullPage:true})
+ }
+ await alice.setViewportSize({width:1280,height:720});await alice.goto(origin+'/?spaces');await alice.getByRole('heading',{name:'Server Halls',exact:true}).waitFor();await viewportFit(alice,'personal halls')
+ await alice.getByRole('link',{name:'Create a server',exact:true}).click();await alice.getByRole('button',{name:'Create space',exact:true}).waitFor();await viewportFit(alice,'server management pane')
+ await alice.locator('.hall-management>summary').click();await alice.locator('.hall-scene').waitFor();await viewportFit(alice,'return to halls')
+ for(const [label,width,height] of [['wide',1920,972],['phone',390,844]]){
+  await alice.setViewportSize({width,height});await viewportFit(alice,`personal halls ${label}`)
+  await alice.screenshot({path:resolve(output,`personal-halls-${label}.png`),fullPage:true})
+  if(width<=900)await alice.getByRole('button',{name:'Servers & channels',exact:true}).click()
+  await alice.locator('.hall-enter').scrollIntoViewIfNeeded();await visibleInViewport(alice,'.hall-enter',`personal hall Enter ${label}`)
+  await alice.getByRole('link',{name:'Join a server',exact:true}).click();await alice.getByLabel('Membership invitation',{exact:true}).waitFor();await viewportFit(alice,`personal hall management ${label}`)
+  await alice.locator('.hall-management>summary').click()
+  if(width<=900)await alice.getByRole('button',{name:'Hall',exact:true}).click()
+  await alice.locator('.hall-scene').waitFor()
+ }
  assert.deepEqual(pageErrors,[])
  const result={transport:'intercepted Auth/PostgREST with real local PGlite RLS; not live Supabase',passed:true,requests:requests.length,screenshots:['home-phone','home-desktop','hall-desktop','hall-phone','editor-phone']}
  await writeFile(resolve(output,'verification.json'),JSON.stringify(result,null,2));console.log('PASS',JSON.stringify(result))

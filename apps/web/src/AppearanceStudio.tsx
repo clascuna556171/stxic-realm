@@ -14,13 +14,14 @@ import {
  type Appearance,
 } from './appearance'
 import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels } from './character'
+import type { Direction } from './world/room'
 import { WorkspaceNav } from './WorkspaceNav'
 import { Icon } from './Icon'
 import { CharacterAlcove } from './world/CharacterAlcove'
 import { useAccount } from './Account'
 import { appearanceFor, errorText } from './account-repository'
 
-export function PixelCharacter({ value, portrait = false }: { value: Appearance; portrait?: boolean }) {
+export function PixelCharacter({ value, portrait = false, direction='down', frame=0 }: { value: Appearance; portrait?: boolean; direction?: Direction; frame?: number }) {
  return (
   <svg
    className={portrait ? 'pixel-portrait' : 'pixel-character'}
@@ -29,7 +30,7 @@ export function PixelCharacter({ value, portrait = false }: { value: Appearance;
    role="img"
    aria-label={`${value.hairStyle} hair, ${value.outfit} outfit, ${value.accessory} accessory character preview`}
   >
-   {characterPixels(value).map((p, i) => (
+   {characterPixels(value,direction,frame).map((p, i) => (
     <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} fill={p.color} />
    ))}
   </svg>

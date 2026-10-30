@@ -4,6 +4,8 @@ This folder is the working information source for STXIC Realm. The [original pro
 
 ## Start here
 
+- [Viewport workspaces](docs/WORKSPACE_LAYOUT.md) — fixed navigation, contained scrolling and responsive Chat/Home/Halls layouts.
+
 - [Project context](docs/PROJECT_CONTEXT.md) — purpose, users, scope and success measures.
 - [Visual direction and logo concept](docs/VISUAL_DIRECTION.md) — owner-preferred direction and customization goals.
 - [Rooms and character direction](docs/ROOMS_AND_CHARACTERS_DIRECTION.md) — visual references, customization ideas and open decisions.

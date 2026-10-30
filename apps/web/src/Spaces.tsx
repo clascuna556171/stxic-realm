@@ -138,18 +138,18 @@ function Spaces() {
   await action('manage_space', { p_action, p_space: selected, p_revision: space?.revision, ...extra }, 'Space updated.')
  }
  return (
-  <main className="workspace-page halls-page">
+  <main className="workspace-page halls-page viewport-world">
    <WorkspaceNav current="spaces" />
    <header className="workspace-header">
     <div><span>Realm</span><span className="header-divider">/</span><strong>Server Halls</strong></div>
     <a href="/">Back to chat</a>
    </header>
    <div className="halls-content">
-    <ServerHall spaces={spaces} selected={selected} onSelect={setSelected} channels={channels} loading={loading} detailsLoading={detailsLoading} error={!spaces.length ? error : undefined} onManage={() => { if (management.current) management.current.open = true }} onRetry={() => { setError(''); setLoading(true); void load().catch(e => { setError(errorText(e)); setLoading(false) }) }} />
+    <ServerHall spaces={spaces} selected={selected} onSelect={setSelected} channels={channels} loading={loading} detailsLoading={detailsLoading} error={!spaces.length ? error : undefined} onManage={() => { if (management.current) { management.current.open = true; requestAnimationFrame(()=>management.current?.querySelector('summary')?.focus({preventScroll:true})) } }} onRetry={() => { setError(''); setLoading(true); void load().catch(e => { setError(errorText(e)); setLoading(false) }) }} />
     {error && spaces.length > 0 && <p className="error" role="alert">{error}</p>}
-    <p role="status">{notice}</p>
+    {notice && <p role="status">{notice}</p>}
     <details ref={management} className="hall-management" id="hall-management" open={token ? true : undefined}>
-    <summary>Manage spaces <span>Invitations, channels, members & server settings</span></summary>
+    <summary>Manage spaces</summary>
     <div className="admin-content">
     <nav className="admin-links" aria-label="Administration">
      <a href="/?privacy">Privacy & data</a>

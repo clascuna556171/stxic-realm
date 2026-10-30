@@ -4,12 +4,19 @@ import { rpc, errorText } from '../account-repository'
 import { client, type Channel } from '../data'
 import { listChannels, type SpaceData } from '../space-repository'
 import { WorkspaceNav } from '../WorkspaceNav'
+import { WorldViewSwitch } from '../WorldViewSwitch'
 import { HallCanvas } from './HallCanvas'
 import { HallSceneBoundary } from './HallSceneBoundary'
 import { HallEditor } from './HallStudio'
 import { WorldAmbience } from './WorldAmbience'
 import { getSharedHall, useSocialSnapshot, type SharedHallState, type Announcement } from './social-repository'
 import type { HallLayout } from './hall-layout'
+import {useWalk} from './useWalk'
+import {WalkControls} from './WalkControls'
+import {HallTraveler} from './HallTraveler'
+import {HALL_SPAWN,canWalkHall,hallDoorPoint,hallObjects} from './hall-movement'
+import {facingFrom} from './navigation'
+import type {Point,Direction,RoomAction} from './room'
 import './social-world.css'
 
 export default function SharedServerHall({ space }: { space: string }) {
@@ -22,6 +29,14 @@ function SharedHall({ space }: { space: string }) {
  if(data) protectedForms.current = data
  const formState = data ?? protectedForms.current
  const [editing, setEditing] = useState(false), [busy, setBusy] = useState(false), [notice, setNotice] = useState(''), [ambient, setAmbient] = useState(true)
+ const [view,setView]=useState<'scene'|'details'>('scene')
+ const [position,setPosition]=useState<Point>(HALL_SPAWN),positionRef=useRef<Point>(HALL_SPAWN),[facing,setFacing]=useState<Direction>('down'),[pose,setPose]=useState<RoomAction|null>(null)
+ const walk=useWalk({position:()=>positionRef.current,walkable:p=>!!data?.enabled&&!!data.layout&&canWalkHall(p,data.layout),step:p=>{setPose(null);setFacing(facingFrom(positionRef.current,p,facing));positionRef.current=p;setPosition(p)},enabled:!!data?.enabled&&!editing})
+ const objects=data?.layout?hallObjects(data.layout):[],arrivedObject=objects.find(o=>o.id===walk.arrived),arrivedPortal=walk.arrived?.startsWith('portal:')?Number(walk.arrived.slice(7)):-1
+ function floor(p:Point){setPose(null);walk.go({point:p})}
+ function approachObject(id:string){setPose(null);const object=objects.find(o=>o.id===id);if(object)walk.go({object,id,label:object.name})}
+ function approachPortal(slot:number){setPose(null);walk.go({point:hallDoorPoint(slot),id:`portal:${slot}`,label:`${['West','Central','East'][slot]} channel portal`})}
+ useEffect(()=>{walk.cancel('Hall arrangement loaded. Your walk is local; this hall has no multiplayer presence.');if(data?.layout&&!canWalkHall(positionRef.current,data.layout)){positionRef.current={...HALL_SPAWN};setPosition(positionRef.current)}},[data?.revision,data?.enabled])
  async function mutate(action: string, args: Record<string, unknown> = {}) {
   if (!data || busy) return; setBusy(true); setNotice('')
   try { const next = await rpc<SharedHallState>(client!, 'manage_server_hall', { p_space: space, p_action: action, p_revision: data.revision, ...args }); apply(next); setNotice('Shared hall updated.'); return next }
@@ -44,19 +59,22 @@ function SharedHall({ space }: { space: string }) {
   save: async (layout: HallLayout, revision: number) => { const next = await rpc<SharedHallState>(client!, 'manage_server_hall', { p_space: space, p_action: 'save', p_revision: revision, p_layout: layout }); apply(next); return editorState(next) },
   reload: async () => editorState(await refresh()),
  }}/>
- return <main className="workspace-page shared-hall-page"><WorkspaceNav current="spaces"/><header className="workspace-header"><strong>Shared Server Hall</strong><a href={`/?space=${encodeURIComponent(space)}`}>Return to chat</a></header>
-  <div className="shared-hall-content"><a href="/?spaces">Back to your personal hub</a><h1>{data?.name ?? 'Server hall'}</h1>
-   {error && <p role="alert" className="error">{error}</p>}<div className="social-actions"><button disabled={busy} onClick={() => void refresh().catch(() => {})}>Refresh shared hall</button>{data?.can_edit && data.layout && <button onClick={() => { editorInitial.current = data; setEditing(true) }}>Decorate shared hall</button>}{data?.owner && data.can_edit && <button disabled={busy} onClick={() => void mutate('enabled', { p_enabled: !data.enabled })}>{data.enabled ? 'Disable shared hall' : 'Enable shared hall'}</button>}</div>
+ return <main className="workspace-page shared-hall-page viewport-world"><WorkspaceNav current="spaces"/><header className="workspace-header"><strong>Shared Server Hall</strong><a href={`/?space=${encodeURIComponent(space)}`}>Return to chat</a></header>
+  <div className="shared-hall-content"><div className="shared-hall-heading"><div><a href="/?spaces">Back to your personal hub</a><h1>{data?.name ?? 'Server hall'}</h1></div>
+   <div className="social-actions"><button disabled={busy} onClick={() => void refresh().catch(() => {})}>Refresh shared hall</button>{data?.can_edit && data.layout && <button onClick={() => { editorInitial.current = data; setEditing(true) }}>Decorate shared hall</button>}{data?.owner && data.can_edit && <button disabled={busy} onClick={() => void mutate('enabled', { p_enabled: !data.enabled })}>{data.enabled ? 'Disable shared hall' : 'Enable shared hall'}</button>}</div></div>
+   <WorldViewSwitch value={view} onChange={setView} scene="Hall" details="Board & settings"/>
+   {error && <p role="alert" className="error">{error}</p>}{notice && <p role="status">{notice}</p>}
+   <div className="shared-hall-workspace" data-view={view}><section className="shared-hall-stage" aria-label="Shared hall scene and portals">
    {data ? <><p>{data.enabled ? `Shared account arrangement · Revision ${data.revision}` : 'This server’s hall is disabled. Its saved arrangement is retained. Chat remains available.'}</p>
-    {data.enabled && data.layout && <><HallSceneBoundary key={`${space}:${data.revision}`}><div className="shared-hall-scene"><HallCanvas layout={data.layout}/>{ambient && <WorldAmbience width={768} height={512} hearths={data.layout.pieces.filter(p => p.kind === 'hearth').map(p => ({ x: p.x * 32, y: p.y * 32 }))}/>}</div></HallSceneBoundary><button aria-pressed={ambient} onClick={() => setAmbient(v => !v)}>Ambient effects {ambient ? 'On' : 'Off'}</button>
-     <nav className="shared-hall-portals" aria-label="Channel portals">{data.portals.map((destination, i) => <button key={i} disabled={busy || !destination || !data.portal_names[i]} onClick={() => void portal(i)}>{['West','Central','East'][i]} channel portal{!destination ? ' · unassigned' : data.portal_names[i] ? ` · #${data.portal_names[i]}` : ' · unavailable'}</button>)}</nav>
+    {data.enabled && data.layout && <><div className="shared-hall-scene-stage"><HallSceneBoundary key={`${space}:${data.revision}`}><div className="shared-hall-scene" tabIndex={0} onKeyDown={walk.key} aria-label="Hall. Click or tap floor, furniture or a door. Arrow keys or WASD move; Escape stops."><HallCanvas layout={data.layout} onWalk={floor} onObject={approachObject} onDoor={approachPortal}/><HallTraveler position={position} direction={facing} moving={walk.moving} seated={!!pose}/>{ambient && <WorldAmbience width={768} height={512} hearths={data.layout.pieces.filter(p => p.kind === 'hearth').map(p => ({ x: p.x * 32, y: p.y * 32 }))}/>}</div></HallSceneBoundary></div><div className="scene-arrival">{arrivedPortal>=0&&<button disabled={busy||!data.portals[arrivedPortal]||!data.portal_names[arrivedPortal]} onClick={()=>void portal(arrivedPortal)}>Enter channel {data.portal_names[arrivedPortal]?`#${data.portal_names[arrivedPortal]}`:protectedForms.current?.portals[arrivedPortal]?'unavailable':'unassigned'}</button>}{arrivedObject&&<><strong>{arrivedObject.name}</strong>{['desk','sofa'].includes(arrivedObject.kind)?<button onClick={()=>setPose({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}>{pose?pose.label:arrivedObject.kind==='desk'?'Sit at PC':'Sit on sofa'}</button>:<span>{arrivedObject.description}</span>}</>}{pose&&<button onClick={()=>setPose(null)}>Stand up</button>}</div><WalkControls position={position} moving={walk.moving} message={walk.message} onStep={walk.step} onStop={()=>walk.cancel()}/><button className="shared-hall-ambience" aria-pressed={ambient} onClick={() => setAmbient(v => !v)}>Ambient effects {ambient ? 'On' : 'Off'}</button>
+     <nav className="shared-hall-portals" aria-label="Channel portals">{data.portals.map((destination, i) => <button key={i} disabled={busy || !destination || !data.portal_names[i]} onClick={() => approachPortal(i)}>{['West','Central','East'][i]} channel portal{!destination ? ' · unassigned' : data.portal_names[i] ? ` · #${data.portal_names[i]}` : ' · unavailable'}</button>)}</nav>
      </>}
 
-   </> : !error && <p role="status">Checking hall membership…</p>}{notice && <p role="status">{notice}</p>}
+   </> : !error && <p role="status">Checking hall membership…</p>}</section><aside className="shared-hall-sidebar" aria-label="Hall board and settings">
    {formState && <>
-    <div hidden={!data?.enabled}><AnnouncementBoard space={space} state={formState} refresh={refresh}/></div>
+    <details className="hall-movement-details"><summary>Movement & objects</summary><WalkControls position={position} moving={walk.moving} message={walk.message} onStep={walk.step} onStop={()=>walk.cancel()} onWalk={floor} showSteps={false} disabled={!data?.enabled}/><div className="hall-object-list">{objects.map(o=><button key={o.id} onClick={()=>approachObject(o.id)}>{o.name}</button>)}</div></details><div hidden={!data?.enabled}><AnnouncementBoard space={space} state={formState} refresh={refresh}/></div>
     <div hidden={!data?.owner || !data.can_edit}><HallSettings space={space} state={formState} busy={busy} mutate={mutate}/></div>
-   </>}
+   </>}</aside></div>
   </div>
  </main>
 }

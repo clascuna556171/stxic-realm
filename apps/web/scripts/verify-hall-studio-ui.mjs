@@ -28,7 +28,7 @@ try{
  assert.deepEqual({x:plant.x,y:plant.y},{x:1,y:14})
  await page.getByLabel('Column',{exact:true}).fill('11')
  await page.getByRole('button',{name:'Move component',exact:true}).click()
- await page.getByText('Keep the central aisle and door landings clear.',{exact:true}).waitFor()
+ await page.getByText(/Invalid placement: Keep the central aisle and door landings clear/).waitFor()
  assert.equal((await read()).pieces.at(-1).x,1)
  await page.getByRole('button',{name:'Remove component',exact:true}).click()
  await page.getByRole('button',{name:'Undo',exact:true}).click()

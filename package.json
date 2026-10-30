@@ -12,6 +12,7 @@
     "test:access:ui": "node apps/web/scripts/verify-access-ui.mjs",
     "test:world:ui": "node apps/web/scripts/verify-world-ui.mjs",
     "test:hall:ui": "node apps/web/scripts/verify-hall-studio-ui.mjs",
+    "test:interaction:ui": "node apps/web/scripts/verify-direct-interaction-ui.mjs",
     "test:world:social:ui": "node apps/web/scripts/verify-world-social-ui.mjs",
     "test:profile:ui": "node apps/web/scripts/verify-profile-ui.mjs",
     "release:preflight": "node scripts/release-preflight.mjs",

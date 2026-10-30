@@ -2,7 +2,8 @@ import Phaser from 'phaser'
 import { readAppearance, type Appearance } from '../appearance'
 import type { Visitor } from '../account-repository'
 import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, type Pixel } from '../character'
-import { ROOM, type Point, type RoomObject } from './room'
+import { ROOM, type Direction, type Point, type RoomObject } from './room'
+import { facingFrom, samePoint } from './navigation'
 import { furniturePixels, roomPixels } from './art'
 import { roomLighting } from './lighting'
 
@@ -12,7 +13,7 @@ export function createRoom(
  onInspect: (id: string) => void,
  getPosition: () => Point,
  getObjects: () => RoomObject[],
- options?: { appearance?: Appearance; people?: () => Visitor[] },
+ options?: { appearance?: Appearance; people?: () => Visitor[]; onWalk?: (point:Point) => void; editor?: { enabled:()=>boolean; error:(id:string,x:number,y:number)=>string|null; place:(id:string,x:number,y:number)=>void; status:(message:string)=>void } },
 ) {
  class RoomScene extends Phaser.Scene {
   constructor() {
@@ -92,179 +93,119 @@ export function createRoom(
       .setInteractive({ useHandCursor: true })
       .on('pointerover', () => hoverRing.setVisible(true))
       .on('pointerout', () => hoverRing.setVisible(false))
-      .on('pointerdown', () => onInspect(item.id))
+
      zones.push(zone)
     }
    }
    drawObjects(getObjects())
    this.game.events.on('room:layout', drawObjects)
 
-   const sprite = this.add.graphics()
-   draw(sprite, characterPixels(appearance))
-   const baseY = -CHARACTER_HEIGHT * 0.66
-   sprite.setPosition(-CHARACTER_WIDTH * 0.33, baseY).setScale(0.66)
-   const aura = this.add.ellipse(0, -1, 26, 10, 0xd8c6a1, 0.1)
-   const shadow = this.add.ellipse(0, -2, 22, 7, 0x12191a, 0.5)
-   const avatar = this.add.container(0, 0, [aura, shadow, sprite])
+   // One pointer path serves mouse and touch; editing never runs walking handlers.
+   const preview=this.add.graphics().setDepth(10000)
+   let drag:{id:string;x:number;y:number;offsetX:number;offsetY:number;last:string}|null=null
+   const clearPlacement=()=>{drag=null;preview.clear()}
+   const pointerTile=(p:Phaser.Input.Pointer)=>({x:Math.floor(p.x/tile),y:Math.floor(p.y/tile)})
+   const hit=(p:Point)=>[...getObjects()].reverse().find(o=>p.x>=o.x&&p.x<o.x+o.width&&p.y>=o.y&&p.y<o.y+o.height)
+   this.input.on('pointerdown',(pointer:Phaser.Input.Pointer)=>{
+    if(pointer.button>0)return
+    const p=pointerTile(pointer),item=hit(p)
+    parent.focus({preventScroll:true})
+    if(options?.editor){
+     if(!options.editor.enabled()||!item)return
+     onInspect(item.id);drag={id:item.id,x:item.x,y:item.y,offsetX:p.x-item.x,offsetY:p.y-item.y,last:''}
+     const event=pointer.event as PointerEvent
+     if(event.pointerId!==undefined)this.game.canvas.setPointerCapture(event.pointerId)
+    }else if(item)onInspect(item.id)
+    else options?.onWalk?.(p)
+   })
+   this.input.on('pointermove',(pointer:Phaser.Input.Pointer)=>{
+    if(!drag||!options?.editor)return
+    const p=pointerTile(pointer),x=p.x-drag.offsetX,y=p.y-drag.offsetY,key=`${x},${y}`
+    if(drag.last===key)return
+    drag.last=key
+    const item=getObjects().find(o=>o.id===drag!.id)!
+    const error=options.editor.error(item.id,x,y)
+    preview.clear();preview.fillStyle(error?0xc86767:0xb7e7d5,.22);preview.fillRect(x*tile,y*tile,item.width*tile,item.height*tile)
+    preview.lineStyle(2,error?0xffa3a3:0xb7e7d5,1);preview.strokeRect(x*tile+1,y*tile+1,item.width*tile-2,item.height*tile-2)
+    if(error){preview.lineBetween(x*tile,y*tile,(x+item.width)*tile,(y+item.height)*tile);preview.lineBetween((x+item.width)*tile,y*tile,x*tile,(y+item.height)*tile)}
+    options.editor.status(error?`Invalid placement: ${error}`:`Valid placement · Column ${x+1}, row ${y+1}. Release to place.`)
+   })
+   this.input.on('pointerup',(pointer:Phaser.Input.Pointer)=>{
+    if(!drag||!options?.editor)return
+    const start=drag,p=pointerTile(pointer);clearPlacement()
+    const x=p.x-start.offsetX,y=p.y-start.offsetY
+    if(options.editor.enabled()&&(x!==start.x||y!==start.y))options.editor.place(start.id,x,y)
+   })
+   const cancelPlacement=()=>{if(drag)options?.editor?.status('Placement cancelled. Original position kept.');clearPlacement()}
+   this.input.on('pointerupoutside',cancelPlacement)
+   window.addEventListener('blur',cancelPlacement)
+   this.game.canvas.addEventListener('pointercancel',cancelPlacement)
+   this.game.events.on('room:cancel-placement',cancelPlacement)
 
-   let idleTween: Phaser.Tweens.Tween | null = null
-   const startIdle = () => {
-    if (idleTween) idleTween.stop()
-    sprite.y = baseY
-    idleTween = this.tweens.add({
-     targets: sprite,
-     y: baseY - 1.5,
-     duration: 1000,
-     yoyo: true,
-     repeat: -1,
-     ease: 'Sine.easeInOut',
-    })
+   const motion=matchMedia('(prefers-reduced-motion: reduce)')
+   type Actor={container:Phaser.GameObjects.Container;art:Phaser.GameObjects.Graphics;point:Point;direction:Direction;appearance:Appearance;until:number;sequence:number}
+   const baseY=-CHARACTER_HEIGHT*.66
+   const paint=(actor:Actor,frame=0)=>{actor.art.clear();draw(actor.art,characterPixels(actor.appearance,actor.direction,frame))}
+   const makeActor=(p:Point,value:Appearance):Actor=>{
+    const art=this.add.graphics().setScale(.66).setPosition(-CHARACTER_WIDTH*.33,baseY)
+    const shadow=this.add.ellipse(0,-2,22,7,0x12191a,.5)
+    const container=this.add.container(p.x*tile+16,p.y*tile+27,[shadow,art]).setDepth((p.y+1)*tile)
+    const actor={container,art,point:{...p},direction:'down' as Direction,appearance:value,until:0,sequence:-1};paint(actor);return actor
    }
-   startIdle()
-
-   let moveTween: Phaser.Tweens.Tween | null = null
-   let bobTween: Phaser.Tweens.Tween | null = null
-
-   const position = (p: Point, immediate = false) => {
-    const targetX = p.x * tile + 16
-    const targetY = p.y * tile + 27
-    const targetDepth = (p.y + 1) * tile
-
-    if (immediate || (avatar.x === 0 && avatar.y === 0)) {
-     avatar.setPosition(targetX, targetY).setDepth(targetDepth)
-     return
-    }
-
-    if (moveTween) moveTween.stop()
-    if (bobTween) bobTween.stop()
-    if (idleTween) idleTween.pause()
-
-    bobTween = this.tweens.add({
-     targets: sprite,
-     y: baseY - 3,
-     duration: 110,
-     yoyo: true,
-     ease: 'Quad.easeOut',
-    })
-
-    moveTween = this.tweens.add({
-     targets: avatar,
-     x: targetX,
-     y: targetY,
-     duration: 220,
-     ease: 'Linear',
-     onUpdate: () => {
-      avatar.setDepth(targetDepth)
-     },
-     onComplete: () => {
-      startIdle()
-     },
-    })
+   const avatar=makeActor(getPosition(),appearance)
+   const moveActor=(actor:Actor,p:Point,reset=false)=>{
+    if(reset){this.tweens.killTweensOf(actor.container);actor.direction='down';actor.point={...p};actor.until=0;actor.container.setPosition(p.x*tile+16,p.y*tile+27).setDepth((p.y+1)*tile);paint(actor);return}
+    if(samePoint(actor.point,p))return
+    const adjacent=Math.abs(p.x-actor.point.x)+Math.abs(p.y-actor.point.y)===1
+    actor.direction=facingFrom(actor.point,p,actor.direction);actor.point={...p};paint(actor)
+    this.tweens.killTweensOf(actor.container)
+    const x=p.x*tile+16,y=p.y*tile+27,depth=(p.y+1)*tile
+    // Polling can skip tiles. Snap authoritative snapshots rather than drawing a route through obstacles.
+    if(motion.matches||!adjacent){actor.container.setPosition(x,y).setDepth(depth);actor.until=0;return}
+    actor.until=this.time.now+220
+    this.tweens.add({targets:actor.container,x,y,duration:220,ease:'Linear',onUpdate:()=>actor.container.setDepth(actor.container.y+5),onComplete:()=>{actor.container.setDepth(depth);actor.until=0;paint(actor)}})
    }
-   position(getPosition(), true)
-   this.game.events.on('room:move', position)
-
-   let actionBadge: Phaser.GameObjects.Container | null = null
-   const onAction = (action: { type: string; target: string; label: string } | null) => {
-    if (actionBadge) {
-     actionBadge.destroy(true)
-     actionBadge = null
-    }
-    if (!action) {
-     sprite.setPosition(-CHARACTER_WIDTH * 0.33, baseY)
-     startIdle()
-     return
-    }
-    if (action.type === 'sit') {
-     if (idleTween) idleTween.stop()
-     if (moveTween) moveTween.stop()
-     // Lower character slightly into the chair or sofa cushion
-     sprite.setPosition(-CHARACTER_WIDTH * 0.33, baseY + 5)
-
-     const badgeBg = this.add.graphics()
-     badgeBg.fillStyle(0x191b24, 0.88)
-     badgeBg.fillRoundedRect(-38, -58, 76, 18, 4)
-     badgeBg.lineStyle(1, action.target === 'desk' ? 0x5ce6dc : 0xd8c6a1, 0.85)
-     badgeBg.strokeRoundedRect(-38, -58, 76, 18, 4)
-
-     const text = action.target === 'desk' ? '💻 At PC Desk' : '☕ Relaxing'
-     const badgeText = this.add.text(0, -49, text, {
-      fontFamily: 'Inter, "Segoe UI", sans-serif',
-      fontSize: '8px',
-      color: '#f3f4f8',
-     }).setOrigin(0.5, 0.5)
-
-     actionBadge = this.add.container(0, 0, [badgeBg, badgeText])
-     avatar.add(actionBadge)
-
-     idleTween = this.tweens.add({
-      targets: sprite,
-      y: baseY + 4,
-      duration: 1200,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-     })
+   const position=(p:Point)=>moveActor(avatar,p)
+   this.game.events.on('room:move',position)
+   let actionBadge:Phaser.GameObjects.Text|null=null
+   const onAction=(action:{label:string}|null)=>{
+    actionBadge?.destroy();actionBadge=null
+    // Sitting is a local pose at the validated adjacent floor tile; it never changes coordinates.
+    avatar.art.y=baseY+(action?4:0)
+    if(action){actionBadge=this.add.text(0,-52,action.label,{fontFamily:'Inter, sans-serif',fontSize:'8px',color:'#f3f4f8',backgroundColor:'#191b24',padding:{x:4,y:3}}).setOrigin(.5,1);avatar.container.add(actionBadge)}
+   }
+   this.game.events.on('room:action',onAction)
+   const guests=new Map<string,Actor>()
+   const drawPeople=(people:Visitor[])=>{
+    const ids=new Set(people.map(p=>p.id))
+    for(const [id,actor] of guests)if(!ids.has(id)){actor.container.destroy(true);guests.delete(id)}
+    for(const person of people){
+     let actor=guests.get(person.id)
+     if(!actor){actor=makeActor(person,{...appearance,...person.character});const label=this.add.text(0,-46,person.name.slice(0,18),{fontFamily:'Inter, sans-serif',fontSize:'9px',color:'#f5f3ff',backgroundColor:'#1d1b29',padding:{x:4,y:2}}).setOrigin(.5,1);actor.container.add(label);guests.set(person.id,actor)}
+     const reset=person.sequence<actor.sequence
+     actor.sequence=person.sequence;actor.appearance={...appearance,...person.character};moveActor(actor,person,reset);if(!actor.until)paint(actor)
     }
    }
-   this.game.events.on('room:action', onAction)
-
-   let guests: Map<string, Phaser.GameObjects.Container> = new Map()
-   const drawPeople = (people: Visitor[]) => {
-    const incomingIds = new Set(people.map(p => p.id))
-    for (const [id, container] of guests) {
-     if (!incomingIds.has(id)) {
-      container.destroy(true)
-      guests.delete(id)
-     }
-    }
-    for (const person of people) {
-     const targetX = person.x * tile + 16
-     const targetY = person.y * tile + 27
-     const targetDepth = (person.y + 1) * tile
-     let guestContainer = guests.get(person.id)
-     if (!guestContainer) {
-      const art = this.add.graphics()
-      draw(art, characterPixels({ ...appearance, ...person.character }))
-      art.setScale(0.66).setPosition(-CHARACTER_WIDTH * 0.33, baseY)
-      const guestShadow = this.add.ellipse(0, -2, 22, 7, 0x12131c, 0.38)
-      const label = this.add
-       .text(0, -46, person.name.slice(0, 18), {
-        fontFamily: 'Inter, "Segoe UI", sans-serif',
-        fontSize: '9px',
-        color: '#f5f3ff',
-        backgroundColor: '#1d1b29',
-        padding: { x: 4, y: 2 },
-       })
-       .setOrigin(0.5, 1)
-      guestContainer = this.add.container(targetX, targetY, [guestShadow, art, label]).setDepth(targetDepth)
-      guests.set(person.id, guestContainer)
-     } else {
-      this.tweens.add({
-       targets: guestContainer,
-       x: targetX,
-       y: targetY,
-       duration: 220,
-       ease: 'Linear',
-       onUpdate: () => {
-        guestContainer?.setDepth(targetDepth)
-       },
-      })
-     }
-    }
-   }
-   drawPeople(options?.people?.() ?? [])
-   this.game.events.on('room:people', drawPeople)
+   drawPeople(options?.people?.()??[])
+   this.game.events.on('room:people',drawPeople)
+   const animation=this.time.addEvent({delay:85,loop:true,callback:()=>{for(const actor of [avatar,...guests.values()])if(actor.until>this.time.now&&!motion.matches)paint(actor,Math.floor(this.time.now/85)%2+1)}})
+   const reduce=()=>{for(const actor of [avatar,...guests.values()]){this.tweens.killTweensOf(actor.container);actor.container.setPosition(actor.point.x*tile+16,actor.point.y*tile+27).setDepth((actor.point.y+1)*tile);actor.until=0;paint(actor)}}
+   motion.addEventListener('change',reduce)
 
    this.events.once('shutdown', () => {
     this.game.events.off('room:layout', drawObjects)
     this.game.events.off('room:move', position)
     this.game.events.off('room:action', onAction)
     this.game.events.off('room:people', drawPeople)
+    this.game.events.off('room:cancel-placement',cancelPlacement)
+    this.game.canvas.removeEventListener('pointercancel',cancelPlacement)
+    window.removeEventListener('blur',cancelPlacement)
+    motion.removeEventListener('change',reduce)
+    animation.remove()
    })
   }
  }
- return new Phaser.Game({
+ const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent,
   width: ROOM.width * tile,
@@ -276,4 +217,9 @@ export function createRoom(
   audio: { noAudio: true },
   banner: false,
  })
+ let frame=0
+ const resize=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{if(game.isRunning){game.scale.getParentBounds();game.scale.refresh()}})})
+ resize.observe(parent)
+ game.events.once('destroy',()=>{resize.disconnect();cancelAnimationFrame(frame)})
+ return game
 }
