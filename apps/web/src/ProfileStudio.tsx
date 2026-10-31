@@ -1,4 +1,7 @@
 import {ProfileImage} from './ProfileImage'
+import {ProfileFrame} from './ProfileFrame'
+import {FrameGallery} from './FrameGallery'
+import {frameSelection} from './profile-frames'
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react'
 import {AccountGate,useAccount} from './Account'
 import {rpc,invoke,errorText,type Profile} from './account-repository'
@@ -18,8 +21,9 @@ export default function ProfilePage(){const {session}=useAccount();const request
 function ProfileStudio({user}:{user:string}){
  const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space')
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Draft|null>(null),[baseline,setBaseline]=useState(''),[media,setMedia]=useState<ProfileMedia[]>([]),[urls,setUrls]=useState<Record<string,string>>({})
- const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
+ const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'frames'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
  const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null)
+ const avatarInputRef=useRef<HTMLInputElement>(null),bannerInputRef=useRef<HTMLInputElement>(null),photoInputRef=useRef<HTMLInputElement>(null)
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
  const dirty=!!draft&&JSON.stringify(draft)!==baseline,own=user===viewer
  latest.current={dirty,noteDirty:note!==noteBase.note}
@@ -41,7 +45,6 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
   catch(e){if(alive.current){setRetryUpload(attempt);setError(errorText(e))}}
  }
  async function upload(file:File|undefined,kind:ProfileMedia['kind']){if(!file||uploading||busy)return;setUploading(kind);setError('');try{
-  // Compare original bytes, not names or timestamps, and reuse the exact normalized payload.
   if(!file.size||file.size>IMAGE_LIMIT)throw new Error('Choose an image up to 8 MiB.')
   const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer()),fingerprint=kind+':'+file.type+':'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')
   const attempt=retryUpload?.fingerprint===fingerprint?retryUpload:{kind,clientId:crypto.randomUUID(),fingerprint,blob:await normalizeProfileImage(file)}
@@ -51,19 +54,21 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
  async function removeUpload(m:ProfileMedia){if(busy||uploading||!confirm('Permanently delete this unused upload?'))return;setBusy(true);try{await invoke(client!,'realm-profile-media',{action:'delete',id:m.id});serial.current++;setMedia(ms=>ms.filter(x=>x.id!==m.id));setNotice('Unused upload deleted.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function social(action:'message'|'friend'|'block'){if(busy||!snapshot)return;setBusy(true);try{if(action==='message'){const id=await rpc<string>(client!,'open_direct',{p_user:user});location.assign('/?dm='+encodeURIComponent(id))}else if(action==='friend'){await rpc(client!,'request_friend',{p_handle:snapshot.profile.username});setNotice('Friend request sent.')}else{await rpc(client!,'set_block',{p_user:user,p_block:true});await read();setNotice('Account blocked.')}}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function saveNote(e:FormEvent){e.preventDefault();setBusy(true);try{const next=await rpc<{note:string;revision:number}>(client!,'save_profile_note',{p_user:user,p_note:note,p_revision:noteBase.revision});setNoteBase(next);setNotice('Your private note is saved.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
+ function triggerAvatarEdit(){setTab('images');avatarInputRef.current?.click()}
+ function triggerBannerEdit(){setTab('images');bannerInputRef.current?.click()}
  const view=own?draft:snapshot?{profile:snapshot.profile,card:snapshot.card}:null
  return <main className="workspace-page account-profile-page"><WorkspaceNav current="profile"/><header className="workspace-header"><strong>{own?'Your account profile':'Member profile'}</strong><nav className="admin-links"><a href="/?friends">Friends & messages</a><a href="/?privacy">Privacy & data</a></nav></header>
   <div className="account-profile-content"><div className="account-profile-intro"><div><h1>{own?'Your profile, your way.':'Meet your people.'}</h1><p>{own?'Make a profile that feels like you. Your world character has its own studio.':'Account photos and profiles are separate from world characters.'}</p></div>{own&&<a href="/?appearance">Customize your world character <Icon name="arrow"/></a>}</div>
    {error&&<p role="alert" className="error">{error}</p>}{loadError&&<p role="alert" className="error">{loadError}</p>}{notice&&<p role="status" className="profile-notice">{notice}</p>}
    {own&&snapshot&&<div className="profile-mobile-switch" aria-label="Profile editor view"><button type="button" aria-pressed={phonePanel==='edit'} onClick={()=>setPhonePanel('edit')}>Edit profile</button><button type="button" aria-pressed={phonePanel==='preview'} onClick={()=>setPhonePanel('preview')}>Preview profile</button></div>}
    {!snapshot?<div className="social-empty"><p>{loadError?'Your profile could not be opened. Your unsaved edits are kept until you leave.':'Opening profile…'}</p><button onClick={()=>void read()}>Try opening profile again</button></div>:view&&<div className={`account-profile-layout ${own?`phone-${phonePanel}`:'is-public'}`}>
-    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles}>
+    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
      {!own&&<div className="account-profile-actions"><button className="profile-message" disabled={busy||!snapshot.friends} onClick={()=>void social('message')}>Message</button>{!snapshot.friends&&<button disabled={busy} onClick={()=>void social('friend')}>Add friend</button>}<a href={`/?home=${user}`}>Visit home</a><button onClick={()=>setReport(true)}>Report</button><button disabled={busy} onClick={()=>void social('block')}>Block</button></div>}
     </AccountCard>{!own&&<form className="private-profile-note" onSubmit={saveNote}><label>Note (only visible to you)<textarea aria-label="Private profile note" value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/></label><button disabled={busy||note===noteBase.note}>Save private note</button></form>}{own&&<p className="profile-preview-help">Live preview · Changes are shared when you save.</p>}</aside>
     {own&&draft&&<form className="account-profile-editor profile-form" onSubmit={save} noValidate>
      <div className="profile-editor-top"><h2>Profile details</h2><div className="social-actions"><button type="button" disabled={busy||!!uploading} onClick={()=>void reload()}>Reload from account</button><button className="primary" disabled={busy||!!uploading||!dirty||stale}>Save profile</button></div></div>
      <p className="profile-save-state" role="status">{stale?'Profile changed on another device. Reload before saving.':uploading?'Uploading image…':dirty?'Unsaved profile changes.':'Your current profile is saved.'}</p>
-     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['identity','images','style','sections'] as const;const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[3]:tabs[(i+(e.key==='ArrowRight'?1:3))%4];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{(['identity','images','style','sections'] as const).map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',style:'Style',sections:'Sections'})[t]}</button>)}</div>
+     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['identity','images','frames','style','sections'] as const;const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[4]:tabs[(i+(e.key==='ArrowRight'?1:4))%5];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{(['identity','images','frames','style','sections'] as const).map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',frames:'Profile frames',style:'Style',sections:'Sections'})[t]}</button>)}</div>
      <fieldset disabled={busy||!!uploading} className="profile-editor-fields"><legend className="sr-only">Profile customization fields</legend>
       <div id="profile-panel-identity" role="tabpanel" aria-labelledby="profile-tab-identity" hidden={tab!=='identity'}>
        <label>Display name<input aria-label="Display name" required value={draft.profile.display_name} maxLength={40} onChange={e=>field('display_name',e.target.value)}/></label>
@@ -73,14 +78,37 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
        <label>Short bio<input aria-label="Short bio" maxLength={160} value={draft.profile.bio} onChange={e=>field('bio',e.target.value)}/></label>
        <label>About you<textarea aria-label="About you" maxLength={2000} rows={6} value={draft.card.about} onChange={e=>card({about:e.target.value})}/><small>{draft.card.about.length}/2000 characters</small></label>
       </div>
-      <div id="profile-panel-images" role="tabpanel" aria-labelledby="profile-tab-images" hidden={tab!=='images'}><h3>Account photos</h3><p>Upload your own images. Your character’s look stays in the character studio.</p><p className="muted">PNG, JPEG, WebP, GIF or AVIF · up to 8 MiB each. Static images are processed before upload. GIF animation is preserved within the server budget.</p>
-       {(['avatar','banner','photo'] as const).map(kind=><label className="profile-file-control" key={kind}>{kind==='avatar'?'Upload account photo':kind==='banner'?'Upload banner':'Upload gallery photo'}<input aria-label={kind==='avatar'?'Upload account photo':kind==='banner'?'Upload banner':'Upload gallery photo'} type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],kind);e.target.value=''}} disabled={kind==='photo'&&draft.card.gallery.length>=6}/></label>)}
+      <div id="profile-panel-images" role="tabpanel" aria-labelledby="profile-tab-images" hidden={tab!=='images'}>
+       <h3>Account photos</h3><p>Upload your own photos and banner. Your character’s look stays in the character studio.</p><p className="muted">PNG, JPEG, WebP, GIF or AVIF · up to 8 MiB each. Static images are processed before upload. GIF animation is preserved within the server budget.</p>
+       <div className="profile-custom-media-grid">
+        <div className="profile-media-action-tile">
+         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="avatar"/></div><div><strong>Profile photo</strong><small>{draft.card.avatar_id?'Custom avatar photo set':'Initials placeholder'}</small></div></div>
+         <div className="profile-media-tile-buttons">
+          <label className="profile-icon-button primary"><Icon name="pencil"/><span>Edit photo</span><input ref={avatarInputRef} aria-label="Upload account photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'avatar');e.target.value=''}}/></label>
+          {draft.card.avatar_id&&<button type="button" className="profile-icon-button" onClick={()=>card({avatar_id:null})}>Remove</button>}
+         </div>
+        </div>
+        <div className="profile-media-action-tile">
+         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="sparkle"/></div><div><strong>Profile banner</strong><small>{draft.card.banner_id?'Custom banner set':'Default banner'}</small></div></div>
+         <div className="profile-media-tile-buttons">
+          <label className="profile-icon-button primary"><Icon name="pencil"/><span>Edit banner</span><input ref={bannerInputRef} aria-label="Upload banner" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'banner');e.target.value=''}}/></label>
+          {draft.card.banner_id&&<button type="button" className="profile-icon-button" onClick={()=>card({banner_id:null})}>Remove</button>}
+         </div>
+        </div>
+        <div className="profile-media-action-tile">
+         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="plus"/></div><div><strong>Gallery photos</strong><small>{draft.card.gallery.length}/6 photos</small></div></div>
+         <div className="profile-media-tile-buttons">
+          <label className={`profile-icon-button primary ${draft.card.gallery.length>=6?'disabled':''}`}><Icon name="plus"/><span>Add photo</span><input ref={photoInputRef} aria-label="Upload gallery photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'photo');e.target.value=''}} disabled={draft.card.gallery.length>=6}/></label>
+         </div>
+        </div>
+       </div>
        {retryUpload&&<p className="muted">The last upload can be retried while this page stays open. <button type="button" disabled={busy||!!uploading||(retryUpload.kind==='photo'&&draft.card.gallery.length>=6)} onClick={()=>void retryImage()}>Retry image upload</button></p>}
        <div className="social-actions"><button type="button" onClick={()=>card({avatar_id:null})}>Remove account photo</button><button type="button" onClick={()=>card({banner_id:null})}>Remove banner</button></div>
        <h3>Crop & framing</h3>{(['avatar_x','avatar_y','banner_x','banner_y'] as const).map(key=><label key={key}>{({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]}<input type="range" aria-label={({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]} min={0} max={100} value={draft.card.style[key]} onChange={e=>style({[key]:Number(e.target.value)})}/></label>)}
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
        <h3>Your upload library <small>{media.length}/30 files</small></h3><p>Unused uploads stay private. Remove an image from your saved profile before deleting its file.</p><ul className="profile-upload-library">{media.map(m=><li key={m.id}>{urls[m.id]&&<ProfileImage src={urls[m.id]} alt={`${m.kind} upload`} loading="lazy"/>}<span>{m.kind} · {m.width} × {m.height}{m.state!=='ready'?` · ${m.state}`:''}</span><div className="social-actions">{m.state==='ready'&&<button type="button" onClick={()=>{if(m.kind==='avatar')card({avatar_id:m.id});else if(m.kind==='banner')card({banner_id:m.id});else card({gallery:draft.card.gallery.includes(m.id)?draft.card.gallery.filter(id=>id!==m.id):[...draft.card.gallery,m.id].slice(0,6)})}}>{m.kind==='photo'?(draft.card.gallery.includes(m.id)?'Hide photo':'Show photo'):'Use image'}</button>}<button type="button" onClick={()=>void removeUpload(m)}>Delete upload</button></div></li>)}</ul>
       </div>
+      <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale}/></div>
       <div id="profile-panel-style" role="tabpanel" aria-labelledby="profile-tab-style" hidden={tab!=='style'}><h3>Make it yours</h3><div className="profile-color-fields">{(['surface','text','accent'] as const).map(key=><label key={key}>{({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]}<input type="color" aria-label={({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]} value={draft.card.style[key]} onChange={e=>style({[key]:e.target.value})}/><code>{draft.card.style[key]}</code></label>)}</div>
        <label>Profile font<select aria-label="Profile font" value={draft.card.style.font} onChange={e=>style({font:e.target.value as ProfileStyle['font']})}><option value="sans">Clean sans serif</option><option value="serif">Classic serif</option><option value="mono">Monospace</option></select></label>
        <label>Photo shape<select aria-label="Photo shape" value={draft.card.style.avatar_shape} onChange={e=>style({avatar_shape:e.target.value as ProfileStyle['avatar_shape']})}><option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="square">Square</option></select></label>
@@ -99,11 +127,22 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
   </div>
  </main>
 }
-function AccountCard({profile,card,urls,roles,children}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];children:React.ReactNode}){
+function AccountCard({profile,card,urls,roles,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
  const theme=card.style,avatar=card.avatar_id?urls[card.avatar_id]:null,banner=card.banner_id?urls[card.banner_id]:null
  const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font]} as CSSProperties
- return <article className="account-profile-card" style={vars}><div className="account-profile-banner" style={{height:theme.banner_height}}>{banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}</div>
-  <div className="account-profile-card-body"><div className="account-profile-topline"><div className={`account-profile-photo shape-${theme.avatar_shape}`}>{avatar?<ProfileImage src={avatar} alt={`${profile.display_name} account photo`} style={{objectPosition:`${theme.avatar_x}% ${theme.avatar_y}%`}}/>:<span aria-label="No account photo">{profile.display_name.trim().slice(0,2).toUpperCase()||'R'}</span>}</div>{card.status&&<p className="account-profile-status">{card.status}</p>}</div>
+ return <article className="account-profile-card" style={vars}>
+  <div className="account-profile-banner" style={{height:theme.banner_height}}>
+   {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
+   {onEditBanner&&<button type="button" className="profile-banner-pencil-btn" aria-label="Edit banner" title="Edit banner" onClick={onEditBanner}><Icon name="pencil"/><span>Edit banner</span></button>}
+  </div>
+  <div className="account-profile-card-body">
+   <div className="account-profile-topline">
+    <div className="account-profile-avatar-wrap">
+     <ProfileFrame className="account-profile-photo" avatarSrc={avatar} {...frameSelection(theme)} focusX={theme.avatar_x} focusY={theme.avatar_y} initials={profile.display_name.trim().slice(0,2).toUpperCase()||'R'} label={`${profile.display_name} account photo`}/>
+     {onEditAvatar&&<button type="button" className="profile-avatar-pencil-btn" aria-label="Edit profile photo" title="Edit profile photo" onClick={onEditAvatar}><Icon name="pencil"/></button>}
+    </div>
+    {card.status&&<p className="account-profile-status">{card.status}</p>}
+   </div>
    <div className="account-profile-name"><h2>{profile.display_name||'Your display name'}</h2><p>@{profile.username||'your_handle'}{card.pronouns&&<> · {card.pronouns}</>}</p>{profile.bio&&<p className="account-profile-short-bio">{profile.bio}</p>}</div>{children}
    {roles.length>0&&<section className="account-card-section"><h3>Server roles</h3><p>{roles.join(', ')}</p></section>}
    {theme.sections.filter(s=>!theme.hidden.includes(s)).map(section=><section className="account-card-section" key={section} data-profile-section={section}><h3>{sectionNames[section]}</h3>

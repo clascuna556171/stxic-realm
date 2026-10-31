@@ -1,0 +1,171 @@
+/* Viewport workspaces: chrome stays put; only the appropriate content pane scrolls. */
+:root{--workspace-bottom:0px}
+.shell.realm-chat{height:100dvh;min-height:0;overflow:hidden;grid-template-rows:minmax(0,1fr)}
+.realm-chat>.sidebar{height:100%;max-height:none;min-height:0;overflow:hidden}
+.realm-chat .sidebar-heading,.realm-chat .side-section,.realm-chat .account{flex:none}
+.realm-chat .sidebar>nav{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+.realm-chat .chat,.realm-chat .chat-body,.realm-chat .conversation,.dm-page,.dm-content{min-height:0;min-width:0;overflow:hidden}
+.realm-chat .chat-header{flex:none}
+.realm-chat .conversation,.dm-page .conversation{display:flex;flex-direction:column;height:100%;min-height:0}
+.conversation>.dm-toolbar,.conversation>.composer,.conversation>.dm-note,.conversation>.error{flex:none}
+.conversation>.dm-thread{overflow-y:auto;overscroll-behavior:contain;min-height:0;flex:1;scrollbar-gutter:stable}
+.conversation>.report-form{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+.conversation:has(>.report-form)>.dm-thread{display:none}
+.realm-chat .server-details{min-height:0;overscroll-behavior:contain}
+.server-details-top{position:sticky;top:0;z-index:2;background:var(--realm-surface)}
+.workspace-nav{height:100dvh;min-height:0;overflow:visible;flex-shrink:0}
+.workspace-nav>nav{flex-shrink:0}
+.viewport-world{height:100dvh;min-height:0!important;overflow:hidden;contain:layout paint;display:flex;flex-direction:column;padding-bottom:var(--workspace-bottom)}
+.viewport-world>.workspace-header{flex:none;min-height:58px;padding-block:10px}
+.viewport-world :is(.room-content,.halls-content,.shared-hall-content){flex:1;min-height:0;min-width:0;width:100%;max-width:1600px;margin:0 auto;padding:18px 24px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+.viewport-world .room-heading{flex:none;margin:0;gap:12px}
+.viewport-world .room-heading h1,.viewport-world .hall-introduction h1,.viewport-world .shared-hall-heading h1{font-size:clamp(24px,2.5vw,34px);margin:0 0 5px;line-height:1.15}
+.viewport-world .room-heading p{margin:0}
+.viewport-world .room-layout{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 310px}
+.viewport-world .room-main{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.viewport-world .room-scene-head,.viewport-world .room-bottom{flex:none;padding:12px 16px}
+.viewport-world .room-canvas-frame{flex:1;min-height:0;display:grid;place-items:center;container-type:size;padding:8px}
+.viewport-world .room-canvas{width:min(100%,calc(100cqh * 4 / 3));height:auto;aspect-ratio:4/3;max-height:none;position:relative}
+.viewport-world .room-inspector{display:block;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:18px;scrollbar-gutter:stable}
+.viewport-world .room-inspector .room-object-list{max-height:none;overflow:visible}
+.viewport-world .room-inspector .home-social-panel{margin-top:20px;padding-top:20px}
+.viewport-world .home-social-navigation{display:grid;gap:6px;padding:10px 0}
+.viewport-world .home-social-toolbar{gap:6px}
+.viewport-world .home-social-panel h2{font-size:21px}
+.viewport-world .home-social-panel form{margin:12px 0}
+.viewport-world .world-social input,.viewport-world .world-social textarea{max-width:100%}
+.viewport-world .home-social-panel .social-actions{align-items:stretch;flex-direction:column}
+.world-view-switch{display:none;flex:none;gap:6px}
+.world-view-switch button{flex:1;min-height:44px;padding:8px 14px;border:1px solid var(--realm-line);border-radius:8px;background:var(--realm-surface);color:var(--realm-text);font:inherit;font-size:12px;cursor:pointer}
+.world-view-switch button[aria-pressed=true]{background:var(--realm-selected);border-color:var(--realm-accent)}
+.world-view-switch button:focus-visible{outline:2px solid var(--realm-accent);outline-offset:2px}
+.viewport-world .server-hall{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.viewport-world .halls-content{max-width:none;padding:12px 18px;gap:8px}
+.hall-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;min-width:0}
+.hall-toolbar .hall-scene-tools{gap:14px;min-width:0}
+.hall-theme-name{display:flex;align-items:center;gap:8px;min-width:0;font-size:12px;color:var(--realm-muted)}
+.hall-theme-name svg{width:16px;height:16px;flex:none}
+.hall-toolbar .hall-intro-actions>a{min-height:40px;padding:8px 12px}
+.hall-toolbar .hall-ambience,.hall-toolbar .hall-scene-tools>a{min-height:40px}
+.viewport-world .hall-introduction{flex:none;margin:0;gap:12px}
+.viewport-world .hall-preview-note,.viewport-world .hall-layout-warning{margin:0;flex:none}
+.viewport-world .hall-layout{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) 300px}
+.viewport-world .hall-world{display:flex;flex-direction:column;min-height:0}
+.hall-scene-stage{flex:1;min-height:0;display:grid;place-items:center;container-type:size;background:#11161d}
+.viewport-world .hall-scene{width:min(100%,calc(100cqh * 3 / 2));aspect-ratio:3/2;flex:none;min-height:0}
+.viewport-world .hall-world-top,.viewport-world .hall-world-bottom{flex:none}
+.viewport-world .hall-directory{display:flex;gap:0;min-height:0;padding:16px 14px 0}
+.viewport-world .hall-server-list{flex:1;min-height:70px;max-height:none;overflow-y:auto;overscroll-behavior:contain;margin-bottom:10px}
+.viewport-world .hall-directory-heading{margin-bottom:10px;flex:none}
+.viewport-world .hall-search,.viewport-world .hall-selected,.viewport-world .hall-directory-foot{flex:none}
+.viewport-world .hall-selected{margin-top:0;padding-top:12px;padding-bottom:12px}
+.viewport-world .hall-selected-title h3{font-size:20px}
+.viewport-world .hall-directory-foot{padding:8px 0}
+.viewport-world .hall-wayfinding{flex:none;padding-top:0;gap:20px}
+.viewport-world .hall-wayfinding>a{min-height:40px;padding:0}
+.viewport-world .hall-management{flex:none;margin:0;min-height:0;padding:0;border-top:0}
+.viewport-world .halls-content:has(.hall-management[open])>.server-hall{display:none}
+.viewport-world .hall-management[open]{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.viewport-world .hall-management>summary{position:sticky;top:0;background:var(--realm-bg);z-index:1;min-height:44px}
+.viewport-world .hall-preview-invitation{flex:none;margin:0;padding:8px 0}
+.viewport-world .hall-preview-invitation h2,.viewport-world .hall-preview-invitation p{display:none}
+.viewport-world .shared-hall-heading{display:flex;justify-content:space-between;gap:20px;align-items:center;flex:none}
+.viewport-world .shared-hall-heading>a{font-size:12px}
+.viewport-world .shared-hall-heading .social-actions{margin:0}
+.shared-hall-workspace{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:20px;flex:1;min-height:0}
+.shared-hall-stage{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.shared-hall-stage>p{flex:none;font-size:12px;color:var(--realm-muted);margin:0 0 12px}
+.shared-hall-scene-stage{flex:1;min-height:0;display:grid;place-items:center;container-type:size;background:var(--realm-surface);border-radius:8px}
+.viewport-world .shared-hall-scene{width:min(100%,calc(100cqh * 3 / 2));margin:0;aspect-ratio:3/2;flex:none}
+.viewport-world .shared-hall-scene>.hall-pixel-canvas{display:block;width:100%;height:100%}
+.shared-hall-sidebar{min-height:0;min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:0 16px;background:var(--realm-surface);border-radius:8px;scrollbar-gutter:stable}
+.shared-hall-sidebar .world-social{margin-top:0;border-top:0;padding-top:18px}
+.shared-hall-sidebar .world-social h2{font-size:20px}
+.viewport-world .shared-hall-portals{flex:none;gap:6px;padding:10px 0}
+.viewport-world .shared-hall-portals button{flex:1;font-size:11px;min-width:0}
+.shared-hall-ambience{align-self:start;flex:none;margin-top:10px}
+@media(min-width:651px) and (max-height:760px){
+ .workspace-nav{padding-top:6px;padding-bottom:6px;overflow:visible}
+ .workspace-nav>nav{margin-top:6px;gap:0}
+ .workspace-nav nav a{min-height:clamp(30px,6.1dvh,46px);padding:2px 0;gap:2px;font-size:10px}
+ .workspace-nav .workspace-account a{min-height:clamp(30px,6.1dvh,46px)}
+ .workspace-nav nav svg{width:18px;height:18px}
+ .workspace-nav>a[aria-label="Realm chat"]{min-height:30px}
+ .workspace-nav>a[aria-label="Realm chat"] svg{max-height:28px}
+ .viewport-world :is(.room-content,.halls-content,.shared-hall-content){padding-block:10px;gap:8px}
+ .viewport-world .hall-wayfinding small,.viewport-world .hall-directory-foot,.viewport-world .hall-world-bottom>span{display:none}
+ .viewport-world .room-bottom{padding-block:6px}
+ .viewport-world .room-scene-head{padding-block:8px}
+ .viewport-world .hall-selected p{margin-block:8px}
+ .viewport-world .hall-directory{overflow-y:auto;overscroll-behavior:contain}
+}
+@media(max-width:1100px){.viewport-world .hall-layout{grid-template-columns:minmax(0,1fr) 260px}.shared-hall-workspace{grid-template-columns:minmax(0,1fr) 300px}}
+@media(max-width:900px){
+ .hall-theme-name{display:none}
+ .world-view-switch{display:flex}
+ .viewport-world .room-layout,.viewport-world .hall-layout,.shared-hall-workspace{grid-template-columns:minmax(0,1fr)}
+ .viewport-world[data-view=scene] .room-inspector,.viewport-world[data-view=details] .room-main{display:none}
+ .server-hall[data-view=scene] .hall-directory,.server-hall[data-view=details] .hall-world{display:none}
+ .shared-hall-workspace[data-view=scene] .shared-hall-sidebar,.shared-hall-workspace[data-view=details] .shared-hall-stage{display:none}
+ .viewport-world .room-inspector{border:0;max-height:none}
+ .viewport-world .hall-introduction{flex-direction:row;align-items:center}
+ .viewport-world .hall-introduction h1{font-size:28px}
+ .viewport-world .hall-directory{max-height:none;overflow-y:auto;overscroll-behavior:contain}
+ .viewport-world .hall-wayfinding{display:none}
+ .viewport-world .shared-hall-heading{display:block}
+ .viewport-world .shared-hall-heading .social-actions{margin-top:8px}
+}
+@media(max-width:800px){
+ .shell.realm-chat{grid-template-columns:68px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+ .realm-chat>.sidebar{grid-column:2;grid-row:1;height:auto;max-height:none}
+ .realm-chat>.chat{grid-column:2;grid-row:2}
+ .realm-chat .sidebar-heading{padding:8px 12px 4px}
+ .realm-chat .sidebar>nav{flex:none;overflow-x:auto;overflow-y:hidden;min-height:44px;scrollbar-gutter:auto}
+ .realm-chat .sidebar>nav button{flex:none;min-height:40px;padding:7px 10px}
+ .realm-chat .account{display:flex;min-height:36px;padding:3px 12px}
+ .realm-chat .account>div{flex:1;min-width:0}
+ .realm-chat .account small{display:none}
+ .realm-chat .account button{min-height:32px;padding:5px 10px}
+ .realm-chat .space-switcher{display:flex;align-items:center;gap:10px}
+ .realm-chat .space-switcher select{min-width:0;min-height:36px;padding-block:5px}
+}
+@media(max-width:650px){
+ .hall-toolbar{flex-wrap:wrap;gap:4px}
+ .hall-toolbar .hall-scene-tools{width:100%;justify-content:space-between}
+ .hall-toolbar .hall-intro-actions{width:100%}
+ :root{--workspace-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+ .workspace-nav{height:var(--workspace-bottom);overflow:visible}
+ .workspace-nav>nav{flex-shrink:1}
+ .shell.realm-chat{height:calc(100dvh - var(--workspace-bottom));grid-template-columns:minmax(0,1fr)}
+ .realm-chat>.sidebar,.realm-chat>.chat{grid-column:1}
+ .viewport-world{padding-bottom:var(--workspace-bottom);padding-left:0}
+ .viewport-world :is(.room-content,.halls-content,.shared-hall-content){padding:10px 12px;gap:10px}
+ .viewport-world>.workspace-header{min-height:50px;padding:8px 12px}
+ .viewport-world .room-heading h1,.viewport-world .hall-introduction h1{font-size:25px}
+ .viewport-world .room-heading p,.viewport-world .hall-introduction p{font-size:11px}
+ .viewport-world .room-heading{align-items:center;flex-direction:row}
+ .viewport-world .room-studio-link{min-height:40px;padding:8px;font-size:11px;white-space:nowrap}
+ .viewport-world .room-scene-head{padding:8px 10px;gap:8px;flex-wrap:wrap}
+ .viewport-world .room-scene-head>span{display:none}
+ .viewport-world .room-bottom{padding:8px 10px;gap:8px}
+ .viewport-world .room-bottom p{font-size:10px}
+ .viewport-world .room-inspector{padding:14px}
+ .viewport-world .hall-introduction{flex-direction:column;align-items:start;gap:8px}
+ .viewport-world .hall-intro-actions{width:100%;gap:8px}
+ .viewport-world .hall-intro-actions>a{flex:1;min-height:40px;justify-content:center}
+ .viewport-world .hall-preview-note{font-size:10px;margin:0}
+ .viewport-world .hall-world-top{padding:6px 10px}
+ .viewport-world .hall-world-bottom{display:none}
+ .viewport-world .hall-preview-invitation{display:none}
+ .viewport-world .hall-channel-preview{margin-bottom:10px}
+ .dm-page{height:100dvh;min-height:0;padding-bottom:var(--workspace-bottom)}
+ .dm-content{padding-inline:12px}
+}
+@media(min-width:651px) and (max-height:500px){
+ .viewport-world .room-heading,.viewport-world .hall-introduction p,.viewport-world .hall-world-bottom,.viewport-world .hall-preview-invitation{display:none}
+ .viewport-world .hall-introduction h1{font-size:24px}
+ .viewport-world .room-scene-head{min-height:48px}
+ .viewport-world .room-bottom>div>p:not([role]){display:none}
+ .viewport-world .shared-hall-stage{overflow-y:auto;overscroll-behavior:contain}
+ .viewport-world .shared-hall-scene-stage{min-height:140px}
+}

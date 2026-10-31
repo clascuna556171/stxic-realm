@@ -4,11 +4,14 @@ This folder is the working information source for STXIC Realm. The [original pro
 
 ## Start here
 
+- [Viewport workspaces](docs/WORKSPACE_LAYOUT.md) — fixed navigation, contained scrolling and responsive Chat/Home/Halls layouts.
+
 - [Project context](docs/PROJECT_CONTEXT.md) — purpose, users, scope and success measures.
 - [Visual direction and logo concept](docs/VISUAL_DIRECTION.md) — owner-preferred direction and customization goals.
 - [Rooms and character direction](docs/ROOMS_AND_CHARACTERS_DIRECTION.md) — visual references, customization ideas and open decisions.
 - [Logo kit and usage](docs/BRAND_ASSETS.md) — SVG variants and brand application.
 - [Design and experience](docs/DESIGN.md) — visual direction, navigation and accessibility.
+- [Account profile frames](docs/PROFILE_FRAMES.md) — original collections, draft/equip behavior and local verification limits.
 - [Features and behavior](docs/FEATURES.md) — messaging, homes, halls, identity and multiplayer.
 - [Architecture and data](docs/ARCHITECTURE.md) — proposed stack, boundaries, data and contracts.
 - [Security and operations](docs/SECURITY_OPERATIONS.md) — privacy, moderation, deployment and quality gates.

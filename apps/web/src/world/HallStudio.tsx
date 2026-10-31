@@ -51,8 +51,9 @@ export function HallEditor({remote}:{remote?:RemoteHallEditor}) {
   window.addEventListener('storage',changed)
   return()=>window.removeEventListener('storage',changed)
  },[user])
- function commit(next:HallLayout){setHistory(h=>editHall(h,next))}
+ function commit(next:HallLayout){if(busy)return;setHistory(h=>editHall(h,next))}
  function travel(direction:'undo'|'redo') {
+  if(busy)return
   setHistory(h=>travelHall(h,direction))
   setNotice(direction==='undo'?'Edit undone.':'Edit restored.')
  }
@@ -73,9 +74,9 @@ export function HallEditor({remote}:{remote?:RemoteHallEditor}) {
  }
  function move(id:string,x:number,y:number) {
   const target=layout.pieces.find(p=>p.id===id)
-  if(!target)return
+  if(!target||busy)return
   const result=placeHallPiece(layout,{...target,x,y})
-  if(result.error){setNotice(result.error);return}
+  if(result.error){setNotice(`Invalid placement: ${result.error} Original position kept.`);return}
   commit(result.layout);setNotice('Position updated. The door landings and central aisle stay clear.')
  }
  function position(e:FormEvent){e.preventDefault();if(piece)move(piece.id,Number(column)-1,Number(row)-1)}
@@ -113,12 +114,12 @@ export function HallEditor({remote}:{remote?:RemoteHallEditor}) {
   <WorkspaceNav current="spaces" />
   <header className="workspace-header"><div><span>Server Halls</span><span className="header-divider">/</span><strong>{remote?`${remote.name} · Hall Studio`:'Hall Studio'}</strong></div><a href={exit} onClick={e=>{if(dirty&&!confirm('Discard unsaved hall changes?'))e.preventDefault()}}>Back to the hall<Icon name="arrow"/></a></header>
   <div className="hall-studio-content">
-   <div className="hall-studio-intro"><div><h1>{remote?'Decorate your server hall.':'Make an entrance.'}</h1><p>{remote?'Shared with server members. Save to publish this arrangement.':'Your hall. Your atmosphere. Every piece in its place.'}</p></div><div className="hall-save-actions"><span role="status">{dirty?'Unsaved changes':parseHall(savedRaw.current)?'Saved arrangement':'Starter arrangement'}</span><button onClick={()=>travel('undo')} disabled={!history.past.length}>Undo</button><button onClick={()=>travel('redo')} disabled={!history.future.length}>Redo</button><button className="primary" onClick={save} disabled={busy||!!remote&&!remote.writable||conflict||(!dirty&&parseHall(savedRaw.current)!==null)}><Icon name="check"/>Save hall</button></div></div>
+   <div className="hall-studio-intro"><div><h1>{remote?'Decorate your server hall.':'Make an entrance.'}</h1><p>{remote?'Shared with server members. Save to publish this arrangement.':'Your hall. Your atmosphere. Every piece in its place.'}</p></div><div className="hall-save-actions"><span role="status">{dirty?'Unsaved changes':parseHall(savedRaw.current)?'Saved arrangement':'Starter arrangement'}</span><button onClick={()=>travel('undo')} disabled={busy||!history.past.length}>Undo</button><button onClick={()=>travel('redo')} disabled={busy||!history.future.length}>Redo</button><button disabled={busy||!dirty} onClick={()=>{const saved=parseHall(baseline);if(saved){setHistory({past:[],present:saved,future:[]});setNotice('Unsaved changes cancelled. Saved arrangement restored.')}}}>Cancel changes</button><button className="primary" onClick={save} disabled={busy||!!remote&&!remote.writable||conflict||(!dirty&&parseHall(savedRaw.current)!==null)}><Icon name="check"/>Save hall</button></div></div>
    {remote&&!remote.writable&&<p role="alert">{remote.error||'Editing permission changed. Your draft is still open. Reload to check current access.'}</p>}
    <div className="hall-studio-layout">
     <section className="hall-workbench" aria-label="Hall arrangement">
      <div className="hall-workbench-head"><span><Icon name="hall"/>Live hall preview</span><span>{worldPalettes[layout.theme].name}</span></div>
-     <div className="hall-editor-canvas"><HallSceneBoundary fallback="The hall preview could not load. You can still arrange components using the list and position fields."><HallCanvas layout={layout} editing selected={selected} onSelect={setSelected} onMove={move}/></HallSceneBoundary></div>
+     <div className="hall-editor-canvas"><HallSceneBoundary fallback="The hall preview could not load. You can still arrange components using the list and position fields."><HallCanvas layout={layout} editing selected={selected} onSelect={setSelected} onMove={move} disabled={busy||!!remote&&!remote.writable} onStatus={setNotice}/></HallSceneBoundary></div>
      <div className="hall-edit-help"><Icon name="compass"/><p>Drag a component to move it. Or select one, focus the hall and use arrow keys. The center path stays open.</p></div>
      <div className="hall-placement-panel">
       <div><h2>{item?.name??'Select a component'}</h2><p>{item?.description??'Choose a piece in the hall or the placed-components list.'}</p></div>

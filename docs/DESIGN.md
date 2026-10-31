@@ -1,5 +1,17 @@
 # Design and experience
 
+## Viewport workspaces — 30 October 2026
+
+Chat/DMs and the main Home/Halls views stay within the browser viewport. The workspace rail, channel heading/account controls, chat header and composer stay in place; messages and long lists scroll inside their own panels. Worlds fit their original proportions within the available stage. Home social features and shared-hall boards/settings sit beside the scene, with Scene/Details buttons on narrower windows and retained drafts. Short windows use compact navigation and scrollable detail fallbacks. Full editors and long profile/settings forms keep normal document scrolling. See [workspace layout](WORKSPACE_LAYOUT.md) for boundaries and verification.
+
+## Account profile frames — 30 October 2026
+
+Profile frames extend the existing obsidian profile editor with six original material collections, each with separate circle, rounded-square and square SVG artwork. Frames surround the account photo or initials; world characters remain separate. Selection previews a draft, while the equipped marker reflects the saved collection. The bottom **Save profile & equip** action saves the whole profile; **Reset frame changes** restores only the saved frame, shape and effects. Compact portraits and reduced-motion views suppress optional effects. Frame art is independent of the private app palette; the interface remains dark. See [profile frames](PROFILE_FRAMES.md) for implementation, local verification and pending hosted rollout.
+
+The owner requested more visible effects after the first pass felt plain. Each collection now has shape-following animated edge light and its own particle treatment: crimson embers, gold/jewel glints, woodland fireflies, cyan/violet circuits, fine white sparkles or floating pastel charms. The **Animated effects** preference controls both the fitting and gallery previews; gallery motion runs for the equipped, hovered or keyboard-focused sample. Motion pauses offscreen and in background documents, and the full static artwork remains for compact and reduced-motion views.
+
+The owner subsequently rejected subtle edge motion and named Discord decorations as the reference. The current effect layer therefore adds larger animated objects: flames, sapphire starbursts, butterflies, lightning shards, monochrome star flares and playful cat/bunny companions. These original motifs extend around the silhouette and keep the central face clear. Preserve this pronounced motion direction when refining cosmetics; the earlier restrained glint-only treatment was not accepted.
+
 ## Approved modern social shell — 29 October 2026
 
 The owner supplied a dark community/chat reference and explicitly selected: (1) modern app chrome with pixel artwork/display lettering mainly in worlds and studios, (2) charcoal surfaces with the user's chosen accent, and (3) rounded messages with the sender's own messages on the right plus server details on desktop. This supersedes the earlier pixel chat headings and sidebar character-alcove direction below.
@@ -100,3 +112,13 @@ These are local prototype capabilities. Directional animation, multiplayer, prof
 Profile, People and Direct message views extend the obsidian workspace. Signed-in Home/Studio/Appearance use account data; anonymous previews remain device-only. Public character identity and private interface theme are separate database records. The five-item narrow navigation is Chat, People, Home, Avatar, Studio; the Profile is reachable through the People header. Shared rooms show a text roster/positions alongside the scene. Save conflicts name the need to reload; access revocation ends a visit instead of retaining movement rights. See implementation notes for the checked desktop/phone flows and current limits.
 
 Access/admin/privacy additions inherit these surfaces: space switching in chat, conventional labeled administration forms, scoped report queues and a privacy page with explicit reauthentication and deletion disclosure. Channel and DM message controls share a thread component, preserving scroll on earlier-history loads and device drafts per account/stream. Private/space authority comes from current server state; disabled setup, access loss, saving, expiry and revision-conflict states are visible. No visual identity, artwork or world interaction redesign is included.
+
+## Direct world interaction - 30 October 2026
+
+Home and Halls now support click/tap routes around furniture, adjacent object actions, directional character artwork and editor-only drag placement. Existing obsidian controls, saved layouts and permissions remain the authority. Arrival controls remain in the scene on narrow windows; keyboard, position forms and directories remain available. Shared Home sends each step to the server; Hall walking has no multiplayer presence. See [direct interaction](DIRECT_INTERACTION.md) for behavior, checks and limits.
+
+The subsequent Apple-guided polish keeps scene geometry stable throughout interactions. One movement toolbar holds feedback and arrival actions; Movement discloses secondary controls, Home coordinates are collapsed, and Hall search/directory precede object controls. Appearance alignment, target sizes and focus handling are refined within the existing theme. See [review and verification](WORLD_POLISH.md).
+
+## Furniture actions
+
+Home/Hall item tasks use one named native dialog above the Scene/Details workspace, centered on desktop and a bottom sheet on phones. Use the existing obsidian semantic tokens, normal interface type, controls and standalone action links with at least 44px targets, explicit focus rings, Tab containment, Close/Escape and return focus to the opener. Keep the fixed movement toolbar and canvas geometry stable; notes, timers and links belong in the dialog. See [item interactions](ITEM_INTERACTIONS.md) for storage, permissions and local effects.

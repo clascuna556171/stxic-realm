@@ -6,3 +6,21 @@
 
 .room-inspector:has(.studio-form) .room-object-list{max-height:240px;margin:16px 0 20px}
 @media(max-width:650px){.room-object-list{max-height:none}.room-inspector:has(.studio-form) .room-object-list{max-height:260px}}
+
+.room-scene-head-actions{display:flex;align-items:center;gap:10px}
+.room-action-indicator{display:inline-flex;align-items:center;gap:8px}
+.room-action-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;background:rgba(92,230,220,.12);border:1px solid rgba(92,230,220,.35);color:#7afbf2;font-size:11px;font-weight:500}
+.action-pill-dot{width:6px;height:6px;border-radius:50%;background:#5ce6dc;box-shadow:0 0 6px #5ce6dc}
+.room-action-btn-mini{background:#262832;border:1px solid #454754;color:#e3e4ee;padding:4px 9px;border-radius:5px;font-size:10px;cursor:pointer}
+.room-action-btn-mini:hover{background:#353846;color:#fff}
+.room-wander-toggle{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;background:#20222a;border:1px solid #3c3e4d;border-radius:14px;color:#a9abbd;font-size:11px;cursor:pointer;transition:all .15s ease}
+.room-wander-toggle:hover{background:#292c36;color:#e5e6f2}
+.room-wander-toggle.is-active{background:rgba(216,198,161,.12);border-color:rgba(216,198,161,.35);color:#f4ebd9}
+.wander-pulse{width:6px;height:6px;border-radius:50%;background:#8a8d9e}
+.room-wander-toggle.is-active .wander-pulse{background:#e7c58c;box-shadow:0 0 6px #e7c58c}
+.room-object-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.room-action-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:6px;background:#262832;border:1px solid #454754;color:#e5e6ed;font-size:11px;font-weight:500;cursor:pointer;transition:background .15s ease,color .15s ease}
+.room-action-btn:hover{background:#363844;color:#fff}
+.room-action-btn.primary{background:var(--realm-accent);border-color:var(--realm-accent);color:#14161a;font-weight:600}
+.room-action-btn.primary:hover{opacity:.92}
+.room-action-btn svg{width:12px;height:12px}

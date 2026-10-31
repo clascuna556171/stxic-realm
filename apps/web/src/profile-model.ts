@@ -1,4 +1,4 @@
-export type ProfileStyle={surface:string;text:string;accent:string;font:'sans'|'serif'|'mono';avatar_shape:'circle'|'rounded'|'square';avatar_x:number;avatar_y:number;banner_x:number;banner_y:number;banner_height:number;sections:Section[];hidden:Section[]}
+export type ProfileStyle={surface:string;text:string;accent:string;font:'sans'|'serif'|'mono';avatar_shape:'circle'|'rounded'|'square';avatar_x:number;avatar_y:number;banner_x:number;banner_y:number;banner_height:number;sections:Section[];hidden:Section[];frame_id?:string;frame_effects?:boolean}
 export type Section='about'|'details'|'connections'|'photos'|'member'
 export const sectionNames:Record<Section,string>={about:'About me',details:'Details',connections:'Connections',photos:'Photos',member:'Member since'}
 export type ProfileCard={user_id:string;pronouns:string;status:string;about:string;avatar_id:string|null;banner_id:string|null;gallery:string[];connections:{title:string;url:string}[];details:{label:string;value:string}[];style:ProfileStyle;revision:number;joined_at:string|null}

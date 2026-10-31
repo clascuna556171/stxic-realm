@@ -785,3 +785,14 @@ export function composedRoomPixels(mood: Appearance['mood'], objects: RoomObject
    .flatMap(o => furniturePixels(o.id, mood).map(p => ({ ...p, x: p.x + o.x * 32, y: p.y + o.y * 32 }))),
  ]
 }
+
+/** Reuse the real furniture pixels for occlusion instead of painting a second chair/quilt. */
+export function furnitureActionForeground(id:string,mood:Appearance['mood'],skin:string):Pixel[]{
+ const pixels=furniturePixels(id,mood)
+ if(id==='desk')return [
+  {x:34,y:21,w:5,h:3,color:skin},{x:55,y:21,w:5,h:3,color:skin},
+  ...pixels.filter(p=>p.x>=31&&p.x+p.w<=65&&p.y>=24)]
+ if(id==='sofa')return pixels.filter(p=>p.y>=43)
+ if(id==='bed')return pixels.filter(p=>p.y>=31)
+ return []
+}

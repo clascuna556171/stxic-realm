@@ -10,6 +10,8 @@ import './administration.css'
 import './world/world-theme.css'
 import './navigation.css'
 import './modern-shell.css'
+import './workspace-layout.css'
+import './world/interaction.css'
 import {AuthCallback,Recovery} from './Auth'
 const Settings=lazy(()=>import('./Settings'))
 const Spaces=lazy(()=>import('./Spaces'))
