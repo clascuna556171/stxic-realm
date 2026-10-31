@@ -7,6 +7,8 @@ import { facingFrom, samePoint } from './navigation'
 import { furniturePixels, roomPixels, furnitureActionForeground } from './art'
 import { roomLighting } from './lighting'
 import { furniturePose } from './furniture-pose'
+import {activityOverlay} from './activity-overlay'
+import type {WorldSnapshot,FocusState} from './activity-state'
 
 const tile = 32
 export function createRoom(
@@ -14,7 +16,7 @@ export function createRoom(
  onInspect: (id: string) => void,
  getPosition: () => Point,
  getObjects: () => RoomObject[],
- options?: { action?:()=>RoomAction|null; lights?:()=>Record<string,boolean>; appearance?: Appearance; people?: () => Visitor[]; onWalk?: (point:Point) => void; editor?: { enabled:()=>boolean; error:(id:string,x:number,y:number)=>string|null; place:(id:string,x:number,y:number)=>void; status:(message:string)=>void } },
+ options?: { activity?:()=>WorldSnapshot; localId?:string; focus?:()=>FocusState; action?:()=>RoomAction|null; lights?:()=>Record<string,boolean>; appearance?: Appearance; people?: () => Visitor[]; onWalk?: (point:Point) => void; editor?: { enabled:()=>boolean; error:(id:string,x:number,y:number)=>string|null; place:(id:string,x:number,y:number)=>void; status:(message:string)=>void } },
 ) {
  class RoomScene extends Phaser.Scene {
   constructor() {
@@ -208,6 +210,7 @@ export function createRoom(
    }
    drawPeople(options?.people?.()??[])
    this.game.events.on('room:people',drawPeople)
+   const disposeActivity=activityOverlay(this,()=>new Map([[options?.localId??'local',avatar],...guests]),()=>options?.activity?.()??{messages:[],activity:[]},options?.localId??'local',()=>options?.focus?.())
    const animation=this.time.addEvent({delay:85,loop:true,callback:()=>{for(const actor of [avatar,...guests.values()])if(actor.until>this.time.now&&!motion.matches)paint(actor,Math.floor(this.time.now/85)%2+1)}})
    const reduce=()=>{for(const actor of [avatar,...guests.values()]){this.tweens.killTweensOf(actor.container);actor.container.setPosition(actor.point.x*tile+16,actor.point.y*tile+27).setDepth((actor.point.y+1)*tile);actor.until=0;paint(actor)}reconcilePose()}
    motion.addEventListener('change',reduce)
@@ -224,6 +227,7 @@ export function createRoom(
     window.removeEventListener('blur',cancelPlacement)
     motion.removeEventListener('change',reduce)
     animation.remove()
+    disposeActivity()
    })
   }
  }

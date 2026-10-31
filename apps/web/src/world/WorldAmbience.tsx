@@ -1,6 +1,13 @@
+import './world-activity.css'
 import { useEffect, useRef } from 'react'
 import fireflies from './vfx/fireflies'
 import embers from './vfx/embers'
+import {soundNames,type Sound} from './soundscape'
+import type {useSoundscape} from './useSoundscape'
+
+export function SoundscapeControls({sound}:{sound:ReturnType<typeof useSoundscape>}){
+ return <section className="soundscape" aria-label="Ambient soundscape"><h3>Soundscape</h3><p>Only you hear this mix. Enable a sound to listen.</p><button type="button" aria-pressed={sound.muted} onClick={sound.mute}>{sound.muted?'Unmute sounds':'Mute sounds'}</button>{(Object.keys(soundNames) as Sound[]).map(id=><div className="soundscape-track" key={id}><button type="button" aria-pressed={sound.mix[id].enabled} onClick={()=>void sound.toggle(id)}>{soundNames[id]} {sound.mix[id].enabled?'On':'Off'}</button><label>{soundNames[id]} volume<input type="range" min="0" max="100" step="1" value={Math.round(sound.mix[id].volume*100)} onChange={e=>sound.volume(id,Number(e.target.value)/100)}/></label></div>)}{sound.error&&<p role="alert">{sound.error}</p>}</section>
+}
 
 type Source={x:number;y:number}
 export function WorldAmbience({width=512,height=384,hearths}:{width?:number;height?:number;hearths?:Source[]}) {

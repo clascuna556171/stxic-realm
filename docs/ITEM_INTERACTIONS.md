@@ -37,3 +37,7 @@ PC sitting now renders the character in the actual chair, facing the screens, wi
 `pnpm test:poses:ui` checks the real Phaser artwork/anchors and snapshot/stand/movement/layout lifecycle plus Hall positioning on desktop and phone. Four new unit tests cover artwork, anchor validity and foreground occlusion.
 
 Pose-polish verification: typecheck, 55 unit tests, database suites, production build, direct interaction UI, world-polish UI, the new pose suite and SQL-backed shared-world UI passed. The reviewer independently reproduced/rechecked delayed-renderer replay and confirmed the final desktop/phone coordinate fit. No hosted changes or new migration were made for this polish.
+
+## Conversation and focus follow-up
+
+The workstation timer now lives for the mounted world visit, survives closing its dialog, seats the avatar at the desk/console and pauses on stand/walk. Workstations offer four gesture-enabled synthesized sound tracks with per-track volume and master mute. Shared homes and connected hall channels also bridge live messages and typing to represented avatars. See [WORLD_ACTIVITY.md](WORLD_ACTIVITY.md) for behavior, the migration and its hosted development recovery, retention, commands and current verification. The previous Phaser bundle warning is resolved by production source-module splitting with the warning budget unchanged.

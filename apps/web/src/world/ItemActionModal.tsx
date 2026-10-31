@@ -4,9 +4,11 @@ import {HomeSocial} from './HomeSocial'
 import {rpc,errorText} from '../account-repository'
 import {client} from '../data'
 import {safeProjectUrl,useSocialSnapshot,type HomeSocialState,type ProjectLink} from './social-repository'
-import {emptyContent,itemActionLabel,plantMood,remainingSeconds,sortMemos,type ItemContent,type Memo} from './item-state'
+import {emptyContent,itemActionLabel,plantMood,sortMemos,type ItemContent,type Memo} from './item-state'
 import type {useWorldItems} from './useWorldItems'
 import './item-actions.css'
+import {focusSeconds} from './activity-state'
+import {SoundscapeControls} from './WorldAmbience'
 
 type Items=ReturnType<typeof useWorldItems>
 type Props={items:Items;scope:string;owner?:string;own?:boolean;hall?:boolean;resources?:ReactNode;chat?:string;onRest:()=>void;onSit:()=>void}
@@ -27,7 +29,7 @@ function ItemDialog({items,scope,owner,own=true,hall=false,resources,chat='/',on
    {tab==='personal'&&<LocalNotes storageKey={`stxic-realm:notes:v1:${scope}`} label="Personal Notes"/>}
    {tab==='sticky'&&(hall?<section><h3>Community notes</h3>{resources??<p>Choose a server to read its community resources.</p>}</section>:<ContentPanel owner={owner} own={own} scope={scope} section="notes"/>)}
    {tab==='guestbook'&&(owner?<HomeSocial owner={owner} selected="coffee-table" section="guestbook"/>:<p>Sign in and open an account home to use its shared guestbook.</p>)}
-  </>:work?<>{kind==='desk'&&<button onClick={()=>{onSit();items.close()}}>Sit at PC</button>}{owner?<ProjectCards owner={owner}/>:hall?<section><h3>Server workspace</h3>{resources}</section>:<p>Project links appear here when the home owner shares them in Home social settings.</p>}<FocusTimer scope={scope}/><LocalNotes storageKey={`stxic-realm:snippets:v1:${scope}`} label="Snippet log"/><a className="item-link-action" href={chat}>Return to Chat</a></>
+  </>:work?<>{kind==='desk'&&<button onClick={()=>{onSit();items.close()}}>Sit at PC</button>}{owner?<ProjectCards owner={owner}/>:hall?<section><h3>Server workspace</h3>{resources}</section>:<p>Project links appear here when the home owner shares them in Home social settings.</p>}<FocusTimer items={items} onSit={onSit}/><SoundscapeControls sound={items.sound}/><LocalNotes storageKey={`stxic-realm:snippets:v1:${scope}`} label="Snippet log"/><a className="item-link-action" href={chat}>Return to Chat</a></>
   :kind==='bookshelf'?<>{hall?<><h3>Server resources</h3>{resources??<p>Select a server in the directory to browse its channels and community guides.</p>}</>:<ContentPanel owner={owner} own={own} scope={scope} section="reading"/>}</>
   :['lantern','floor-lamp','hearth'].includes(kind)?<><h3>Ambience</h3><p>Lighting is {items.lights[target.id]===false?'off':'on'} for your view. Your visitors keep their own settings.</p><button aria-pressed={items.lights[target.id]!==false} onClick={()=>items.toggle(target.id)}>{kind==='hearth'?(items.lights[target.id]===false?'Stoke Fire':'Let Fire Rest'):'Toggle Light'}</button>{kind==='hearth'&&<p>Embers follow the fire setting and your reduced-motion preference.</p>}</>
   :kind==='plant'?<><h3>{plantMood(items.watered[target.id])}</h3><p>{items.watered[target.id]?`Last watered ${new Date(items.watered[target.id]).toLocaleString()}`:'This plant has not been watered during this visit.'}</p><button onClick={()=>items.water(target.id)}>Water Plant</button><span key={items.splash} className={items.splash?'item-water-drop':''} aria-hidden="true">{items.splash?'💧':''}</span><p role="status">{items.watered[target.id]?'Watered. Looking greener already.':''}</p></>
@@ -72,10 +74,8 @@ function ReadingList({links,save,readOnly=false}:{links:ProjectLink[];save:(link
 }
 function LinkCards({links}:{links:ProjectLink[]}){return links.length?<ul className="item-links">{links.map((l,i)=>{const url=safeProjectUrl(l.url);return url?<li key={i}><a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"><strong>{l.title}</strong><span>{new URL(url).hostname} · Opens in new tab</span></a></li>:null})}</ul>:<p>No links shared yet.</p>}
 function ProjectCards({owner}:{owner:string}){const load=useCallback(()=>rpc<HomeSocialState>(client!,'home_social',{p_owner:owner}),[owner]),{data,error}=useSocialSnapshot(load);return <section><h3>Owner’s projects</h3>{error?<p role="alert">{error}</p>:data?<LinkCards links={data.links}/>:<p role="status">Loading projects…</p>}</section>}
-function FocusTimer({scope}:{scope:string}){
- const {value,save,error}=useLocalValue<{deadline:number|null;paused:number}>(`stxic-realm:focus:v1:${scope}`,{deadline:null,paused:1500}),[now,setNow]=useState(Date.now())
- useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id)},[])
- const seconds=value.deadline?remainingSeconds(value.deadline,now):value.paused,done=value.deadline!==null&&seconds===0
- return <section><h3>Focus timer</h3><output className="item-timer" aria-label="Focus time remaining">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</output><p role="status">{done?'Focus session complete. Take a break.':value.deadline?'Focus session running. You can close this sheet.':'25 minutes to focus. Start when you’re ready.'}</p><div className="item-actions"><button disabled={done} onClick={()=>{const current=Date.now();setNow(current);save(value.deadline?{deadline:null,paused:remainingSeconds(value.deadline,current)}:{deadline:current+seconds*1000,paused:seconds})}}>{value.deadline?'Pause timer':'Start timer'}</button><button onClick={()=>save({deadline:null,paused:1500})}>Reset timer</button></div>{error&&<p role="alert">{error}</p>}</section>
+function FocusTimer({items,onSit}:{items:Items;onSit:()=>void}){
+ const seconds=focusSeconds(items.focus,items.now),running=items.focus.status==='running'
+ return <section><h3>Focus timer</h3><output className="item-timer" aria-label="Focus time remaining">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</output><p role="status">{items.focus.status==='complete'?'Focus session complete. Take a break.':running?'Deep Work · Standing up pauses your session.':items.focus.status==='paused'?'Session paused. Start to settle back in.':'25 minutes to focus. Start when you’re ready.'}</p><div className="item-actions"><button disabled={seconds===0} onClick={()=>{if(running)items.pauseFocus();else{onSit();items.startFocus(items.target!.id)}}}>{running?'Pause timer':'Start timer'}</button><button onClick={items.resetFocus}>Reset timer</button></div></section>
 }
 export {itemActionLabel}

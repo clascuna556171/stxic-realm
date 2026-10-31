@@ -1,3 +1,4 @@
+import {useTyping} from './world/useWorldActivity'
 import {useEffect,useLayoutEffect,useRef,useState,type FormEvent} from 'react'
 import {useAccount} from './Account'
 import {errorText,publicIdentities,rpc,type PublicIdentity} from './account-repository'
@@ -286,6 +287,7 @@ function formatDiscordTimestamp(dateStr: string) {
 
 export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,onSync,onOpenSettings,availableChannels}:{kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
  const user=useAccount().session!.user.id,key=draftKey(user,kind,id)
+ const worldTyping=useTyping(kind==='channel'&&visible&&!readOnly?{kind:'channel',id}:null,user)
  const [messages,setMessages]=useState<StreamMessage[]>([]),[people,setPeople]=useState<Record<string,PublicIdentity>>({}),[body,setBody]=useState(()=>{try{return localStorage.getItem(key)??''}catch{return ''}}),[error,setError]=useState(''),[status,setStatus]=useState('Loading messages…'),[loading,setLoading]=useState(true),[older,setOlder]=useState(false),[end,setEnd]=useState(false),[sending,setSending]=useState(false),[denied,setDenied]=useState(false),[editing,setEditing]=useState<StreamMessage|null>(null),[editBody,setEditBody]=useState(''),[changing,setChanging]=useState(false),[report,setReport]=useState<StreamMessage|null>(null)
  const [activeMenu,setActiveMenu]=useState<string|null>(null),[copiedId,setCopiedId]=useState<string|null>(null),[replyingTo,setReplyingTo]=useState<StreamMessage|null>(null)
  const [reactions,setReactions]=useState<Record<string,Record<string,string[]>>>(()=>{try{const s=localStorage.getItem(`realm_reactions_${id}`);return s?JSON.parse(s):{}}catch{return {}}})
@@ -446,7 +448,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   }
  }
 
- function fail(e:unknown){if(!alive.current)return;const code=(e as {code?:string})?.code;setError(errorText(e));if(code==='42501'||code==='PT403'){setDenied(true);setMessages([]);setPeople({});setReport(null);setEditing(null);setStatus('Access changed');watermark.current=null;stopSubscription.current()}else setStatus('Reconnecting…')}
+ function fail(e:unknown){if(!alive.current)return;const code=(e as {code?:string})?.code;setError(errorText(e));if(code==='42501'||code==='PT403'){worldTyping.stop();setDenied(true);setMessages([]);setPeople({});setReport(null);setEditing(null);setStatus('Access changed');watermark.current=null;stopSubscription.current()}else setStatus('Reconnecting…')}
 
  useEffect(()=>{
   alive.current=true
@@ -503,7 +505,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
 
  async function send(e:FormEvent){
   e.preventDefault();if(sending||readOnly||denied||!body.trim())return;setSending(true);setError('')
-  const version=draftVersion.current,clientId=retry.current??crypto.randomUUID();retry.current=clientId
+  worldTyping.stop();const version=draftVersion.current,clientId=retry.current??crypto.randomUUID();retry.current=clientId
   try{
    await rpc(client!,'message_send',{p_kind:kind,p_stream:id,p_body:body.trim(),p_client:clientId})
    if(!alive.current)return
@@ -627,7 +629,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
    )}
    <form className="composer" onSubmit={send}>
     <label className="sr-only" htmlFor="stream-body">{title}</label>
-    <input id="stream-body" value={body} disabled={readOnly||denied} maxLength={4000} onChange={e=>{setBody(e.target.value);draftVersion.current++;retry.current=null}} placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}/>
+    <input id="stream-body" value={body} disabled={readOnly||denied} maxLength={4000} onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}} placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}/>
     <button disabled={sending||readOnly||denied||!body.trim()}>{sending?'Sending…':'Send'}</button>
    </form>
    <p className="muted dm-note">{readOnly?'Archived conversations preserve their history.':'Drafts stay on this device for this account. Press Enter to send.'}</p>

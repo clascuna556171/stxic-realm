@@ -25,7 +25,7 @@ try{
  for(const file of migrations){
   await db.exec(await readFile(resolve(root,'supabase/migrations',file),'utf8'));console.log('Applied',file)
  }
- for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql','world_social.sql','account_profiles.sql','profile_frames.sql','home_item_content.sql']){
+ for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql','world_social.sql','account_profiles.sql','profile_frames.sql','home_item_content.sql','world_activity.sql']){
   await db.exec(await readFile(resolve(root,'supabase/tests',file),'utf8'));console.log('PASS',file)
  }
  await db.exec(await readFile(resolve(root,'supabase/tests/integration_fixture_support.sql'),'utf8'))

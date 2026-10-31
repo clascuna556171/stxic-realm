@@ -4,8 +4,10 @@ import {characterPixels,seatedCharacterPixels} from '../character'
 import {furniturePose,type PoseObject} from './furniture-pose'
 import {furnitureActionForeground} from './art'
 import type { Direction, Point, RoomAction } from './room'
+import {TravelerActivity} from './TravelerActivity'
+import {initialFocus,type WorldSnapshot,type FocusState} from './activity-state'
 
-export function HallTraveler({position,direction,moving,action=null,objects=[]}:{position:Point;direction:Direction;moving:boolean;action?:RoomAction|null;objects?:PoseObject[]}){
+export function HallTraveler({position,direction,moving,action=null,objects=[],activity={messages:[],activity:[]},user='local',focus=initialFocus}:{position:Point;direction:Direction;moving:boolean;action?:RoomAction|null;objects?:PoseObject[];activity?:WorldSnapshot;user?:string;focus?:FocusState}){
  const [frame,setFrame]=useState(0)
  useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');let timer:ReturnType<typeof setInterval>|undefined;const start=()=>{clearInterval(timer);setFrame(0);if(moving&&!media.matches)timer=setInterval(()=>setFrame(f=>f===1?2:1),100)};start();media.addEventListener('change',start);return()=>{clearInterval(timer);media.removeEventListener('change',start)}},[moving])
  const appearance=readAppearance(),pose=furniturePose(position,action,objects),x=pose?.x??position.x*32+16,y=pose?.y??position.y*32+27,facing=pose?.direction??direction
@@ -18,5 +20,6 @@ export function HallTraveler({position,direction,moving,action=null,objects=[]}:
    <rect x="-12" y="-54" width="24" height="12" rx="2" fill="#17212bed"/><text x="0" y="-45" textAnchor="middle" fontSize="8" fill="#e0edf3">You</text>
   </g>
   {pose&&<g className="hall-pose-foreground" aria-hidden="true">{furnitureActionForeground(pose.kind,appearance.mood,appearance.skin).map((p,i)=><rect key={i} x={pose.object.x*32+p.x} y={pose.object.y*32+p.y} width={p.w} height={p.h} fill={p.color}/>)}</g>}
+  <TravelerActivity snapshot={activity} user={user} x={x} y={y} focus={focus}/>
  </svg>
 }

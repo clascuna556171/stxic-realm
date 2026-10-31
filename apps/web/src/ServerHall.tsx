@@ -1,3 +1,5 @@
+import {HallConversation} from './world/WorldConversation'
+import {useWorldActivity} from './world/useWorldActivity'
 import {ItemActionModal,itemActionLabel} from './world/ItemActionModal'
 import {useWorldItems} from './world/useWorldItems'
 import {ItemLightLayer} from './world/ItemLightLayer'
@@ -66,9 +68,13 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
  const pages = Math.max(1, Math.ceil(spaces.length / 3))
  const visible = spaces.slice(page * 3, page * 3 + 3)
  const activeChannels = channels.filter(c => !c.archived_at)
+ const [chosenChannel,setChosenChannel]=useState('')
+ const connectedChannel=activeChannels.some(c=>c.id===chosenChannel)?chosenChannel:activeChannels[0]?.id??''
+ const activity=useWorldActivity(!preview&&session&&connectedChannel?{kind:'channel',id:connectedChannel}:null,items.focus)
  const destination = selectedSpace && !selectedSpace.closed_at
   ? `/?space=${encodeURIComponent(selectedSpace.id)}${activeChannels[0] ? `&channel=${encodeURIComponent(activeChannels[0].id)}` : ''}` : null
 
+ useEffect(()=>items.syncAction(action),[action])
  const walk=useWalk({position:()=>positionRef.current,walkable:p=>canWalkHall(p,layout),step:p=>{setAction(null);setFacing(facingFrom(positionRef.current,p,facing));positionRef.current=p;setPosition(p)}})
  const objects=hallObjects(layout),arrivedObject=objects.find(o=>o.id===walk.arrived&&beside(position,o))
  const arrivedSpace=walk.arrived===`server:${selected}`?selectedSpace:null
@@ -107,7 +113,7 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
      </div>
      {!loading && !error && !spaces.length && <div className="hall-scene-message"><Icon name="hall" /><strong>Your story starts here.</strong><span>Create a server or bring an invitation.</span></div>}
      {loading && <div className="hall-scene-message" role="status"><Icon name="hall" /><strong>Lighting the lanterns…</strong><span>Finding your servers.</span></div>}
-     <HallTraveler position={position} direction={facing} moving={walk.moving} action={action} objects={objects}/>
+     <HallTraveler key={connectedChannel} activity={activity.snapshot} user={session?.user.id} focus={items.focus} position={position} direction={facing} moving={walk.moving} action={action} objects={objects}/>
      {pages > 1 && <div className="hall-scene-pagination" aria-label="Hall wings"><button aria-label="Previous hall wing" disabled={page === 0} onClick={() => setPage(p => p - 1)}><Icon name="back" /></button><span>Wing {page + 1} / {pages}</span><button aria-label="Next hall wing" disabled={page + 1 === pages} onClick={() => setPage(p => p + 1)}><Icon name="arrow" /></button></div>}
     </div></div>
     <WalkControls position={position} moving={walk.moving} message={action?action.label:walk.message} onStep={walk.step} onStop={()=>walk.cancel()} onWalk={floor}>{arrivedSpace&&(preview?<a href="/">Sign in to enter</a>:destination&&!detailsLoading?<a href={destination}>Enter server</a>:<span>{detailsLoading?'Loading channels...':'Server closed'}</span>)}{arrivedObject&&<>{['desk','sofa'].includes(arrivedObject.kind)?(!action&&<button onClick={()=>setAction({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}>{arrivedObject.kind==='desk'?'Sit at PC':'Sit on sofa'}</button>):<button onClick={()=>items.open(arrivedObject)}>{itemActionLabel(arrivedObject.kind)}</button>}</>}{action&&<button onClick={()=>setAction(null)}>Stand up</button>}</WalkControls>
@@ -125,6 +131,7 @@ export function ServerHall({ spaces, selected, onSelect, channels: allChannels, 
      {preview ? <a className="hall-enter" href="/">Sign in to enter<Icon name="arrow" /></a> : destination && !detailsLoading ? <a className="hall-enter" href={destination}>Enter server<Icon name="arrow" /></a> : <span className="hall-enter is-disabled">{detailsLoading ? 'Opening the way…' : 'Server closed'}</span>}
     </div>}
     <details className="hall-movement-details"><summary>Hall objects</summary><div className="hall-object-list">{objects.map(o=><button key={o.id} onClick={()=>approachObject(o.id)}>{o.name}</button>)}</div>{arrivedObject&&<><p>{arrivedObject.description}</p><button onClick={()=>items.open(arrivedObject)}>{itemActionLabel(arrivedObject.kind)}</button></>}</details>
+    {!preview&&session&&<HallConversation channels={activeChannels} channel={connectedChannel} onChannel={setChosenChannel}/>}
    </aside>
   </div>
  <ItemActionModal items={items} scope={`${session?.user.id??'guest'}:hall`} hall onRest={()=>{}} onSit={()=>{if(arrivedObject)setAction({type:'sit',target:arrivedObject.id,label:arrivedObject.kind==='desk'?'Sitting at PC':'Sitting on sofa'})}} chat={destination??'/'} resources={selectedSpace&&<><h4>{selectedSpace.name}</h4>{channels.map(c=><p key={c.id}><a className="item-link-action" href={`/?space=${selectedSpace.id}&channel=${c.id}`}>#{c.name}</a></p>)}</>}/></section>

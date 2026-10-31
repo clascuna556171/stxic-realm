@@ -1,0 +1,21 @@
+.world-conversation{flex:none;min-width:0;margin-block:16px;color:var(--realm-text,#e6e8ee)}
+.world-conversation h2{font-size:16px;margin:0 0 8px}
+.world-conversation p{font-size:12px;line-height:1.5}
+.world-conversation ol{list-style:none;margin:12px 0;padding:0;max-height:180px;overflow:auto;overflow-wrap:anywhere}
+.world-conversation li{display:grid;gap:3px;padding:8px 0;font-size:13px}
+.world-conversation li strong{font-size:12px}
+.world-conversation form,.world-conversation label{display:grid;gap:8px;min-width:0}
+.world-conversation input,.world-conversation select{width:100%;min-width:0;min-height:44px;font-size:16px}
+.world-conversation button{min-height:44px}
+.hall-conversation .conversation{display:flex;flex-direction:column;height:420px;max-height:60dvh;min-height:200px;min-width:0;overflow:hidden}
+.hall-conversation .dm-toolbar{display:none}
+.viewport-world .hall-directory:has(.hall-conversation){overflow-y:auto;overscroll-behavior:contain}
+.hall-conversation .thread{min-width:0}
+.soundscape-track{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:center;margin-block:12px}
+.soundscape-track label{font-size:12px;min-width:0}
+.soundscape-track input[type=range]{width:100%;min-height:44px;padding:0;accent-color:var(--accent,#b7d4cf)}
+.soundscape button{min-height:44px}
+.soundscape button[aria-pressed=true]{border-color:var(--accent,#b7d4cf)}
+.soundscape :focus-visible,.world-conversation :focus-visible{outline:2px solid var(--accent,#b7d4cf);outline-offset:2px}
+.hall-speech text{font-family:'Segoe UI',sans-serif;fill:#e6e8ee;font-size:11px}
+@media(max-width:360px){.soundscape-track{grid-template-columns:1fr}}

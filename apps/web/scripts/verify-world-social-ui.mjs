@@ -88,6 +88,19 @@ try {
  await alice.goto(homeUrl);await alice.getByRole('heading',{name:'Guestbook',exact:true}).waitFor()
  // New direct movement is exercised against the actual local SQL function/RLS.
  await bob.goto(homeUrl);await bob.locator('.room-canvas canvas').waitFor()
+ // Room conversation and typing use permission-checked SQL across separate browser identities.
+ const eventually=async(check,label)=>{for(let i=0;i<40;i++){if(await check())return;await new Promise(r=>setTimeout(r,100))}assert.fail(label)}
+ const roomState=()=>asUser(users.alice,()=>sqlRpc('world_activity_snapshot',{p_kind:'home',p_scope:users.alice}))
+ const roomInput=alice.getByLabel('Say something in this room',{exact:true})
+ await roomInput.fill('Hello in the shared world')
+ await eventually(async()=> (await roomState()).activity.some(a=>a.user_id===users.alice&&a.typing_until),'typing is shared')
+ await roomInput.fill('')
+ await eventually(async()=> !(await roomState()).activity.some(a=>a.user_id===users.alice&&a.typing_until),'draft clear stops typing')
+ await roomInput.fill('Hello in the shared world');await alice.getByRole('button',{name:'Say',exact:true}).click()
+ await bob.locator('.world-conversation').getByText('Hello in the shared world',{exact:true}).waitFor()
+ assert.equal((await roomState()).messages[0].author_id,users.alice)
+ assert.equal((await roomState()).activity.find(a=>a.user_id===users.alice)?.typing_until,null)
+
  const clickHomeTile=async(page,x,y)=>{const box=await page.locator('.room-canvas canvas').boundingBox();await page.mouse.click(box.x+(x+.5)*box.width/16,box.y+(y+.5)*box.height/12)}
  await bob.evaluate(()=>document.fonts.ready);const sharedHomeBounds=await bob.locator('.room-canvas').boundingBox()
  await clickHomeTile(bob,2,2);await bob.locator('.scene-arrival').getByRole('button',{name:'Sit at PC',exact:true}).waitFor()
@@ -97,11 +110,16 @@ try {
  assert.ok((besideDesk.x===1||besideDesk.x===5)&&besideDesk.y>=2&&besideDesk.y<4 || (besideDesk.y===1||besideDesk.y===4)&&besideDesk.x>=2&&besideDesk.x<5)
  await bob.locator('.scene-arrival').getByRole('button',{name:'Sit at PC',exact:true}).click();assert.deepEqual(await readBob(),besideDesk,'sitting never invents a shared coordinate')
  await alice.locator('.visitor-list li').filter({hasText:'Bob'}).getByText(`Column ${besideDesk.x+1}, row ${besideDesk.y+1}`,{exact:true}).waitFor()
+ await bob.locator('.room-object-detail').getByRole('button',{name:'Open Workstation',exact:true}).click()
+ await bob.getByRole('dialog').getByRole('button',{name:'Start timer',exact:true}).click();await bob.keyboard.press('Escape')
+ await eventually(async()=> (await roomState()).activity.some(a=>a.user_id===users.bob&&a.focus_target==='desk'&&a.focus_until),'focus state synchronized to another visitor')
+
  moveDelay=350;const beforeRequests=requests.filter(r=>r.user===users.bob&&r.name==='move_home').length
  await clickHomeTile(bob,14,10)
  for(let i=0;i<100&&requests.filter(r=>r.user===users.bob&&r.name==='move_home').length===beforeRequests;i++)await new Promise(r=>setTimeout(r,10))
  await clickHomeTile(bob,8,5);await bob.locator('.room-main .walk-summary').getByText('Destination reached.',{exact:false}).waitFor();moveDelay=0
  assert.deepEqual({x:(await readBob()).x,y:(await readBob()).y},{x:8,y:5})
+ await eventually(async()=> !(await roomState()).activity.some(a=>a.user_id===users.bob&&a.focus_until),'walking clears shared focus')
  // A new owner revision ends this active route; no remaining queued steps may bypass it.
  await clickHomeTile(bob,14,10)
  await asUser(users.alice,async()=>{const home=await db.query('select * from public.homes where owner_id=$1',[users.alice]).then(r=>r.rows[0]);return sqlRpc('save_home',{p_layout:home.layout,p_privacy:'private',p_revision:home.revision})})
@@ -140,6 +158,12 @@ try {
  await alice.getByLabel('West portal destination',{exact:true}).selectOption(channel);await alice.getByRole('button',{name:'Save channel portals',exact:true}).click();await alice.getByRole('button',{name:'Save channel portals',exact:true}).waitFor({state:'visible'});await alice.waitForFunction(()=>document.querySelector('.shared-hall-portals button')?.disabled===false);assert.equal(await alice.getByText('The hall changed. Reload destinations before saving.',{exact:true}).count(),0)
  await alice.getByLabel('New announcement',{exact:true}).fill('Welcome to our shared hall.');await alice.getByRole('button',{name:'Publish announcement',exact:true}).click();await alice.getByText('Announcement saved.',{exact:true}).waitFor()
  await bob.goto(hallUrl);await openHallDetails(bob);await bob.getByText('Welcome to our shared hall.',{exact:true}).waitFor();assert.equal(await bob.getByLabel('New announcement',{exact:true}).count(),0)
+ await alice.getByRole('textbox',{name:'Message this channel',exact:true}).fill('Hall message bridges into the world')
+ await alice.getByRole('button',{name:'Send',exact:true}).click()
+ await alice.locator('.hall-speech').getByText('Hall message', {exact:false}).waitFor()
+ await bob.locator('.hall-conversation').getByText('Hall message bridges into the world',{exact:true}).waitFor()
+
+
  await alice.screenshot({path:resolve(output,'hall-desktop.png'),fullPage:true})
  await bob.setViewportSize({width:320,height:780});await overflow(bob);await bob.screenshot({path:resolve(output,'hall-phone.png'),fullPage:true})
  await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Remove component',exact:true}).click();await bob.getByRole('button',{name:'Undo',exact:true}).click();await bob.getByRole('button',{name:'Redo',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()

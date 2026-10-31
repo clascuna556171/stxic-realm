@@ -13,6 +13,7 @@
     "test:world:ui": "node apps/web/scripts/verify-world-ui.mjs",
     "test:hall:ui": "node apps/web/scripts/verify-hall-studio-ui.mjs",
     "test:poses:ui": "node apps/web/scripts/verify-furniture-poses-ui.mjs",
+    "test:activity:ui": "node apps/web/scripts/verify-world-activity-ui.mjs",
     "test:items:ui": "node apps/web/scripts/verify-item-actions-ui.mjs",
     "test:interaction:ui": "node apps/web/scripts/verify-direct-interaction-ui.mjs",
     "test:world:polish:ui": "node apps/web/scripts/verify-world-polish-ui.mjs",

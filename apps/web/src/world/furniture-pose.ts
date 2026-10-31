@@ -9,6 +9,7 @@ export function furniturePose(position:Point,action:RoomAction|null,objects:Pose
  const kind=object.kind??object.id
  let offset:Point,direction:Direction
  if(action.type==='sit'&&kind==='desk'){offset={x:48,y:45};direction='up'}
+ else if(action.type==='sit'&&kind==='console'){offset={x:16,y:40};direction='up'}
  else if(action.type==='sit'&&kind==='sofa'){offset={x:23,y:46};direction='down'}
  else if(action.type==='rest'&&kind==='bed'){offset={x:44,y:51};direction='down'}
  else return null

@@ -120,7 +120,7 @@
  .realm-chat>.sidebar{grid-column:2;grid-row:1;height:auto;max-height:none}
  .realm-chat>.chat{grid-column:2;grid-row:2}
  .realm-chat .sidebar-heading{padding:8px 12px 4px}
- .realm-chat .sidebar>nav{flex:none;overflow-x:auto;overflow-y:hidden;min-height:44px;scrollbar-gutter:auto}
+ .realm-chat .sidebar>nav{flex:none;overflow-x:auto;overflow-y:auto;min-height:44px;max-height:88px;scrollbar-gutter:auto}
  .realm-chat .sidebar>nav button{flex:none;min-height:40px;padding:7px 10px}
  .realm-chat .account{display:flex;min-height:36px;padding:3px 12px}
  .realm-chat .account>div{flex:1;min-width:0}
