@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
-import path from 'node:path'
 import {
   BADGE_CATALOG,
   BADGE_CATEGORY_NAMES,
@@ -24,8 +23,6 @@ test('badge catalog contains all 32 authentic badges with valid icons', () => {
   const badgeKeys = Object.keys(BADGE_CATALOG)
   assert.equal(badgeKeys.length, 32, 'Must have exactly 32 hallmarks')
 
-  const publicDir = path.resolve('D:/Tech/Projects/stxic-realm/apps/web/public')
-
   for (const [id, badge] of Object.entries(BADGE_CATALOG)) {
     assert.equal(badge.id, id)
     assert.ok(badge.name, `Badge ${id} missing name`)
@@ -34,8 +31,8 @@ test('badge catalog contains all 32 authentic badges with valid icons', () => {
     assert.ok(badge.category in BADGE_CATEGORY_NAMES, `Invalid category for ${id}`)
     assert.ok(badge.rarity in BADGE_RARITY_COLORS, `Invalid rarity for ${id}`)
 
-    const iconPath = path.join(publicDir, badge.icon)
-    assert.ok(fs.existsSync(iconPath), `Icon file missing for ${id}: ${iconPath}`)
+    const iconUrl = new URL(`../public${badge.icon}`, import.meta.url)
+    assert.ok(fs.existsSync(iconUrl), `Icon file missing for ${id}: ${badge.icon}`)
   }
 })
 
