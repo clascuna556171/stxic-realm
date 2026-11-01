@@ -12,6 +12,7 @@ import { activityOverlay } from './activity-overlay'
 import type { WorldSnapshot, FocusState } from './activity-state'
 import { petDisplayName, type EquippedPetSummary, type WildlifeEncounter } from '../pets/pet-model'
 import { getPetPixels, getPetSpriteDimensions } from '../pets/pet-sprites'
+import { petCornerPixels, petRestTile } from './pet-corner'
 import { findSafePetTile, stepPetBehavior, type PetBehaviorState } from './pet-actor'
 
 const tile = 32
@@ -31,6 +32,7 @@ export function createRoom(
   appearance?: Appearance
   people?: () => Visitor[]
   pets?: () => EquippedPetSummary[]
+  petRandom?: () => number
   wildlife?: () => WildlifeEncounter | null
   onPetInteract?: (pet: EquippedPetSummary) => void
   onWildlifeClick?: (encounter: WildlifeEncounter) => void
@@ -152,7 +154,10 @@ export function createRoom(
    }
    this.game.events.on('room:lights', onLights)
 
+   const petCorner = this.add.graphics().setDepth(0.5).setName('pet-corner')
    const drawObjects = (objects: RoomObject[]) => {
+    petCorner.clear()
+    draw(petCorner, petCornerPixels(objects, appearance.mood))
     drawLighting(objects)
     furnishings.forEach(o => o.destroy())
     itemLife.forEach(({ g }) => g.destroy())
@@ -246,6 +251,8 @@ export function createRoom(
     }
     const petHit = hitPet(p)
     if (petHit) {
+     petHit.state.target = undefined
+     petHit.state.intent = undefined
      petHit.state.animState = 'happy'
      petHit.state.ticksInState = 0
      petHit.state.stateDurationTicks = 6
@@ -428,7 +435,9 @@ export function createRoom(
     container: Phaser.GameObjects.Container
     art: Phaser.GameObjects.Graphics
     label: Phaser.GameObjects.Text
+    shadow: Phaser.GameObjects.Ellipse
    }
+   let hoveredPetId: string | null = null
    const petActors = new Map<string, PetNode>()
    const startSpots: Point[] = [
     { x: 6, y: 8 },
@@ -439,10 +448,13 @@ export function createRoom(
    const paintPet = (node: PetNode, frameTick: number) => {
     node.art.clear()
     const dims = getPetSpriteDimensions(node.summary.species_id)
-    const scale = node.summary.species_id === 'triarch' ? 0.8 : 0.85
+    const scale = 1
     node.art.setScale(scale).setPosition((-dims.width * scale) / 2, -dims.height * scale + 2)
+    node.label.setVisible(hoveredPetId === node.summary.id || node.state.animState === 'happy')
+    node.shadow.setDisplaySize(node.state.animState === 'sleep' ? 23 : node.summary.species_id === 'triarch' ? 30 : 19, node.state.animState === 'sleep' ? 4 : 5)
+    node.container.setData('pet-state', node.state)
     const frame = motion.matches ? 0 : frameTick % 4
-    draw(node.art, getPetPixels(node.summary.species_id, node.state.animState, frame))
+    draw(node.art, getPetPixels(node.summary.species_id, node.state.animState, frame, node.state.direction))
    }
 
    const syncPets = (pets: EquippedPetSummary[]) => {
@@ -464,22 +476,25 @@ export function createRoom(
       return
      }
      const occupied = [...petActors.values()].map(n => n.state.point)
-     const spawnPt = findSafePetTile(startSpots[idx] ?? startSpots[0], objects, occupied)
+     const spawnPt = findSafePetTile(pet.personality === 'Sleepy' ? petRestTile(objects, occupied) ?? startSpots[idx] : startSpots[idx], objects, occupied)
      const shadow = this.add.ellipse(0, 0, pet.species_id === 'triarch' ? 26 : 18, 6, 0x10131c, 0.45)
      const art = this.add.graphics()
-     const labelText = pet.title ? `${petDisplayName(pet)} · ${pet.title}` : petDisplayName(pet)
+     const labelText = petDisplayName(pet)
+     const ui = getComputedStyle(parent)
      const label = this.add
       .text(0, -30, labelText, {
        fontFamily: 'Inter, sans-serif',
        fontSize: '8px',
-       color: pet.species_id === 'triarch' ? '#f5d986' : '#ececf4',
-       backgroundColor: '#191824',
+       color: ui.getPropertyValue('--realm-text').trim() || ui.color,
+       backgroundColor: ui.getPropertyValue('--realm-surface').trim() || 'transparent',
        padding: { x: 4, y: 2 },
       })
       .setOrigin(0.5, 1)
+      .setVisible(false)
      const container = this.add
       .container(spawnPt.x * tile + 16, spawnPt.y * tile + 26, [shadow, art, label])
       .setDepth((spawnPt.y + 0.9) * tile)
+      .setName(`pet:${pet.id}`)
      const node: PetNode = {
       summary: pet,
       state: {
@@ -495,6 +510,7 @@ export function createRoom(
       container,
       art,
       label,
+      shadow,
      }
      paintPet(node, lifeTick)
      petActors.set(pet.id, node)
@@ -510,6 +526,7 @@ export function createRoom(
     point: Point
     container: Phaser.GameObjects.Container
     art: Phaser.GameObjects.Graphics
+    badge: Phaser.GameObjects.Text
    }
    let wildlifeNode: WildlifeNode | null = null
 
@@ -535,25 +552,37 @@ export function createRoom(
     const ring = this.add.ellipse(0, 0, 26, 10, 0xd9b152, 0.35)
     const art = this.add.graphics()
     const dims = getPetSpriteDimensions(enc.species_id)
-    art.setScale(0.9).setPosition((-dims.width * 0.9) / 2, -dims.height * 0.9 + 2)
+    art.setScale(1).setPosition(-dims.width / 2, -dims.height + 2)
     draw(art, getPetPixels(enc.species_id, 'idle', 0))
     const badge = this.add
-     .text(0, -32, `✦ Wild ${enc.name} (Click to bond)`, {
+     .text(0, -32, `Wild ${enc.name}`, {
       fontFamily: 'Inter, sans-serif',
       fontSize: '8.5px',
-      color: '#fef08a',
-      backgroundColor: '#251e38',
+      color: getComputedStyle(parent).getPropertyValue('--realm-text').trim() || getComputedStyle(parent).color,
+      backgroundColor: getComputedStyle(parent).getPropertyValue('--realm-surface').trim() || 'transparent',
       padding: { x: 5, y: 2 },
      })
      .setOrigin(0.5, 1)
+     .setVisible(false)
     const container = this.add
      .container(pt.x * tile + 16, pt.y * tile + 26, [ring, art, badge])
      .setDepth((pt.y + 0.95) * tile)
-    wildlifeNode = { encounter: enc, point: pt, container, art }
+    wildlifeNode = { encounter: enc, point: pt, container, art, badge }
    }
 
    syncWildlife(options?.wildlife?.() ?? null)
    this.game.events.on('room:wildlife', syncWildlife)
+   this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+    const point = pointerTile(pointer)
+    hoveredPetId = hitPet(point)?.summary.id ?? null
+    petActors.forEach(node => node.label.setVisible(hoveredPetId === node.summary.id || node.state.animState === 'happy'))
+    wildlifeNode?.badge.setVisible(!!hitWildlife(point))
+   })
+   this.input.on('gameout', () => {
+    hoveredPetId = null
+    petActors.forEach(node => node.label.setVisible(false))
+    wildlifeNode?.badge.setVisible(false)
+   })
 
    const reconcilePose = () => {
     if (activeAction) onAction(activeAction)
@@ -638,7 +667,7 @@ export function createRoom(
         const prevPoint = { ...node.state.point }
         const others = [...petActors.values()].filter(o => o.summary.id !== node.summary.id).map(o => o.state.point)
         if (wildlifeNode) others.push(wildlifeNode.point)
-        node.state = stepPetBehavior(node.state, objects, avatar.point, others)
+        node.state = stepPetBehavior(node.state, objects, avatar.point, others, options?.petRandom?.() ?? Math.random(), [...guests.values()].map(guest => guest.point))
         if (node.state.point.x !== prevPoint.x || node.state.point.y !== prevPoint.y) {
          this.tweens.killTweensOf(node.container)
          const targetX = node.state.point.x * tile + 16

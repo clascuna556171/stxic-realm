@@ -2,6 +2,7 @@ import type { Appearance } from '../appearance'
 import type { Pixel } from '../character'
 import type { RoomObject } from './room'
 import { worldPalettes } from './palette.ts'
+import { petCornerPixels } from './pet-corner.ts'
 import { libraryShelfPixels } from './sprite-art.ts'
 
 // Original, deterministic high-detail pixel artwork inspired by the STXIC Realm v3 & room concepts.
@@ -777,6 +778,7 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
 export function composedRoomPixels(mood: Appearance['mood'], objects: RoomObject[]): Pixel[] {
  return [
   ...roomPixels(mood),
+  ...petCornerPixels(objects, mood),
   ...[...objects]
    .sort((a, b) => a.y - b.y)
    .flatMap(o => furniturePixels(o.id, mood).map(p => ({ ...p, x: p.x + o.x * 32, y: p.y + o.y * 32 }))),

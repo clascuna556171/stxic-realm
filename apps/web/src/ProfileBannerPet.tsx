@@ -1,96 +1,119 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { petDisplayName, type EquippedPetSummary, type PetAnimationState } from './pets/pet-model.ts'
+import type { Direction } from './world/room.ts'
 import { PetSprite } from './pets/PetSprite.tsx'
+import { getPetSpriteDimensions } from './pets/pet-sprites.ts'
+import { bannerRoamBounds, nextBannerStop } from './pets/banner-roam.ts'
+import { usePetMotion } from './pets/usePetMotion.ts'
 
-interface ProfileBannerPetProps {
-  pet: EquippedPetSummary | null | undefined
+export function ProfileBannerPet({ pet }: { pet: EquippedPetSummary | null | undefined }) {
+  return pet ? <BannerCompanion key={pet.id} pet={pet} /> : null
 }
 
-export function ProfileBannerPet({ pet }: ProfileBannerPetProps) {
-  const [animState, setAnimState] = useState<PetAnimationState>(() =>
-    pet?.species_id === 'triarch' ? 'happy' : 'idle',
-  )
-  const [offsetPct, setOffsetPct] = useState(74)
-  const [reducedMotion, setReducedMotion] = useState(() =>
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false,
-  )
+function BannerCompanion({ pet }: { pet: EquippedPetSummary }) {
+  const [pose, setPose] = useState<PetAnimationState>('sit')
+  const [direction, setDirection] = useState<Direction>('down')
+  const [held, setHeld] = useState(false)
+  const [reacting, setReacting] = useState(false)
+  const [bounds, setBounds] = useState<{ min: number; max: number } | null>(null)
+  const { ref, reducedMotion, active } = usePetMotion<HTMLButtonElement>(pet.id)
+  const position = useRef<number | null>(null)
+  const step = useRef(0)
+  const greeted = useRef(false)
+  const reactionTimer = useRef<number | undefined>(undefined)
+  const spriteWidth = getPetSpriteDimensions(pet.species_id).width * 2
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const onChange = () => setReducedMotion(media.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [])
+    const parent = ref.current?.parentElement
+    if (!parent) return
+    const measure = () => setBounds(bannerRoamBounds(parent.clientWidth, spriteWidth))
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(parent)
+    return () => observer.disconnect()
+  }, [ref, spriteWidth])
 
-  // Greeting animation when viewing Triarch on the Founder's profile banner
   useEffect(() => {
-    if (!pet) return
-    if (pet.species_id === 'triarch' && !reducedMotion) {
-      setAnimState('happy')
-      const greetTimer = window.setTimeout(() => setAnimState('idle'), 1800)
-      return () => window.clearTimeout(greetTimer)
-    } else {
-      setAnimState(reducedMotion ? 'sit' : 'idle')
+    const element = ref.current
+    if (!element || !bounds) return
+    const x = Math.min(bounds.max, Math.max(bounds.min, position.current ?? bounds.max))
+    position.current = x
+    element.style.transform = `translate3d(${x}px, 0, 0)`
+    let timer: number | undefined
+    let animation: Animation | undefined
+    let cancelled = false
+    const rest = () => {
+      setDirection('down')
+      setPose(pet.personality === 'Sleepy' ? 'sleep' : step.current % 2 ? 'sit' : 'idle')
+      timer = window.setTimeout(walk, pet.personality === 'Sleepy' ? 8000 : 2600 + step.current % 3 * 700)
     }
-  }, [pet?.id, pet?.species_id, reducedMotion])
-
-  // Lightweight banner edge wandering / resting cycle
-  useEffect(() => {
-    if (!pet || reducedMotion) {
-      setAnimState('sit')
-      return
-    }
-    const states: PetAnimationState[] =
-      pet.personality === 'Sleepy'
-        ? ['sit', 'sleep', 'idle', 'sit']
-        : ['idle', 'walk', 'sit', 'idle']
-    let step = 0
-    const timer = window.setInterval(() => {
-      if (document.hidden) return
-      step = (step + 1) % states.length
-      const next = states[step]
-      setAnimState(next)
-      if (next === 'walk') {
-        setOffsetPct(prev => (prev > 68 ? 56 : 76))
+    const walk = () => {
+      const from = position.current ?? bounds.max
+      const to = nextBannerStop(from, bounds, step.current++, pet.personality)
+      if (Math.abs(to - from) < 8) { rest(); return }
+      setDirection(to < from ? 'left' : 'right')
+      setPose('walk')
+      // Constant ground speed on the compositor, without a frame loop.
+      animation = element.animate([
+        { transform: `translate3d(${from}px, 0, 0)` },
+        { transform: `translate3d(${to}px, 0, 0)` },
+      ], { duration: Math.abs(to - from) / (pet.personality === 'Playful' ? 32 : 23) * 1000, easing: 'linear', fill: 'forwards' })
+      animation.onfinish = () => {
+        if (cancelled) return
+        position.current = to
+        element.style.transform = `translate3d(${to}px, 0, 0)`
+        animation?.cancel()
+        animation = undefined
+        rest()
       }
-    }, 3600)
-    return () => window.clearInterval(timer)
-  }, [pet, reducedMotion])
+    }
+    if (!active || held || reacting) {
+      setDirection('down')
+      setPose(reacting && active ? 'happy' : 'sit')
+    } else if (!greeted.current && pet.species_id === 'triarch') {
+      greeted.current = true
+      setPose('happy')
+      timer = window.setTimeout(rest, 1400)
+    } else rest()
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+      // Freeze an interrupted walk at its visible position, not its destination.
+      if (animation) {
+        const stopped = new DOMMatrixReadOnly(getComputedStyle(element).transform).m41
+        position.current = stopped
+        animation.cancel()
+        element.style.transform = `translate3d(${stopped}px, 0, 0)`
+      }
+    }
+  }, [active, held, reacting, bounds, pet.personality, pet.species_id, ref])
 
-  if (!pet) return null
-
+  useEffect(() => () => window.clearTimeout(reactionTimer.current), [])
   const displayName = petDisplayName(pet)
-  const label = pet.title
-    ? `${displayName} (${pet.name} · ${pet.title})`
-    : `${displayName} (${pet.name})`
-
+  const label = pet.title ? `${displayName} (${pet.name} · ${pet.title})` : `${displayName} (${pet.name})`
   return (
-    <div
+    <button
+      ref={ref}
+      type="button"
       className={`profile-banner-pet ${pet.species_id === 'triarch' ? 'is-triarch' : ''}`}
-      style={{ left: `${offsetPct}%` }}
-      role="group"
-      aria-label={`Banner companion: ${label}`}
+      data-pose={reducedMotion ? 'sit' : pose}
+      data-direction={direction}
+      aria-label={`Greet banner companion: ${label}`}
       title={label}
+      onPointerEnter={event => { if (event.pointerType === 'mouse') setHeld(true) }}
+      onPointerLeave={() => { if (!ref.current?.matches(':focus-visible')) setHeld(false) }}
+      onFocus={() => setHeld(true)}
+      onBlur={() => setHeld(false)}
       onClick={() => {
-        if (!reducedMotion) {
-          setAnimState('happy')
-          window.setTimeout(() => setAnimState('idle'), 1400)
-        }
+        if (!active) return
+        setReacting(true)
+        window.clearTimeout(reactionTimer.current)
+        reactionTimer.current = window.setTimeout(() => setReacting(false), 1400)
       }}
     >
-      <PetSprite
-        speciesId={pet.species_id}
-        state={reducedMotion ? 'sit' : animState}
-        scale={pet.species_id === 'triarch' ? 1.15 : 1.25}
-        animate={!reducedMotion}
-        label={label}
-      />
-      <span className="profile-banner-pet-tag" aria-hidden="true">
-        {displayName}
-      </span>
-    </div>
+      <span className="profile-banner-pet-shadow" aria-hidden="true" />
+      <PetSprite speciesId={pet.species_id} state={reducedMotion ? 'sit' : pose} direction={direction} scale={2} animate={active} />
+      <span className="profile-banner-pet-tag" aria-hidden="true">{displayName}</span>
+    </button>
   )
 }

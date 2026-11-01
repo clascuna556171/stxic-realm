@@ -1,9 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { Direction } from '../world/room.ts'
 import type { PetAnimationState, PetSpeciesId } from './pet-model.ts'
 import { getPetPixels, getPetSpriteDimensions } from './pet-sprites.ts'
+import { usePetMotion } from './usePetMotion.ts'
 
 interface PetSpriteProps {
   speciesId: PetSpeciesId
+  direction?: Direction
   state?: PetAnimationState
   scale?: number
   animate?: boolean
@@ -15,6 +18,7 @@ interface PetSpriteProps {
 export function PetSprite({
   speciesId,
   state = 'idle',
+  direction = 'down',
   scale = 2,
   animate = true,
   silhouette = false,
@@ -22,38 +26,11 @@ export function PetSprite({
   label,
 }: PetSpriteProps) {
   const { width, height } = getPetSpriteDimensions(speciesId)
-  const svgRef = useRef<SVGSVGElement>(null)
+  const { ref: svgRef, reducedMotion, active } = usePetMotion<SVGSVGElement>()
   const [frame, setFrame] = useState(0)
-  const [inView, setInView] = useState(true)
-  const [reducedMotion, setReducedMotion] = useState(() =>
-    typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      : false,
-  )
 
   useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const onChange = () => setReducedMotion(media.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [])
-
-  useEffect(() => {
-    const el = svgRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0]) setInView(entries[0].isIntersecting)
-      },
-      { threshold: 0.05 },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    if (!animate || reducedMotion || !inView || silhouette) {
+    if (!animate || !active || silhouette) {
       setFrame(0)
       return
     }
@@ -64,10 +41,10 @@ export function PetSprite({
       }
     }, intervalMs)
     return () => window.clearInterval(timer)
-  }, [animate, reducedMotion, inView, silhouette, state])
+  }, [animate, active, silhouette, state])
 
   const activeFrame = !animate || reducedMotion || silhouette ? 0 : frame
-  const pixels = getPetPixels(speciesId, state, activeFrame)
+  const pixels = getPetPixels(speciesId, state, activeFrame, direction)
 
   return (
     <svg
@@ -88,7 +65,7 @@ export function PetSprite({
           y={p.y}
           width={p.w}
           height={p.h}
-          fill={silhouette ? '#151621' : p.color}
+          fill={silhouette ? 'var(--realm-muted)' : p.color}
         />
       ))}
     </svg>

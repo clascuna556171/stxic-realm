@@ -4,6 +4,7 @@ import {pgcrypto} from '@electric-sql/pglite/contrib/pgcrypto'
 import {readFile,readdir} from 'node:fs/promises'
 import {resolve} from 'node:path'
 import assert from 'node:assert/strict'
+import {verifyPetAuthorityUpgrade} from './pet-authority-upgrade.mjs'
 const root=resolve(import.meta.dirname,'../..'),db=new PGlite({extensions:{pgcrypto}})
 const setup=`create role anon;create role authenticated;create role service_role bypassrls;
  create schema auth;create schema extensions;
@@ -25,12 +26,13 @@ try{
  for(const file of migrations){
   await db.exec(await readFile(resolve(root,'supabase/migrations',file),'utf8'));console.log('Applied',file)
  }
- for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql','world_social.sql','account_profiles.sql','profile_frames.sql','home_item_content.sql','world_activity.sql','pets_and_wildlife.sql']){
+ for(const file of ['social_homes.sql','access_messaging.sql','access_boundaries.sql','world_social.sql','account_profiles.sql','profile_frames.sql','home_item_content.sql','world_activity.sql','pets_and_wildlife.sql','pet_authority.sql']){
   await db.exec(await readFile(resolve(root,'supabase/tests',file),'utf8'));console.log('PASS',file)
  }
  await db.exec(await readFile(resolve(root,'supabase/tests/integration_fixture_support.sql'),'utf8'))
  await db.exec(`begin;insert into auth.users(id,email,email_confirmed_at) values('10000000-0000-4000-8000-000000000001','fixture@example.invalid',now());select public.realm_test_fixture(array['10000000-0000-4000-8000-000000000001']::uuid[]);select public.realm_test_control('10000000-0000-4000-8000-000000000001','suspended');rollback;`)
  console.log('PASS dedicated integration fixture support')
+ await verifyPetAuthorityUpgrade(root,setup,migrations)
  const upgrade=new PGlite({extensions:{pgcrypto}})
  try{
   await upgrade.exec(setup)

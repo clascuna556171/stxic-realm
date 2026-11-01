@@ -7,6 +7,7 @@ import {
   validatePetNickname,
 } from '../src/pets/pet-model.ts'
 import { getPetPixels, getPetSpriteDimensions } from '../src/pets/pet-sprites.ts'
+import { bannerRoamBounds, nextBannerStop } from '../src/pets/banner-roam.ts'
 import {
   ALL_HABITAT_TAGS,
   FURNITURE_HABITAT_TAGS,
@@ -21,8 +22,46 @@ import {
   findSafePetTile,
   isWalkableForPet,
   stepPetBehavior,
+  nextPetWaypoint,
 } from '../src/world/pet-actor.ts'
+import { petRestTile, petCornerPixels } from '../src/world/pet-corner.ts'
 import { OBJECTS, ROOM } from '../src/world/room.ts'
+import { readRoomPets } from '../src/world/pet-room-state.ts'
+import { getUserPets, adoptStarterPet, bondWildlifePet, equipPets, updatePetNickname, interactWithPet, grantFounderPet, evaluateWildlifeEncounter } from '../src/pets/pet-repository.ts'
+
+test('pet schema outages reject every account read and mutation without fabricating ownership', async () => {
+  const storageBefore = globalThis.localStorage
+  let storageAccesses = 0
+  globalThis.localStorage = { getItem() { storageAccesses++; return null }, setItem() { storageAccesses++ } }
+  const db = { rpc: async () => ({ data: null, error: { code: 'PGRST202', message: 'Could not find the function in the schema cache' } }) }
+  try {
+    for (const call of [
+      () => getUserPets(db, 'ordinary-user'), () => adoptStarterPet(db, 'cat'),
+      () => bondWildlifePet(db, 'encounter'), () => equipPets(db, 'house', []),
+      () => updatePetNickname(db, 'pet', 'Miso'), () => interactWithPet(db, 'pet'),
+      () => grantFounderPet(db), () => evaluateWildlifeEncounter(db),
+    ]) await assert.rejects(call, /temporarily unavailable.*migrations/)
+    assert.equal(storageAccesses, 0)
+  } finally {
+    if (storageBefore === undefined) delete globalThis.localStorage
+    else globalThis.localStorage = storageBefore
+  }
+})
+
+test('pet repository preserves server errors and authoritative successful responses', async () => {
+  const denial = { code: '42501', message: 'Not permitted' }
+  await assert.rejects(getUserPets({ rpc: async () => ({ data: null, error: denial }) }), error => error === denial)
+  const snapshot = { owned: [], equipment: { house_pets: [], banner_pet: null }, is_founder: false }
+  assert.equal(await getUserPets({ rpc: async () => ({ data: snapshot, error: null }) }), snapshot)
+})
+
+test('authoritative empty room pet snapshots clear previous companions and wildlife', () => {
+  const prior = readRoomPets({ house_pets: [{ id: 'old-pet' }], wildlife_encounter: { id: 'old-encounter' } })
+  assert.equal(prior.housePets.length, 1)
+  assert.deepEqual(readRoomPets({ house_pets: [], wildlife_encounter: null }), { housePets: [], wildlife: null })
+  assert.deepEqual(readRoomPets({}), { housePets: [], wildlife: null })
+  assert.equal(prior.housePets.length, 1, 'reading a new snapshot must not mutate the prior visit')
+})
 
 test('pet catalog contains all 8 species with starter, wildlife, achievement, and founder categories', () => {
   assert.equal(PET_SPECIES_CATALOG.length, 8)
@@ -183,4 +222,95 @@ test('house pet actor respects room boundaries, furniture footprints, player spa
 
   const safeTile = findSafePetTile({ x: 2, y: 2 }, OBJECTS, [ROOM.spawn])
   assert.equal(isWalkableForPet(safeTile, OBJECTS, [ROOM.spawn]), true)
+})
+
+test('Village Cat has four distinct bounded views with stable native pixel dimensions', () => {
+  const directions = ['down','up','left','right']
+  assert.equal(new Set(directions.map(d=>JSON.stringify(getPetPixels('cat','idle',0,d)))).size,4)
+  for(const direction of directions) for(const state of ['idle','walk','sit','sleep','happy']) for(let frame=0;frame<4;frame++) {
+    for(const p of getPetPixels('cat',state,frame,direction)) {
+      assert.ok(p.x>=0&&p.y>=0&&p.x+p.w<=32&&p.y+p.h<=32,`${direction}/${state}/${frame} must stay inside the sprite`)
+      assert.ok([p.x,p.y,p.w,p.h].every(Number.isInteger))
+    }
+  }
+  assert.notDeepEqual(getPetPixels('cat','sleep',0),getPetPixels('cat','idle',0),'sleep needs a curled silhouette')
+})
+
+test('resting corner follows the sofa and never occupies a blocked or entrance tile', () => {
+  const mat=petRestTile(OBJECTS)
+  assert.deepEqual(mat,{x:6,y:7})
+  assert.equal(isWalkableForPet(mat,OBJECTS),true)
+  assert.equal(petRestTile(OBJECTS.filter(o=>o.id!=='sofa')),null)
+  const moved=OBJECTS.filter(o=>!['sofa','desk','lantern'].includes(o.id)).concat({...OBJECTS.find(o=>o.id==='sofa'),x:3,y:2})
+  assert.notDeepEqual(petRestTile(moved),mat)
+  const alternate=petRestTile(OBJECTS,[mat])
+  assert.ok(alternate && (alternate.x!==mat.x||alternate.y!==mat.y))
+  for(const mood of ['cozy','medieval','tech'])for(const p of petCornerPixels(OBJECTS,mood)) {
+    assert.ok(p.x>=0&&p.y>=0&&p.x+p.w<=512&&p.y+p.h<=384)
+    assert.match(p.color,/^#[0-9a-f]{6}$/i)
+  }
+})
+
+test('pet routes detour around furniture and decline unreachable destinations', () => {
+  const wall={id:'test-wall',name:'Wall',description:'',x:6,y:6,width:1,height:3}
+  let point={x:5,y:7},target={x:7,y:7},steps=0
+  while((point.x!==target.x||point.y!==target.y)&&steps<20) {
+    const next=nextPetWaypoint(point,target,[wall])
+    assert.ok(next)
+    assert.equal(Math.abs(next.x-point.x)+Math.abs(next.y-point.y),1)
+    assert.equal(isWalkableForPet(next,[wall]),true)
+    point=next;steps++
+  }
+  assert.deepEqual(point,target)
+  assert.ok(steps>2,'route must go around the wall')
+  assert.equal(nextPetWaypoint({x:5,y:7},target,[wall],[target]),null)
+})
+
+test('personalities choose grounded activities: rest, inspect, follow, retreat and play', () => {
+  const pet=(personality,point={x:7,y:8})=>({id:'behavior',speciesId:'cat',personality,point,direction:'down',animState:'idle',ticksInState:9,stateDurationTicks:4})
+  let sleepy=pet('Sleepy',{x:9,y:8}),sleptOnMat=false
+  for(let i=0;i<60;i++) {
+    sleepy=stepPetBehavior(sleepy,OBJECTS,ROOM.spawn,[],.1)
+    if(sleepy.animState==='sleep'&&JSON.stringify(sleepy.point)===JSON.stringify(petRestTile(OBJECTS)))sleptOnMat=true
+  }
+  assert.equal(sleptOnMat,true)
+  const curious=stepPetBehavior(pet('Curious'),OBJECTS,ROOM.spawn,[],.1)
+  assert.equal(curious.intent,'inspect');assert.ok(curious.target)
+  const loyal=stepPetBehavior(pet('Loyal'),OBJECTS,{x:10,y:9},[],.1)
+  assert.equal(loyal.intent,'follow');assert.equal(Math.abs(loyal.target.x-10)+Math.abs(loyal.target.y-9),1)
+  const shy=stepPetBehavior(pet('Shy'),OBJECTS,{x:7,y:7},[],.99)
+  assert.equal(shy.intent,'retreat');assert.ok(Math.abs(shy.target.x-7)+Math.abs(shy.target.y-7)>1)
+  const visiting=stepPetBehavior(pet('Shy'),OBJECTS,{x:12,y:9},[],.99,[{x:7,y:7}])
+  assert.equal(visiting.intent,'retreat','an approaching visitor also triggers shy behavior')
+  assert.equal(stepPetBehavior(pet('Playful'),OBJECTS,ROOM.spawn,[],.1).intent,'play')
+  assert.equal(stepPetBehavior(pet('Mischievous'),OBJECTS,ROOM.spawn,[],.1).intent,'inspect')
+})
+
+test('First Wyrm has distinct directional silhouettes and bounded native-pixel poses', () => {
+  const signatures = ['down', 'up', 'left', 'right'].map(direction => JSON.stringify(getPetPixels('triarch', 'idle', 0, direction)))
+  assert.equal(new Set(signatures).size, 4)
+  for (const direction of ['down', 'up', 'left', 'right']) for (const state of ['idle', 'walk', 'sit', 'sleep', 'happy']) for (let frame = 0; frame < 4; frame++) {
+    const pixels = getPetPixels('triarch', state, frame, direction)
+    for (const p of pixels) {
+      assert.ok([p.x, p.y, p.w, p.h].every(Number.isInteger))
+      assert.ok(p.x >= 0 && p.y >= 0 && p.x + p.w <= 48 && p.y + p.h <= 36, `${direction}/${state}/${frame}: ${JSON.stringify(p)}`)
+    }
+    if (state === 'sleep') assert.ok(Math.min(...pixels.map(p => p.y)) >= 20, 'sleep lowers all three heads and folds the wings')
+    if (direction === 'up') assert.equal(pixels.some(p => p.color === '#ffc775'), false, 'rear has no eyes')
+  }
+})
+
+test('banner routes keep the entire pet inside its measured lane, clear of avatar overlap', () => {
+  for (const width of [200, 256, 288, 320, 440, 560, 1000]) for (const spriteWidth of [64, 96]) {
+    const bounds = bannerRoamBounds(width, spriteWidth)
+    assert.ok(bounds.min >= 0 && bounds.max + spriteWidth <= width)
+    if (width >= 288) assert.ok(bounds.min >= 154, 'avatar overlap stays clear')
+    for (const personality of ['Sleepy', 'Curious', 'Playful', 'Shy', 'Loyal', 'Mischievous']) {
+      let x = bounds.max
+      for (let step = 0; step < 12; step++) {
+        x = nextBannerStop(x, bounds, step, personality)
+        assert.ok(x >= bounds.min && x <= bounds.max)
+      }
+    }
+  }
 })

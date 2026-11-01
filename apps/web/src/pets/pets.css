@@ -7,22 +7,55 @@
 }
 
 .pet-pixel-sprite.is-silhouette {
-  filter: drop-shadow(0 0 1px rgba(180, 185, 215, 0.28));
+  filter: drop-shadow(0 0 1px color-mix(in srgb, var(--realm-muted) 28%, transparent));
 }
 
 /* Profile Banner Companion Overlay */
 .profile-banner-pet {
   position: absolute;
   bottom: 4px;
-  transform: translateX(-50%);
+  left: 0;
+  transform: translate3d(154px, 0, 0);
   z-index: 3;
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--realm-text);
+  font: inherit;
   cursor: pointer;
   user-select: none;
-  transition: left 2.4s ease-in-out;
+  min-height: 44px;
   pointer-events: auto;
+}
+
+/* Override the profile editor's general button skin without changing the hit area. */
+.account-profile-page button.profile-banner-pet,
+.account-profile-page button.profile-banner-pet:hover:not(:disabled) {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.profile-banner-pet-shadow {
+  position: absolute;
+  bottom: 1px;
+  left: 22%;
+  width: 56%;
+  height: 5px;
+  background: color-mix(in srgb, var(--realm-bg) 40%, transparent);
+  border-radius: 50%;
+  z-index: -1;
+}
+.profile-banner-pet > .pet-pixel-sprite {
+  width: 64px;
+  height: 64px;
+}
+.profile-banner-pet.is-triarch > .pet-pixel-sprite {
+  width: 96px;
+  height: 72px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -32,13 +65,19 @@
 }
 
 .profile-banner-pet-tag {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 0.68rem;
   line-height: 1.1;
   padding: 2px 6px;
   border-radius: 4px;
-  background: rgba(20, 21, 30, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ececf4;
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
+  color: var(--realm-text);
   white-space: nowrap;
   opacity: 0;
   transform: translateY(2px);
@@ -53,15 +92,8 @@
 }
 
 .profile-banner-pet.is-triarch .profile-banner-pet-tag {
-  color: #f5d986;
-  border-color: rgba(217, 177, 82, 0.45);
-}
-
-@media (max-width: 520px) {
-  .profile-banner-pet {
-    left: 78% !important;
-    bottom: 2px;
-  }
+  color: var(--realm-accent);
+  border-color: color-mix(in srgb, var(--realm-accent) 45%, transparent);
 }
 
 /* Pet Collection & Journal Layout */
@@ -69,7 +101,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
-  color: #ececf1;
+  color: var(--realm-text);
 }
 
 .pet-panel-header {
@@ -79,7 +111,7 @@
   align-items: center;
   gap: 0.75rem;
   padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--realm-line);
 }
 
 .pet-panel-header h3 {
@@ -91,22 +123,22 @@
 .pet-panel-header p {
   margin: 0.2rem 0 0;
   font-size: 0.85rem;
-  color: #a2a5b8;
+  color: var(--realm-muted);
 }
 
 .pet-subnav {
   display: inline-flex;
   gap: 0.35rem;
-  background: #15161e;
+  background: var(--realm-surface);
   padding: 0.25rem;
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--realm-line);
 }
 
 .pet-subnav button {
   background: transparent;
   border: none;
-  color: #a9acc0;
+  color: var(--realm-muted);
   font-size: 0.82rem;
   padding: 0.38rem 0.75rem;
   border-radius: 4px;
@@ -115,15 +147,15 @@
 
 .pet-subnav button[aria-selected="true"],
 .pet-subnav button[aria-pressed="true"] {
-  background: #262837;
-  color: #f4f4f8;
+  background: var(--realm-raised);
+  color: var(--realm-text);
   font-weight: 600;
 }
 
 /* Starter Adoption Banner */
 .pet-starter-adoption-box {
-  background: #191b24;
-  border: 1px solid rgba(179, 205, 189, 0.28);
+  background: var(--realm-surface);
+  border: 1px solid color-mix(in srgb, var(--realm-accent) 28%, transparent);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -144,20 +176,20 @@
   text-align: center;
   gap: 0.45rem;
   padding: 0.8rem;
-  background: #14151d;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 6px;
-  color: #ececf2;
+  color: var(--realm-text);
   cursor: pointer;
 }
 
 .pet-starter-choice[aria-pressed="true"] {
-  border-color: #b3cdbd;
-  background: #1e222d;
+  border-color: var(--realm-accent);
+  background: var(--realm-raised);
 }
 
 .pet-starter-choice small {
-  color: #9da0b3;
+  color: var(--realm-muted);
   font-size: 0.76rem;
   line-height: 1.35;
 }
@@ -185,8 +217,8 @@
 }
 
 .pet-card {
-  background: #181922;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 8px;
   padding: 0.8rem;
   display: flex;
@@ -196,13 +228,13 @@
 }
 
 .pet-card.is-selected {
-  border-color: #b3cdbd;
-  background: #1d1f2b;
+  border-color: var(--realm-accent);
+  background: var(--realm-raised);
 }
 
 .pet-card.is-locked {
   opacity: 0.68;
-  background: #14151c;
+  background: var(--realm-surface);
 }
 
 .pet-card-top {
@@ -215,8 +247,8 @@
   width: 56px;
   height: 56px;
   border-radius: 6px;
-  background: #12131a;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,7 +264,7 @@
 
 .pet-card-meta strong {
   font-size: 0.9rem;
-  color: #f3f3f8;
+  color: var(--realm-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -240,7 +272,7 @@
 
 .pet-card-meta small {
   font-size: 0.75rem;
-  color: #9ca0b3;
+  color: var(--realm-muted);
 }
 
 .pet-rarity-badge {
@@ -252,24 +284,24 @@
   letter-spacing: 0.04em;
   padding: 0.12rem 0.42rem;
   border-radius: 4px;
-  background: #232533;
-  color: #c5c8d8;
+  background: var(--realm-raised);
+  color: var(--realm-muted);
 }
 
 .pet-rarity-badge.rarity-uncommon {
-  background: rgba(127, 161, 98, 0.2);
-  color: #b5d99c;
+  background: color-mix(in srgb, var(--realm-accent) 20%, transparent);
+  color: var(--realm-accent);
 }
 
 .pet-rarity-badge.rarity-rare {
-  background: rgba(126, 87, 194, 0.24);
-  color: #d4b8ff;
+  background: color-mix(in srgb, var(--realm-accent) 24%, transparent);
+  color: var(--realm-accent);
 }
 
 .pet-rarity-badge.rarity-founder {
-  background: rgba(217, 177, 82, 0.22);
-  color: #f5d986;
-  border: 1px solid rgba(217, 177, 82, 0.4);
+  background: color-mix(in srgb, var(--realm-accent) 22%, transparent);
+  color: var(--realm-accent);
+  border: 1px solid color-mix(in srgb, var(--realm-accent) 40%, transparent);
 }
 
 .pet-card-actions {
@@ -287,8 +319,8 @@
 
 /* Pet Details Inspector */
 .pet-details-drawer {
-  background: #171821;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 8px;
   padding: 1rem;
   display: grid;
@@ -304,8 +336,8 @@
 }
 
 .pet-details-preview {
-  background: #111219;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 8px;
   padding: 0.75rem;
   display: flex;
@@ -341,7 +373,7 @@
 .pet-details-body p {
   margin: 0;
   font-size: 0.84rem;
-  color: #b7bacb;
+  color: var(--realm-muted);
   line-height: 1.45;
 }
 
@@ -362,8 +394,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #161720;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 6px;
   padding: 0.65rem 0.85rem;
   font-size: 0.84rem;
@@ -379,46 +411,53 @@
   font-size: 0.7rem;
   padding: 0.15rem 0.45rem;
   border-radius: 4px;
-  background: #212330;
-  color: #c9cce0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--realm-raised);
+  color: var(--realm-muted);
+  border: 1px solid var(--realm-line);
 }
 
 .habitat-tag-pill.is-met {
-  background: rgba(127, 161, 98, 0.22);
-  color: #c2e5a8;
-  border-color: rgba(127, 161, 98, 0.45);
+  background: color-mix(in srgb, var(--realm-accent) 22%, transparent);
+  color: var(--realm-accent);
+  border-color: color-mix(in srgb, var(--realm-accent) 45%, transparent);
 }
 
 /* House Wildlife Encounter Modal */
 .wildlife-encounter-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 950;
-  background: rgba(10, 11, 16, 0.76);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
+  box-sizing: border-box;
+  width: min(440px, calc(100% - 2rem));
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--realm-line);
+  border-radius: 10px;
+  background: var(--realm-surface);
+  color: var(--realm-text);
+  overflow: auto;
+}
+
+.wildlife-encounter-modal::backdrop {
+  background: color-mix(in srgb, var(--realm-bg) 76%, transparent);
 }
 
 .wildlife-encounter-dialog {
-  background: #191a24;
-  border: 1px solid rgba(217, 177, 82, 0.35);
+  background: var(--realm-surface);
+  border: 1px solid color-mix(in srgb, var(--realm-accent) 35%, transparent);
   border-radius: 10px;
-  max-width: 440px;
+  box-sizing: border-box;
   width: 100%;
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  color: #f0f0f6;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+  color: var(--realm-text);
+  box-shadow: 0 18px 42px color-mix(in srgb, var(--realm-bg) 55%, transparent);
 }
 
 .wildlife-encounter-stage {
-  background: #12131b;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
   border-radius: 8px;
   padding: 1rem;
   display: flex;
@@ -431,14 +470,48 @@
 .wildlife-bonding-meter {
   width: 100%;
   height: 8px;
-  background: #111218;
+  background: var(--realm-surface);
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--realm-line);
 }
 
 .wildlife-bonding-fill {
   height: 100%;
-  background: #b3cdbd;
-  transition: width 0.25s ease;
+  background: var(--realm-accent);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+}
+
+.pet-collection-panel :is(button, input), .wildlife-encounter-modal :is(button, input) {
+  min-height: 44px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.wildlife-encounter-modal button { white-space: normal; }
+.wildlife-encounter-modal :is(button, input) {
+  font: inherit;
+  padding: .6rem .75rem;
+  border: 1px solid var(--realm-line);
+  border-radius: 6px;
+  background: var(--realm-raised);
+  color: var(--realm-text);
+}
+.wildlife-encounter-modal button { cursor: pointer; }
+.wildlife-encounter-modal button.primary {
+  background: var(--realm-accent);
+  color: var(--realm-bg);
+  border-color: var(--realm-accent);
+}
+.wildlife-encounter-modal button:disabled { cursor: wait; opacity: .6; }
+.pet-collection-panel :focus-visible, .wildlife-encounter-modal :focus-visible, .profile-banner-pet:focus-visible {
+  outline: 2px solid var(--realm-accent);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wildlife-bonding-fill, .profile-banner-pet-tag { transition: none; }
+}
+@media (max-width: 440px) {
+  .wildlife-journal-summary { align-items: flex-start; flex-direction: column; gap: .75rem; }
+  .pet-panel-header > div { min-width: 0; overflow-wrap: anywhere; }
 }

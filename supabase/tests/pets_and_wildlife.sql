@@ -23,7 +23,7 @@ insert into auth.users(id, email, email_confirmed_at) values
  ('30000000-0000-4000-8000-000000000003', 'pet-bob@example.invalid', now());
 
 update realm_private.accounts set state = 'active';
-insert into realm_private.founder_accounts(user_id) values ('10000000-0000-4000-8000-000000000001');
+insert into realm_private.founder_accounts(user_id,verified_at) values ('10000000-0000-4000-8000-000000000001',now());
 insert into realm_private.platform_admins(user_id) values ('20000000-0000-4000-8000-000000000002');
 insert into public.friendships(requester, addressee, status) values
  ('10000000-0000-4000-8000-000000000001', '20000000-0000-4000-8000-000000000002', 'accepted'),

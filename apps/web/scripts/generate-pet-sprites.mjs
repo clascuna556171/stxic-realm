@@ -32,4 +32,21 @@ for (const species of PET_SPECIES_CATALOG) {
   await writeFile(resolve(outDir, `${species.id}-sheet.svg`), svg, 'utf8')
 }
 
-console.log('Generated 8 pet sprite sheets in public/pets/')
+// Four genuine cat views, arranged as direction columns and state/frame rows.
+const turns=[]
+for(const [column,direction] of ['down','up','left','right'].entries()) {
+ for(const [row,state] of STATES.entries()) for(let frame=0;frame<FRAMES;frame++) {
+  for(const p of getPetPixels('cat',state,frame,direction)) turns.push(`<rect x="${column*32+p.x}" y="${(row*4+frame)*32+p.y}" width="${p.w}" height="${p.h}" fill="${p.color}"/>`)
+ }
+}
+await writeFile(resolve(outDir,'cat-turns.svg'),`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 640" width="128" height="640" shape-rendering="crispEdges">${turns.join('')}</svg>\n`,'utf8')
+console.log('Generated 8 pet sheets and Village Cat directional sheet in public/pets/')
+
+const wyrmTurns=[]
+for (const [column,direction] of ['down','up','left','right'].entries()) {
+ for (const [row,state] of STATES.entries()) for (let frame=0;frame<FRAMES;frame++) {
+  for (const p of getPetPixels('triarch',state,frame,direction)) wyrmTurns.push(`<rect x="${column*48+p.x}" y="${(row*4+frame)*36+p.y}" width="${p.w}" height="${p.h}" fill="${p.color}"/>`)
+ }
+}
+await writeFile(resolve(outDir,'triarch-turns.svg'),`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 720" width="192" height="720" shape-rendering="crispEdges">${wyrmTurns.join('')}</svg>\n`,'utf8')
+console.log('Generated First Wyrm directional sheet')

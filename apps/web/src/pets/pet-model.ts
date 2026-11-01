@@ -83,10 +83,10 @@ export interface UserPetsSnapshot {
 export const PERSONALITY_DESCRIPTIONS: Record<PetPersonality, string> = {
   Sleepy: 'Often curls up for long naps near soft furniture and warm light.',
   Curious: 'Wanders from piece to piece, inspecting books, lamps, and corners.',
-  Playful: 'Takes lively steps around the room and bounds up to greet movement.',
-  Shy: 'Prefers quiet edges of the room and settles calmly when guests arrive.',
+  Playful: 'Explores short routes around the room and celebrates on arrival.',
+  Shy: 'Keeps its distance and seeks quiet edges when someone approaches.',
   Loyal: 'Stays close to your footsteps and watches over the room beside you.',
-  Mischievous: 'Darts between furniture with sudden hops and alert, sidelong glances.',
+  Mischievous: 'Investigates desks, banners, and consoles with quick, alert steps.',
 }
 
 export const RARITY_LABELS: Record<PetRarity, string> = {

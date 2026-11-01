@@ -88,6 +88,19 @@ try {
  await alice.goto(homeUrl);await alice.getByRole('heading',{name:'Guestbook',exact:true}).waitFor()
  // New direct movement is exercised against the actual local SQL function/RLS.
  await bob.goto(homeUrl);await bob.locator('.room-canvas canvas').waitFor()
+ // Pet state must clear on authoritative empty snapshots, including cross-tab changes.
+ await asUser(users.alice,()=>sqlRpc('adopt_starter_pet',{p_species_id:'cat',p_nickname:'Snapshot Cat'}))
+ await bob.getByRole('list',{name:'Companions in this home',exact:true}).getByText('Snapshot Cat',{exact:true}).waitFor()
+ await asUser(users.alice,()=>db.query("select public.equip_pet('house','{}'::uuid[])"))
+ await bob.getByRole('list',{name:'Companions in this home',exact:true}).waitFor({state:'hidden'})
+ await alice.getByRole('button',{name:'Bond with Moss Fox',exact:true}).waitFor()
+ const encounter=(await asUser(users.alice,()=>sqlRpc('get_user_pets',{}))).active_encounter
+ assert.ok(encounter,'owner bootstrap must create wildlife')
+ await asUser(users.alice,()=>sqlRpc('bond_wildlife_pet',{p_encounter_id:encounter.id,p_nickname:'Snapshot Fox'}))
+ await alice.getByRole('button',{name:'Bond with Moss Fox',exact:true}).waitFor({state:'hidden'})
+ await asUser(users.alice,()=>db.query("select public.equip_pet('house','{}'::uuid[])"))
+ await alice.getByRole('list',{name:'Companions in this home',exact:true}).waitFor({state:'hidden'})
+ await bob.getByRole('list',{name:'Companions in this home',exact:true}).waitFor({state:'hidden'})
  // Room conversation and typing use permission-checked SQL across separate browser identities.
  const eventually=async(check,label)=>{for(let i=0;i<40;i++){if(await check())return;await new Promise(r=>setTimeout(r,100))}assert.fail(label)}
  const roomState=()=>asUser(users.alice,()=>sqlRpc('world_activity_snapshot',{p_kind:'home',p_scope:users.alice}))

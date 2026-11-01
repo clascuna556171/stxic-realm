@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { errorText } from '../account-repository.ts'
 import { client } from '../data.ts'
 import {
@@ -34,6 +35,19 @@ export function WildlifeEncounterModal({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
+  const dialog = useRef<HTMLDialogElement>(null)
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const element = dialog.current
+    element?.showModal()
+    return () => {
+      element?.close()
+      queueMicrotask(() => {
+        if (previous?.isConnected && !document.querySelector('dialog[open]')) previous.focus()
+      })
+    }
+  }, [])
+
   const progressPct = Math.min(100, Math.round((step / 3) * 100))
 
   async function handleAdopt(e: FormEvent) {
@@ -56,14 +70,24 @@ export function WildlifeEncounterModal({
     }
   }
 
-  return (
-    <div
+  return createPortal(
+    <dialog
+      ref={dialog}
       className="wildlife-encounter-modal"
-      role="dialog"
       aria-modal="true"
       aria-labelledby="wildlife-encounter-title"
+      onCancel={e => { e.preventDefault(); if (!busy) onClose() }}
+      onKeyDown={e => {
+        if (e.key !== 'Tab') return
+        const controls = [...e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),[tabindex="0"]')].filter(el => el.getClientRects().length)
+        const first = controls[0], last = controls.at(-1)
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus() }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus() }
+      }}
       onClick={e => {
-        if (e.target === e.currentTarget && !busy) onClose()
+        if (e.target !== e.currentTarget || busy) return
+        const bounds = e.currentTarget.getBoundingClientRect()
+        if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) onClose()
       }}
     >
       <div className="wildlife-encounter-dialog">
@@ -86,7 +110,7 @@ export function WildlifeEncounterModal({
             scale={3}
             label={`Wild ${encounter.name}`}
           />
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#c4c7d8' }}>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--realm-muted)' }}>
             {encounter.description}
           </p>
         </div>
@@ -104,7 +128,7 @@ export function WildlifeEncounterModal({
             <span>{step} / 3</span>
           </div>
           <div className="wildlife-bonding-meter" aria-hidden="true">
-            <div className="wildlife-bonding-fill" style={{ width: `${progressPct}%` }} />
+            <div className="wildlife-bonding-fill" style={{ transform: `scaleX(${progressPct / 100})` }} />
           </div>
         </div>
 
@@ -116,7 +140,7 @@ export function WildlifeEncounterModal({
 
         {step < 3 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#aeb2c6' }}>
+            <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--realm-muted)' }}>
               The {encounter.name} watches you curiously from your room. Complete a gentle bonding action to earn its trust:
             </p>
             <button
@@ -129,7 +153,7 @@ export function WildlifeEncounterModal({
           </div>
         ) : (
           <form onSubmit={handleAdopt} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <p style={{ margin: 0, fontSize: '0.84rem', color: '#b5d99c' }}>
+            <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--realm-text)' }}>
               The {encounter.name} trusts you completely and wishes to stay in your Realm!
             </p>
             <label style={{ fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
@@ -153,6 +177,6 @@ export function WildlifeEncounterModal({
           </form>
         )}
       </div>
-    </div>
+    </dialog>, document.body,
   )
 }

@@ -476,7 +476,7 @@ export function PetCollection({
                       <small>{sp.discovery_origin}</small>
                     </div>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#b4b7c9' }}>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--realm-muted)' }}>
                     {discovered ? sp.description : sp.journal_clue}
                   </p>
                   {progress.length > 0 && (

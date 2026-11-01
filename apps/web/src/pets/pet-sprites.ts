@@ -1,3 +1,6 @@
+import { triarchPixels } from './triarch-art.ts'
+import { villageCatPixels } from './village-cat-art.ts'
+import type { Direction } from '../world/room.ts'
 import type { Pixel } from '../character.ts'
 import type { PetAnimationState, PetSpeciesId } from './pet-model.ts'
 
@@ -35,11 +38,19 @@ export function getPetPixels(
   speciesId: PetSpeciesId,
   state: PetAnimationState = 'idle',
   frame = 0,
+  direction: Direction = 'down',
 ): Pixel[] {
   const f = ((frame % 4) + 4) % 4
+  if (speciesId === 'cat') return villageCatPixels(state, f, direction)
+  if (speciesId === 'triarch') return triarchPixels(state, f, direction)
+  const pixels = getSpeciesPixels(speciesId, state, f)
+  return direction === 'left' ? pixels.map(p => ({ ...p, x: getPetSpriteDimensions(speciesId).width - p.x - p.w })) : pixels
+}
+
+function getSpeciesPixels(speciesId: PetSpeciesId, state: PetAnimationState, f: number): Pixel[] {
   switch (speciesId) {
     case 'cat':
-      return drawVillageCat(state, f)
+      return villageCatPixels(state, f, 'down')
     case 'slime':
       return drawTinySlime(state, f)
     case 'pup':
@@ -53,98 +64,8 @@ export function getPetPixels(
     case 'owl':
       return drawMoonOwl(state, f)
     case 'triarch':
-      return drawTriarchWyrm(state, f)
+      return triarchPixels(state, f, 'down')
   }
-}
-
-function drawVillageCat(state: PetAnimationState, f: number): Pixel[] {
-  const { pixels, rect } = createCanvasBuilder(32, 32)
-  const outline = '#241c19'
-  const furBase = '#8f7765'
-  const furShade = '#6e5849'
-  const furStripe = '#47372d'
-  const cream = '#ebd7bd'
-  const pink = '#d98a82'
-  const scarf = '#9e3b3b'
-  const scarfShade = '#732626'
-
-  const bob = state === 'walk' ? (f % 2 === 0 ? -1 : 0) : state === 'happy' ? (f % 2 === 0 ? -2 : 0) : 0
-  const sleepY = state === 'sleep' ? 3 : 0
-  const by = bob + sleepY
-
-  // Tail (left side)
-  const tailLift = state === 'idle' || state === 'happy' ? (f % 2 === 0 ? 0 : -1) : 0
-  rect(5, 19 + by + tailLift, 3, 6, furShade)
-  rect(4, 16 + by + tailLift, 3, 4, furBase)
-  rect(4, 17 + by + tailLift, 3, 1, furStripe)
-  rect(5, 15 + by + tailLift, 2, 1, furStripe)
-
-  // Body
-  rect(9, 17 + by, 13, 9 - sleepY, outline)
-  rect(10, 18 + by, 11, 7 - Math.min(2, sleepY), furBase)
-  rect(10, 19 + by, 4, 5 - Math.min(2, sleepY), furShade)
-  rect(11, 20 + by, 3, 1, furStripe)
-  rect(11, 22 + by, 3, 1, furStripe)
-  rect(14, 19 + by, 6, 5 - Math.min(2, sleepY), cream)
-
-  // Paws
-  const stepL = state === 'walk' && f % 2 === 0 ? -1 : 0
-  const stepR = state === 'walk' && f % 2 === 1 ? -1 : 0
-  rect(10, 25 + stepL, 3, 3, cream)
-  rect(14, 25 + stepR, 3, 3, cream)
-  rect(18, 25 + stepL, 3, 3, cream)
-  rect(10, 27 + stepL, 3, 1, outline)
-  rect(14, 27 + stepR, 3, 1, outline)
-  rect(18, 27 + stepL, 3, 1, outline)
-
-  // Red Bandana / Scarf
-  rect(10, 16 + by, 12, 3, scarf)
-  rect(11, 18 + by, 10, 1, scarfShade)
-  rect(15, 19 + by, 4, 2, scarf)
-  rect(16, 20 + by, 2, 1, scarfShade)
-
-  // Head
-  rect(10, 8 + by, 13, 9, outline)
-  rect(11, 9 + by, 11, 7, furBase)
-  rect(12, 13 + by, 9, 3, cream)
-
-  // Tabby forehead stripes
-  rect(15, 9 + by, 1, 2, furStripe)
-  rect(17, 9 + by, 1, 2, furStripe)
-  rect(16, 10 + by, 1, 2, furStripe)
-
-  // Ears
-  const earTwitch = state === 'idle' && f === 2 ? 1 : 0
-  rect(10, 5 + by + earTwitch, 4, 4, outline)
-  rect(11, 6 + by + earTwitch, 2, 3, furBase)
-  rect(12, 7 + by + earTwitch, 1, 2, pink)
-
-  rect(19, 5 + by, 4, 4, outline)
-  rect(20, 6 + by, 2, 3, furBase)
-  rect(20, 7 + by, 1, 2, pink)
-
-  // Eyes & Nose
-  if (state === 'sleep' || (state === 'idle' && f === 3)) {
-    rect(13, 12 + by, 2, 1, outline)
-    rect(18, 12 + by, 2, 1, outline)
-  } else {
-    rect(13, 11 + by, 2, 2, outline)
-    rect(18, 11 + by, 2, 2, outline)
-  }
-  rect(16, 13 + by, 1, 1, pink)
-
-  // Sleep or Happy indicators
-  if (state === 'sleep') {
-    rect(23, 6 - (f % 2), 3, 1, '#c4b5fd')
-    rect(24, 7 - (f % 2), 1, 1, '#c4b5fd')
-    rect(23, 8 - (f % 2), 3, 1, '#c4b5fd')
-  } else if (state === 'happy') {
-    rect(15, 2 + (f % 2), 2, 2, '#f43f5e')
-    rect(17, 2 + (f % 2), 2, 2, '#f43f5e')
-    rect(16, 4 + (f % 2), 2, 2, '#f43f5e')
-  }
-
-  return pixels
 }
 
 function drawTinySlime(state: PetAnimationState, f: number): Pixel[] {
@@ -508,142 +429,6 @@ function drawMoonOwl(state: PetAnimationState, f: number): Pixel[] {
   if (state === 'happy') {
     rect(23, 6 + (f % 2), 2, 2, moonGlow)
     rect(5, 15 - (f % 2), 2, 2, moonGlow)
-  }
-
-  return pixels
-}
-
-/**
- * Triarch — The First Wyrm (48x36 Founder Exclusive)
- * Features 3 distinct dragon heads with independent idle glancing,
- * sequential sleeping, object inspection, and sovereign gold/purple breath.
- */
-function drawTriarchWyrm(state: PetAnimationState, f: number): Pixel[] {
-  const { pixels, rect } = createCanvasBuilder(48, 36)
-  const obsidian = '#14121c'
-  const charcoal = '#252232'
-  const scaleLight = '#3c3750'
-  const royalPurple = '#6d3b8e'
-  const purpleLight = '#9458b8'
-  const purpleDeep = '#46225e'
-  const gold = '#d9b152'
-  const goldBright = '#f5d986'
-  const goldDark = '#99752c'
-  const eyeEmber = '#f59e0b'
-
-  const walkStep = state === 'walk' ? (f % 2 === 0 ? -1 : 1) : 0
-  const wingLift = state === 'walk' || state === 'happy' ? (f % 2 === 0 ? -2 : 1) : f === 2 ? -1 : 0
-
-  // Left Dragon Wing
-  rect(1, 14 + wingLift, 13, 2, obsidian)
-  rect(2, 13 + wingLift, 11, 2, gold)
-  rect(2, 16 + wingLift, 12, 11, royalPurple)
-  rect(3, 17 + wingLift, 4, 8, purpleLight)
-  rect(8, 17 + wingLift, 4, 8, purpleDeep)
-  rect(2, 26 + wingLift, 3, 2, obsidian)
-  rect(7, 26 + wingLift, 3, 2, obsidian)
-
-  // Right Dragon Wing
-  rect(34, 14 + wingLift, 13, 2, obsidian)
-  rect(35, 13 + wingLift, 11, 2, gold)
-  rect(34, 16 + wingLift, 12, 11, royalPurple)
-  rect(41, 17 + wingLift, 4, 8, purpleLight)
-  rect(36, 17 + wingLift, 4, 8, purpleDeep)
-  rect(38, 26 + wingLift, 3, 2, obsidian)
-  rect(43, 26 + wingLift, 3, 2, obsidian)
-
-  // Coiled Spiked Tail (lower right)
-  rect(32, 26, 9, 6, obsidian)
-  rect(33, 27, 7, 4, charcoal)
-  rect(38, 24, 3, 3, gold)
-
-  // Sovereign Armored Body & Chest
-  rect(14, 18, 20, 13, obsidian)
-  rect(15, 19, 18, 11, charcoal)
-  rect(17, 20, 14, 9, scaleLight)
-
-  // Antique Gold Chest Chevrons & Royal Purple Core
-  rect(17, 20, 4, 3, gold)
-  rect(27, 20, 4, 3, gold)
-  rect(21, 21, 6, 7, royalPurple)
-  rect(22, 22, 4, 5, goldDark)
-
-  // Dragon Legs & Gold Claws
-  rect(14, 29 + walkStep, 4, 5, charcoal)
-  rect(14, 33 + walkStep, 4, 2, gold)
-  rect(19, 30 - walkStep, 4, 5, charcoal)
-  rect(19, 34 - walkStep, 4, 2, gold)
-  rect(25, 30 + walkStep, 4, 5, charcoal)
-  rect(25, 34 + walkStep, 4, 2, gold)
-  rect(30, 29 - walkStep, 4, 5, charcoal)
-  rect(30, 33 - walkStep, 4, 2, gold)
-
-  // Calculate independent offsets for the 3 Dragon Heads
-  // Left Head: inspects when state === 'sit', sleeps first in 'sleep'
-  const leftOffY =
-    state === 'sleep' ? 5 : state === 'sit' ? 4 : state === 'happy' ? -2 : f === 0 || f === 3 ? -1 : 0
-  const leftOffX = state === 'idle' && f === 1 ? 1 : 0
-
-  // Center Sovereign Head: tallest, sleeps last in 'sleep'
-  const centerOffY =
-    state === 'sleep' && f >= 2 ? 4 : state === 'happy' ? -2 : f === 1 ? -1 : 0
-  const centerOffX = state === 'idle' && f === 2 ? -1 : state === 'idle' && f === 3 ? 1 : 0
-
-  // Right Head: sleeps second in 'sleep'
-  const rightOffY =
-    state === 'sleep' && f >= 1 ? 5 : state === 'happy' ? -2 : f === 2 ? -1 : 0
-  const rightOffX = state === 'idle' && f === 0 ? 1 : 0
-
-  // --- LEFT NECK & HEAD ---
-  rect(14, 11 + leftOffY, 5, 9, charcoal)
-  rect(15, 12 + leftOffY, 2, 7, royalPurple)
-  rect(8 + leftOffX, 7 + leftOffY, 9, 6, obsidian)
-  rect(9 + leftOffX, 8 + leftOffY, 7, 4, charcoal)
-  // Left Head Gold Horns
-  rect(13 + leftOffX, 5 + leftOffY, 5, 2, gold)
-  rect(15 + leftOffX, 4 + leftOffY, 3, 1, goldBright)
-  // Left Head Eye
-  if (state !== 'sleep') {
-    rect(11 + leftOffX, 9 + leftOffY, 2, 1, eyeEmber)
-  }
-
-  // --- CENTER SOVEREIGN NECK & HEAD ---
-  rect(21, 7 + centerOffY, 6, 13, obsidian)
-  rect(22, 8 + centerOffY, 4, 11, charcoal)
-  rect(23, 9 + centerOffY, 2, 9, goldDark)
-  rect(19 + centerOffX, 2 + centerOffY, 10, 7, obsidian)
-  rect(20 + centerOffX, 3 + centerOffY, 8, 5, charcoal)
-  // Center Crown Horns
-  rect(18 + centerOffX, 1 + centerOffY, 4, 2, gold)
-  rect(26 + centerOffX, 1 + centerOffY, 4, 2, gold)
-  rect(23 + centerOffX, 0 + centerOffY, 2, 2, goldBright)
-  // Center Eye
-  if (!(state === 'sleep' && f >= 2)) {
-    rect(22 + centerOffX, 5 + centerOffY, 2, 1, eyeEmber)
-    rect(25 + centerOffX, 5 + centerOffY, 1, 1, eyeEmber)
-  }
-
-  // --- RIGHT NECK & HEAD ---
-  rect(29, 11 + rightOffY, 5, 9, charcoal)
-  rect(31, 12 + rightOffY, 2, 7, royalPurple)
-  rect(31 + rightOffX, 7 + rightOffY, 9, 6, obsidian)
-  rect(32 + rightOffX, 8 + rightOffY, 7, 4, charcoal)
-  // Right Head Gold Horns
-  rect(30 + rightOffX, 5 + rightOffY, 5, 2, gold)
-  rect(30 + rightOffX, 4 + rightOffY, 3, 1, goldBright)
-  // Right Head Eye
-  if (!(state === 'sleep' && f >= 1)) {
-    rect(35 + rightOffX, 9 + rightOffY, 2, 1, eyeEmber)
-  }
-
-  // Rare / Greeting Breath Effect (Gold & Royal Purple Arcane Flame)
-  if (state === 'happy') {
-    rect(5, 5 + (f % 2), 3, 2, purpleLight)
-    rect(6, 4 + (f % 2), 2, 1, goldBright)
-    rect(23, 0, 2, 2, goldBright)
-    rect(22, 1, 4, 1, purpleLight)
-    rect(40, 5 + (f % 2), 3, 2, purpleLight)
-    rect(40, 4 + (f % 2), 2, 1, goldBright)
   }
 
   return pixels

@@ -67,3 +67,8 @@ The **Pets & Realm Wildlife System** is implemented locally across schema, Phase
 - **Realm Wildlife Habitat Discovery**: Server-controlled habitat evaluation on `save_home` using furniture habitat tags (`Forest`, `Cozy`, `Magical`, `Ancient`, `Dark`, `Water`, `Warm`, `Light`), persistent `pet_encounters` across reloads, a 3-step bonding interaction (`WildlifeEncounterModal`), and a Wildlife Journal in `PetCollection`.
 - **House Movement & Banner Companions**: Up to 3 equipped house pets roam valid walkable tiles in Phaser (`pet-actor.ts`, `renderer.ts`) with collision avoidance and 6 personality state machines (`Sleepy`, `Curious`, `Playful`, `Shy`, `Loyal`, `Mischievous`); up to 1 equipped banner pet animates along the lower edge of profile banners (`ProfileBannerPet.tsx`) with `IntersectionObserver`, `document.hidden`, and `prefers-reduced-motion` support.
 - **Database & Security Verification**: Additive migration `20261102010000_pets_and_wildlife.sql` and SQL/RLS test suite `supabase/tests/pets_and_wildlife.sql` enforce server-side ownership, equipment limits, and strict founder-only protection for `Triarch`. Hosted migration rollout remains pending alongside earlier local migrations.
+
+
+### Pets QA hardening — 2 November 2026
+
+Local corrective migration `20261102020000_pet_authority_hardening.sql` requires explicit operator verification of the actual creator UUID; legacy name/email/admin-derived founder entries are quarantined. Pet RPCs fail closed, shared-home snapshots clear empty pet state, and banner/modal/token regressions are addressed. See [pets rollout and verification](PETS_AND_WILDLIFE_SYSTEM.md#7-qa-hardening--2-november-2026). Hosted rollout and creator-ID verification remain separate operator steps.
