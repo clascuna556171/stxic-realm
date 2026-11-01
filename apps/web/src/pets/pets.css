@@ -1,0 +1,444 @@
+/* STXIC Realm — Pet Collection, Wildlife Journal, Banner Companion & Encounter UI */
+
+.pet-pixel-sprite {
+  display: block;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+}
+
+.pet-pixel-sprite.is-silhouette {
+  filter: drop-shadow(0 0 1px rgba(180, 185, 215, 0.28));
+}
+
+/* Profile Banner Companion Overlay */
+.profile-banner-pet {
+  position: absolute;
+  bottom: 4px;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: left 2.4s ease-in-out;
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-banner-pet {
+    transition: none;
+  }
+}
+
+.profile-banner-pet-tag {
+  font-size: 0.68rem;
+  line-height: 1.1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(20, 21, 30, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ececf4;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  pointer-events: none;
+}
+
+.profile-banner-pet:hover .profile-banner-pet-tag,
+.profile-banner-pet:focus-visible .profile-banner-pet-tag {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.profile-banner-pet.is-triarch .profile-banner-pet-tag {
+  color: #f5d986;
+  border-color: rgba(217, 177, 82, 0.45);
+}
+
+@media (max-width: 520px) {
+  .profile-banner-pet {
+    left: 78% !important;
+    bottom: 2px;
+  }
+}
+
+/* Pet Collection & Journal Layout */
+.pet-collection-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  color: #ececf1;
+}
+
+.pet-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pet-panel-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.pet-panel-header p {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  color: #a2a5b8;
+}
+
+.pet-subnav {
+  display: inline-flex;
+  gap: 0.35rem;
+  background: #15161e;
+  padding: 0.25rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pet-subnav button {
+  background: transparent;
+  border: none;
+  color: #a9acc0;
+  font-size: 0.82rem;
+  padding: 0.38rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pet-subnav button[aria-selected="true"],
+.pet-subnav button[aria-pressed="true"] {
+  background: #262837;
+  color: #f4f4f8;
+  font-weight: 600;
+}
+
+/* Starter Adoption Banner */
+.pet-starter-adoption-box {
+  background: #191b24;
+  border: 1px solid rgba(179, 205, 189, 0.28);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pet-starter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.65rem;
+}
+
+.pet-starter-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.45rem;
+  padding: 0.8rem;
+  background: #14151d;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+  color: #ececf2;
+  cursor: pointer;
+}
+
+.pet-starter-choice[aria-pressed="true"] {
+  border-color: #b3cdbd;
+  background: #1e222d;
+}
+
+.pet-starter-choice small {
+  color: #9da0b3;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.pet-starter-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.pet-starter-controls label {
+  flex: 1 1 200px;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+/* Pet Collection Grid */
+.pet-collection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+  gap: 0.75rem;
+}
+
+.pet-card {
+  background: #181922;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  transition: border-color 0.15s ease;
+}
+
+.pet-card.is-selected {
+  border-color: #b3cdbd;
+  background: #1d1f2b;
+}
+
+.pet-card.is-locked {
+  opacity: 0.68;
+  background: #14151c;
+}
+
+.pet-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pet-card-stage {
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  background: #12131a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pet-card-meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.pet-card-meta strong {
+  font-size: 0.9rem;
+  color: #f3f3f8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pet-card-meta small {
+  font-size: 0.75rem;
+  color: #9ca0b3;
+}
+
+.pet-rarity-badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.42rem;
+  border-radius: 4px;
+  background: #232533;
+  color: #c5c8d8;
+}
+
+.pet-rarity-badge.rarity-uncommon {
+  background: rgba(127, 161, 98, 0.2);
+  color: #b5d99c;
+}
+
+.pet-rarity-badge.rarity-rare {
+  background: rgba(126, 87, 194, 0.24);
+  color: #d4b8ff;
+}
+
+.pet-rarity-badge.rarity-founder {
+  background: rgba(217, 177, 82, 0.22);
+  color: #f5d986;
+  border: 1px solid rgba(217, 177, 82, 0.4);
+}
+
+.pet-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: auto;
+}
+
+.pet-card-actions button {
+  flex: 1 1 auto;
+  font-size: 0.75rem;
+  padding: 0.32rem 0.5rem;
+}
+
+/* Pet Details Inspector */
+.pet-details-drawer {
+  background: #171821;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .pet-details-drawer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pet-details-preview {
+  background: #111219;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.pet-anim-states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  justify-content: center;
+}
+
+.pet-anim-states button {
+  font-size: 0.68rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+}
+
+.pet-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.pet-details-body h4 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.pet-details-body p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #b7bacb;
+  line-height: 1.45;
+}
+
+.pet-nickname-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.pet-nickname-row label {
+  flex: 1 1 180px;
+  font-size: 0.8rem;
+}
+
+/* Wildlife Journal */
+.wildlife-journal-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #161720;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.84rem;
+}
+
+.wildlife-habitat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.habitat-tag-pill {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #212330;
+  color: #c9cce0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.habitat-tag-pill.is-met {
+  background: rgba(127, 161, 98, 0.22);
+  color: #c2e5a8;
+  border-color: rgba(127, 161, 98, 0.45);
+}
+
+/* House Wildlife Encounter Modal */
+.wildlife-encounter-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: rgba(10, 11, 16, 0.76);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.wildlife-encounter-dialog {
+  background: #191a24;
+  border: 1px solid rgba(217, 177, 82, 0.35);
+  border-radius: 10px;
+  max-width: 440px;
+  width: 100%;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  color: #f0f0f6;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55);
+}
+
+.wildlife-encounter-stage {
+  background: #12131b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.wildlife-bonding-meter {
+  width: 100%;
+  height: 8px;
+  background: #111218;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.wildlife-bonding-fill {
+  height: 100%;
+  background: #b3cdbd;
+  transition: width 0.25s ease;
+}

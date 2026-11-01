@@ -17,18 +17,24 @@ import {BadgeRibbon} from './BadgeRibbon'
 import {BadgeModal} from './BadgeModal'
 import {BadgeToastContainer} from './BadgeToast'
 import {getUserBadgeState, trackHallmarkMilestone, type UserBadgeState} from './badges'
+import {ProfileBannerPet} from './ProfileBannerPet'
+import {PetCollection} from './pets/PetCollection'
+import {getUserPets} from './pets/pet-repository'
+import type {EquippedPetSummary} from './pets/pet-model'
 import './account-profile.css'
+import './pets/pets.css'
 
-type Snapshot={profile:Profile;card:ProfileCard;media:ProfileMedia[];own:boolean;friends:boolean;roles:string[];note:{note:string;revision:number}}
+type Snapshot={profile:Profile;card:ProfileCard;media:ProfileMedia[];own:boolean;friends:boolean;roles:string[];note:{note:string;revision:number};banner_pet?:EquippedPetSummary|null}
 type Draft={profile:Profile;card:ProfileCard}
 type UploadAttempt={kind:ProfileMedia['kind'];clientId:string;fingerprint:string;blob:Blob}
 export default function ProfilePage(){const {session}=useAccount();const requested=new URLSearchParams(location.search).get('profile');return <AccountGate><ProfileStudio key={`${session?.user.id}:${requested}`} user={requested||session?.user.id||''}/></AccountGate>}
 function ProfileStudio({user}:{user:string}){
  const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space'),own=user===viewer
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Draft|null>(null),[baseline,setBaseline]=useState(''),[media,setMedia]=useState<ProfileMedia[]>([]),[urls,setUrls]=useState<Record<string,string>>({})
- const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'frames'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
+ const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'frames'|'pets'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
  const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null),[badgeState,setBadgeState]=useState<UserBadgeState>(()=>getUserBadgeState(user,[],own)),[showHallmarks,setShowHallmarks]=useState(false)
- useEffect(()=>{if(snapshot){setBadgeState(getUserBadgeState(user,snapshot.roles,own))}},[user,snapshot,own])
+ const [bannerPet,setBannerPet]=useState<EquippedPetSummary|null>(null)
+ useEffect(()=>{if(snapshot){setBadgeState(getUserBadgeState(user,snapshot.roles,own));if(snapshot.banner_pet)setBannerPet(snapshot.banner_pet);else if(client){void getUserPets(client,user).then(p=>{if(p.equipment.banner_pet)setBannerPet(p.equipment.banner_pet)}).catch(()=>{})}}},[user,snapshot,own])
  const avatarInputRef=useRef<HTMLInputElement>(null),bannerInputRef=useRef<HTMLInputElement>(null),photoInputRef=useRef<HTMLInputElement>(null)
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
  const dirty=!!draft&&JSON.stringify(draft)!==baseline
@@ -63,18 +69,19 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
  function triggerAvatarEdit(){setTab('images');avatarInputRef.current?.click()}
  function triggerBannerEdit(){setTab('images');bannerInputRef.current?.click()}
  const view=own?draft:snapshot?{profile:snapshot.profile,card:snapshot.card}:null
+ const tabs=['identity','images','frames','pets','style','sections'] as const
  return <main className="workspace-page account-profile-page"><WorkspaceNav current="profile"/><header className="workspace-header"><strong>{own?'Your account profile':'Member profile'}</strong><nav className="admin-links"><a href="/?friends">Friends & messages</a><a href="/?privacy">Privacy & data</a></nav></header>
   <div className="account-profile-content"><div className="account-profile-intro"><div><h1>{own?'Your profile, your way.':'Meet your people.'}</h1><p>{own?'Make a profile that feels like you. Your world character has its own studio.':'Account photos and profiles are separate from world characters.'}</p></div>{own&&<a href="/?appearance">Customize your world character <Icon name="arrow"/></a>}</div>
    {error&&<p role="alert" className="error">{error}</p>}{loadError&&<p role="alert" className="error">{loadError}</p>}{notice&&<p role="status" className="profile-notice">{notice}</p>}
    {own&&snapshot&&<div className="profile-mobile-switch" aria-label="Profile editor view"><button type="button" aria-pressed={phonePanel==='edit'} onClick={()=>setPhonePanel('edit')}>Edit profile</button><button type="button" aria-pressed={phonePanel==='preview'} onClick={()=>setPhonePanel('preview')}>Preview profile</button></div>}
    {!snapshot?<div className="social-empty"><p>{loadError?'Your profile could not be opened. Your unsaved edits are kept until you leave.':'Opening profile…'}</p><button onClick={()=>void read()}>Try opening profile again</button></div>:view&&<div className={`account-profile-layout ${own?`phone-${phonePanel}`:'is-public'}`}>
-    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} badgeState={badgeState} onOpenHallmarks={()=>setShowHallmarks(true)} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
+    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} badgeState={badgeState} bannerPet={bannerPet} onOpenHallmarks={()=>setShowHallmarks(true)} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
      {!own&&<div className="account-profile-actions"><button className="profile-message" disabled={busy||!snapshot.friends} onClick={()=>void social('message')}>Message</button>{!snapshot.friends&&<button disabled={busy} onClick={()=>void social('friend')}>Add friend</button>}<a href={`/?home=${user}`}>Visit home</a><button onClick={()=>setReport(true)}>Report</button><button disabled={busy} onClick={()=>void social('block')}>Block</button></div>}
     </AccountCard>{!own&&<form className="private-profile-note" onSubmit={saveNote}><label>Note (only visible to you)<textarea aria-label="Private profile note" value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/></label><button disabled={busy||note===noteBase.note}>Save private note</button></form>}{own&&<p className="profile-preview-help">Live preview · Changes are shared when you save.</p>}</aside>
     {own&&draft&&<form className="account-profile-editor profile-form" onSubmit={save} noValidate>
      <div className="profile-editor-top"><h2>Profile details</h2><div className="social-actions"><button type="button" disabled={busy||!!uploading} onClick={()=>void reload()}>Reload from account</button><button className="primary" disabled={busy||!!uploading||!dirty||stale}>Save profile</button></div></div>
      <p className="profile-save-state" role="status">{stale?'Profile changed on another device. Reload before saving.':uploading?'Uploading image…':dirty?'Unsaved profile changes.':'Your current profile is saved.'}</p>
-     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const tabs=['identity','images','frames','style','sections'] as const;const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[4]:tabs[(i+(e.key==='ArrowRight'?1:4))%5];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{(['identity','images','frames','style','sections'] as const).map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',frames:'Profile frames',style:'Style',sections:'Sections'})[t]}</button>)}</div>
+     <div className="profile-editor-tabs" role="tablist" aria-label="Profile customization" onKeyDown={e=>{if(!['ArrowRight','ArrowLeft','Home','End'].includes(e.key))return;e.preventDefault();const i=tabs.indexOf(tab),next=e.key==='Home'?tabs[0]:e.key==='End'?tabs[tabs.length-1]:tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];setTab(next);e.currentTarget.querySelector<HTMLButtonElement>(`#profile-tab-${next}`)?.focus()}}>{tabs.map(t=><button key={t} type="button" role="tab" tabIndex={tab===t?0:-1} id={`profile-tab-${t}`} aria-controls={`profile-panel-${t}`} aria-selected={tab===t} onClick={()=>setTab(t)}>{({identity:'Identity',images:'Photos & banner',frames:'Profile frames',pets:'Pets & wildlife',style:'Style',sections:'Sections'})[t]}</button>)}</div>
      <fieldset disabled={busy||!!uploading} className="profile-editor-fields"><legend className="sr-only">Profile customization fields</legend>
       <div id="profile-panel-identity" role="tabpanel" aria-labelledby="profile-tab-identity" hidden={tab!=='identity'}>
        <label>Display name<input aria-label="Display name" required value={draft.profile.display_name} maxLength={40} onChange={e=>field('display_name',e.target.value)}/></label>
@@ -115,6 +122,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
        <h3>Your upload library <small>{media.length}/30 files</small></h3><p>Unused uploads stay private. Remove an image from your saved profile before deleting its file.</p><ul className="profile-upload-library">{media.map(m=><li key={m.id}>{urls[m.id]&&<ProfileImage src={urls[m.id]} alt={`${m.kind} upload`} loading="lazy"/>}<span>{m.kind} · {m.width} × {m.height}{m.state!=='ready'?` · ${m.state}`:''}</span><div className="social-actions">{m.state==='ready'&&<button type="button" onClick={()=>{if(m.kind==='avatar')card({avatar_id:m.id});else if(m.kind==='banner')card({banner_id:m.id});else card({gallery:draft.card.gallery.includes(m.id)?draft.card.gallery.filter(id=>id!==m.id):[...draft.card.gallery,m.id].slice(0,6)})}}>{m.kind==='photo'?(draft.card.gallery.includes(m.id)?'Hide photo':'Show photo'):'Use image'}</button>}<button type="button" onClick={()=>void removeUpload(m)}>Delete upload</button></div></li>)}</ul>
       </div>
       <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale} isFounder={own && (account.access?.platform_admin || user === 'self' || user === 'guest')}/></div>
+      <div id="profile-panel-pets" role="tabpanel" aria-labelledby="profile-tab-pets" hidden={tab!=='pets'}><PetCollection userId={user} isOwn={own} onBannerPetChange={setBannerPet}/></div>
       <div id="profile-panel-style" role="tabpanel" aria-labelledby="profile-tab-style" hidden={tab!=='style'}><h3>Make it yours</h3><div className="profile-color-fields">{(['surface','text','accent'] as const).map(key=><label key={key}>{({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]}<input type="color" aria-label={({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]} value={draft.card.style[key]} onChange={e=>style({[key]:e.target.value})}/><code>{draft.card.style[key]}</code></label>)}</div>
        <label>Profile font<select aria-label="Profile font" value={draft.card.style.font} onChange={e=>style({font:e.target.value as ProfileStyle['font']})}><option value="sans">Clean sans serif</option><option value="serif">Classic serif</option><option value="mono">Monospace</option></select></label>
        <label>Photo shape<select aria-label="Photo shape" value={draft.card.style.avatar_shape} onChange={e=>style({avatar_shape:e.target.value as ProfileStyle['avatar_shape']})}><option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="square">Square</option></select></label>
@@ -135,13 +143,14 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
    <BadgeToastContainer onOpenTrophyCase={()=>setShowHallmarks(true)}/>
  </main>
 }
-function AccountCard({profile,card,urls,roles,badgeState,onOpenHallmarks,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
+function AccountCard({profile,card,urls,roles,badgeState,bannerPet,onOpenHallmarks,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;bannerPet?:EquippedPetSummary|null;onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
  const theme=card.style,avatar=card.avatar_id?urls[card.avatar_id]:null,banner=card.banner_id?urls[card.banner_id]:null
  const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font]} as CSSProperties
  const tilt=useCardTilt<HTMLElement>()
  return <article ref={tilt} className="account-profile-card" style={vars}>
   <div className="account-profile-banner" style={{height:theme.banner_height}}>
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
+   <ProfileBannerPet pet={bannerPet}/>
    {onEditBanner&&<button type="button" className="profile-banner-pencil-btn" aria-label="Edit banner" title="Edit banner" onClick={onEditBanner}><Icon name="pencil"/><span>Edit banner</span></button>}
   </div>
   <div className="account-profile-card-body">

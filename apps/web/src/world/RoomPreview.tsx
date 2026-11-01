@@ -15,7 +15,13 @@ import { useWalk } from './useWalk'
 import { WalkControls } from './WalkControls'
 import { beside } from './navigation'
 import { STORAGE_KEY, parseLayout } from './layout'
+import type { EquippedPetSummary } from '../pets/pet-model'
 import './room.css'
+
+const PREVIEW_PETS: EquippedPetSummary[] = [
+ { id: 'preview-triarch', species_id: 'triarch', name: 'Triarch', title: 'The First Wyrm', nickname: 'Triarch', rarity: 'founder', personality: 'Loyal', sprite_key: 'triarch', affection_level: 1 },
+ { id: 'preview-cat', species_id: 'cat', name: 'Village Cat', title: '', nickname: null, rarity: 'starter', personality: 'Curious', sprite_key: 'cat', affection_level: 1 },
+]
 
 export default function RoomPreview(){
  const items=useWorldItems()
@@ -45,7 +51,7 @@ export default function RoomPreview(){
  useEffect(()=>{if(action?.type!=='rest')return;const wake=(e:KeyboardEvent)=>{if(/^(Arrow(?:Up|Down|Left|Right)|[wasd])$/i.test(e.key)&&!(e.target instanceof HTMLElement&&e.target.closest('input,textarea,select,[contenteditable=true],dialog[open]')))setAction(null)};window.addEventListener('keydown',wake);return()=>window.removeEventListener('keydown',wake)},[action])
  useEffect(()=>{game.current?.events.emit('room:lights',items.lights)},[items.lights])
 
- useEffect(()=>{let disposed=false;void import('./renderer').then(({createRoom})=>{if(!disposed&&mount.current){game.current=createRoom(mount.current,id=>interaction.current.select(id),()=>positionRef.current,()=>layout,{activity:()=>activityRef.current,focus:()=>focusRef.current,action:()=>actionRef.current,lights:()=>lightsRef.current,onWalk:p=>interaction.current.floor(p)});game.current.events.once('ready',()=>{if(!disposed)setReady(true)})}}).catch(()=>{if(!disposed)setRenderError(true)});return()=>{disposed=true;game.current?.destroy(true);game.current=null}},[])
+ useEffect(()=>{let disposed=false;void import('./renderer').then(({createRoom})=>{if(!disposed&&mount.current){game.current=createRoom(mount.current,id=>interaction.current.select(id),()=>positionRef.current,()=>layout,{activity:()=>activityRef.current,focus:()=>focusRef.current,action:()=>actionRef.current,lights:()=>lightsRef.current,pets:()=>PREVIEW_PETS,onWalk:p=>interaction.current.floor(p)});game.current.events.once('ready',()=>{if(!disposed)setReady(true)})}}).catch(()=>{if(!disposed)setRenderError(true)});return()=>{disposed=true;game.current?.destroy(true);game.current=null}},[])
 
  useEffect(()=>{
   if(!autoMove||action!==null||walk.moving)return

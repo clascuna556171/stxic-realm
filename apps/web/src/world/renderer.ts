@@ -10,6 +10,9 @@ import { roomAmbientPixels, characterBlinkPixels } from './room-life'
 import { furniturePose } from './furniture-pose'
 import { activityOverlay } from './activity-overlay'
 import type { WorldSnapshot, FocusState } from './activity-state'
+import { petDisplayName, type EquippedPetSummary, type WildlifeEncounter } from '../pets/pet-model'
+import { getPetPixels, getPetSpriteDimensions } from '../pets/pet-sprites'
+import { findSafePetTile, stepPetBehavior, type PetBehaviorState } from './pet-actor'
 
 const tile = 32
 const animatedFurnitureIds = new Set(['desk', 'sofa', 'bed', 'coffee-table', 'lantern', 'floor-lamp', 'console', 'plant', 'bookshelf'])
@@ -27,6 +30,10 @@ export function createRoom(
   lights?: () => Record<string, boolean>
   appearance?: Appearance
   people?: () => Visitor[]
+  pets?: () => EquippedPetSummary[]
+  wildlife?: () => WildlifeEncounter | null
+  onPetInteract?: (pet: EquippedPetSummary) => void
+  onWildlifeClick?: (encounter: WildlifeEncounter) => void
   onWalk?: (point: Point) => void
   editor?: {
    enabled: () => boolean
@@ -216,6 +223,9 @@ export function createRoom(
    }
    const pointerTile = (p: Phaser.Input.Pointer) => ({ x: Math.floor(p.x / tile), y: Math.floor(p.y / tile) })
    const hit = (p: Point) => [...getObjects()].reverse().find(o => p.x >= o.x && p.x < o.x + o.width && p.y >= o.y && p.y < o.y + o.height)
+   const hitPet = (p: Point) => [...petActors.values()].find(pa => pa.state.point.x === p.x && pa.state.point.y === p.y)
+   const hitWildlife = (p: Point) => (wildlifeNode && wildlifeNode.point.x === p.x && wildlifeNode.point.y === p.y ? wildlifeNode : null)
+
    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
     if (pointer.button > 0) return
     const p = pointerTile(pointer),
@@ -227,7 +237,23 @@ export function createRoom(
      drag = { id: item.id, x: item.x, y: item.y, offsetX: p.x - item.x, offsetY: p.y - item.y, last: '' }
      const event = pointer.event as PointerEvent
      if (event.pointerId !== undefined) this.game.canvas.setPointerCapture(event.pointerId)
-    } else if (item) onInspect(item.id)
+     return
+    }
+    const wildHit = hitWildlife(p)
+    if (wildHit) {
+     options?.onWildlifeClick?.(wildHit.encounter)
+     return
+    }
+    const petHit = hitPet(p)
+    if (petHit) {
+     petHit.state.animState = 'happy'
+     petHit.state.ticksInState = 0
+     petHit.state.stateDurationTicks = 6
+     paintPet(petHit, lifeTick)
+     options?.onPetInteract?.(petHit.summary)
+     return
+    }
+    if (item) onInspect(item.id)
     else options?.onWalk?.(p)
    })
    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
@@ -394,10 +420,162 @@ export function createRoom(
    }
    this.game.events.on('room:action', onAction)
    onAction(options?.action?.() ?? null)
+
+   // --- EQUIPPED HOUSE PETS (Up to 3 living companions) ---
+   type PetNode = {
+    summary: EquippedPetSummary
+    state: PetBehaviorState
+    container: Phaser.GameObjects.Container
+    art: Phaser.GameObjects.Graphics
+    label: Phaser.GameObjects.Text
+   }
+   const petActors = new Map<string, PetNode>()
+   const startSpots: Point[] = [
+    { x: 6, y: 8 },
+    { x: 10, y: 8 },
+    { x: 7, y: 5 },
+   ]
+
+   const paintPet = (node: PetNode, frameTick: number) => {
+    node.art.clear()
+    const dims = getPetSpriteDimensions(node.summary.species_id)
+    const scale = node.summary.species_id === 'triarch' ? 0.8 : 0.85
+    node.art.setScale(scale).setPosition((-dims.width * scale) / 2, -dims.height * scale + 2)
+    const frame = motion.matches ? 0 : frameTick % 4
+    draw(node.art, getPetPixels(node.summary.species_id, node.state.animState, frame))
+   }
+
+   const syncPets = (pets: EquippedPetSummary[]) => {
+    const incomingIds = new Set(pets.slice(0, 3).map(p => p.id))
+    for (const [id, node] of petActors) {
+     if (!incomingIds.has(id)) {
+      this.tweens.killTweensOf(node.container)
+      node.container.destroy(true)
+      petActors.delete(id)
+     }
+    }
+    const objects = getObjects()
+    pets.slice(0, 3).forEach((pet, idx) => {
+     const existing = petActors.get(pet.id)
+     if (existing) {
+      existing.summary = pet
+      existing.label.setText(petDisplayName(pet))
+      paintPet(existing, lifeTick)
+      return
+     }
+     const occupied = [...petActors.values()].map(n => n.state.point)
+     const spawnPt = findSafePetTile(startSpots[idx] ?? startSpots[0], objects, occupied)
+     const shadow = this.add.ellipse(0, 0, pet.species_id === 'triarch' ? 26 : 18, 6, 0x10131c, 0.45)
+     const art = this.add.graphics()
+     const labelText = pet.title ? `${petDisplayName(pet)} · ${pet.title}` : petDisplayName(pet)
+     const label = this.add
+      .text(0, -30, labelText, {
+       fontFamily: 'Inter, sans-serif',
+       fontSize: '8px',
+       color: pet.species_id === 'triarch' ? '#f5d986' : '#ececf4',
+       backgroundColor: '#191824',
+       padding: { x: 4, y: 2 },
+      })
+      .setOrigin(0.5, 1)
+     const container = this.add
+      .container(spawnPt.x * tile + 16, spawnPt.y * tile + 26, [shadow, art, label])
+      .setDepth((spawnPt.y + 0.9) * tile)
+     const node: PetNode = {
+      summary: pet,
+      state: {
+       id: pet.id,
+       speciesId: pet.species_id,
+       personality: pet.personality,
+       point: spawnPt,
+       direction: 'down',
+       animState: 'idle',
+       ticksInState: 0,
+       stateDurationTicks: 4 + idx * 2,
+      },
+      container,
+      art,
+      label,
+     }
+     paintPet(node, lifeTick)
+     petActors.set(pet.id, node)
+    })
+   }
+
+   syncPets(options?.pets?.() ?? [])
+   this.game.events.on('room:pets', syncPets)
+
+   // --- ACTIVE WILDLIFE VISITOR ---
+   type WildlifeNode = {
+    encounter: WildlifeEncounter
+    point: Point
+    container: Phaser.GameObjects.Container
+    art: Phaser.GameObjects.Graphics
+   }
+   let wildlifeNode: WildlifeNode | null = null
+
+   const syncWildlife = (enc: WildlifeEncounter | null) => {
+    if (!enc || enc.status !== 'active') {
+     if (wildlifeNode) {
+      wildlifeNode.container.destroy(true)
+      wildlifeNode = null
+     }
+     return
+    }
+    if (wildlifeNode && wildlifeNode.encounter.id === enc.id) {
+     wildlifeNode.encounter = enc
+     return
+    }
+    if (wildlifeNode) {
+     wildlifeNode.container.destroy(true)
+     wildlifeNode = null
+    }
+    const objects = getObjects()
+    const occupied = [...petActors.values()].map(n => n.state.point)
+    const pt = findSafePetTile({ x: 8, y: 5 }, objects, occupied)
+    const ring = this.add.ellipse(0, 0, 26, 10, 0xd9b152, 0.35)
+    const art = this.add.graphics()
+    const dims = getPetSpriteDimensions(enc.species_id)
+    art.setScale(0.9).setPosition((-dims.width * 0.9) / 2, -dims.height * 0.9 + 2)
+    draw(art, getPetPixels(enc.species_id, 'idle', 0))
+    const badge = this.add
+     .text(0, -32, `✦ Wild ${enc.name} (Click to bond)`, {
+      fontFamily: 'Inter, sans-serif',
+      fontSize: '8.5px',
+      color: '#fef08a',
+      backgroundColor: '#251e38',
+      padding: { x: 5, y: 2 },
+     })
+     .setOrigin(0.5, 1)
+    const container = this.add
+     .container(pt.x * tile + 16, pt.y * tile + 26, [ring, art, badge])
+     .setDepth((pt.y + 0.95) * tile)
+    wildlifeNode = { encounter: enc, point: pt, container, art }
+   }
+
+   syncWildlife(options?.wildlife?.() ?? null)
+   this.game.events.on('room:wildlife', syncWildlife)
+
    const reconcilePose = () => {
     if (activeAction) onAction(activeAction)
+    const objects = getObjects()
+    const used: Point[] = []
+    for (const node of petActors.values()) {
+     const safe = findSafePetTile(node.state.point, objects, used)
+     used.push(safe)
+     if (safe.x !== node.state.point.x || safe.y !== node.state.point.y) {
+      this.tweens.killTweensOf(node.container)
+      node.state.point = safe
+      node.container.setPosition(safe.x * tile + 16, safe.y * tile + 26).setDepth((safe.y + 0.9) * tile)
+     }
+    }
+    if (wildlifeNode) {
+     const safeWild = findSafePetTile(wildlifeNode.point, objects, used)
+     wildlifeNode.point = safeWild
+     wildlifeNode.container.setPosition(safeWild.x * tile + 16, safeWild.y * tile + 26).setDepth((safeWild.y + 0.95) * tile)
+    }
    }
    this.game.events.on('room:layout', reconcilePose)
+
    const guests = new Map<string, Actor>()
    const drawPeople = (people: Visitor[]) => {
     const ids = new Set(people.map(p => p.id))
@@ -452,6 +630,39 @@ export function createRoom(
       lastLifeAt = now
       lifeTick++
       paintRoomLife(lifeTick)
+
+      // Animate equipped house pets & advance behavior every 3 lifeTicks (~750ms)
+      const objects = getObjects()
+      for (const node of petActors.values()) {
+       if (lifeTick % 3 === 0) {
+        const prevPoint = { ...node.state.point }
+        const others = [...petActors.values()].filter(o => o.summary.id !== node.summary.id).map(o => o.state.point)
+        if (wildlifeNode) others.push(wildlifeNode.point)
+        node.state = stepPetBehavior(node.state, objects, avatar.point, others)
+        if (node.state.point.x !== prevPoint.x || node.state.point.y !== prevPoint.y) {
+         this.tweens.killTweensOf(node.container)
+         const targetX = node.state.point.x * tile + 16
+         const targetY = node.state.point.y * tile + 26
+         const targetDepth = (node.state.point.y + 0.9) * tile
+         this.tweens.add({
+          targets: node.container,
+          x: targetX,
+          y: targetY,
+          duration: 380,
+          ease: 'Sine.easeInOut',
+          onUpdate: () => node.container.setDepth(node.container.y + 2),
+          onComplete: () => node.container.setDepth(targetDepth),
+         })
+        }
+       }
+       paintPet(node, lifeTick)
+      }
+
+      if (wildlifeNode) {
+       wildlifeNode.art.clear()
+       draw(wildlifeNode.art, getPetPixels(wildlifeNode.encounter.species_id, 'idle', lifeTick % 4))
+      }
+
       const actors = [avatar, ...guests.values()]
       actors.forEach((actor, idx) => {
        if (actor.until > now) return
@@ -480,6 +691,14 @@ export function createRoom(
      actor.until = 0
      paint(actor)
     }
+    for (const node of petActors.values()) {
+     this.tweens.killTweensOf(node.container)
+     node.state.animState = 'sit'
+     node.container
+      .setPosition(node.state.point.x * tile + 16, node.state.point.y * tile + 26)
+      .setDepth((node.state.point.y + 0.9) * tile)
+     paintPet(node, 0)
+    }
     reconcilePose()
    }
    motion.addEventListener('change', reduce)
@@ -491,6 +710,8 @@ export function createRoom(
     this.game.events.off('room:action', onAction)
     this.game.events.off('room:lights', onLights)
     this.game.events.off('room:people', drawPeople)
+    this.game.events.off('room:pets', syncPets)
+    this.game.events.off('room:wildlife', syncWildlife)
     this.game.events.off('room:cancel-placement', cancelPlacement)
     this.game.canvas.removeEventListener('pointercancel', cancelPlacement)
     window.removeEventListener('blur', cancelPlacement)

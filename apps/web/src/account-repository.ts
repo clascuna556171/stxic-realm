@@ -8,7 +8,7 @@ export type PublicIdentity = Profile & {character?:Character}
 export type Friendship = {id:string;requester:string;addressee:string;status:'pending'|'accepted'}
 export type Home = {owner_id:string;privacy:'private'|'friends';mood:Appearance['mood'];layout:import('./world/layout.ts').Layout;revision:number}
 export type Visitor = {id:string;name:string;x:number;y:number;sequence:number;character:Character}
-export type RoomState = {home:Home;owner:Profile;visitors:Visitor[]}
+export type RoomState = {home:Home;owner:Profile;visitors:Visitor[];house_pets?:import('./pets/pet-model.ts').EquippedPetSummary[];wildlife_encounter?:import('./pets/pet-model.ts').WildlifeEncounter|null}
 
 export function appearanceFor(identity:Pick<Identity,'character'|'theme'|'mood'>):Appearance {
  return parseAppearance(JSON.stringify({...identity.character,...identity.theme,mood:identity.mood}))
