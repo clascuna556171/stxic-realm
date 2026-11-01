@@ -1,0 +1,178 @@
+/* STXIC Realm — Hallmark Unlock Toast Notifications */
+
+.badge-toast-viewport {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+  max-width: 380px;
+  width: calc(100% - 48px);
+}
+
+.badge-toast-card {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  animation: badgeToastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+  overflow: hidden;
+}
+
+.badge-toast-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: skewX(-20deg);
+  animation: badgeToastGlint 1.2s ease-in-out 0.2s forwards;
+  pointer-events: none;
+}
+
+@keyframes badgeToastSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes badgeToastGlint {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}
+
+.badge-toast-icon-wrap {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--realm-raised, #1a1c26);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.badge-toast-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.badge-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.badge-toast-topline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.badge-toast-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--realm-accent, #38bdf8);
+  font-family: var(--realm-ui-font, sans-serif);
+}
+
+.badge-toast-rarity {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.badge-toast-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--realm-text, #f8fafc);
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-toast-subtitle {
+  font-size: 11px;
+  color: var(--realm-muted, #94a3b8);
+  margin: 2px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge-toast-btn {
+  background: transparent;
+  border: none;
+  color: var(--realm-muted, #94a3b8);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.badge-toast-btn:hover {
+  color: var(--realm-text, #f8fafc);
+  background: var(--realm-raised, #1a1c26);
+}
+
+.badge-toast-btn.primary {
+  background: var(--realm-raised, #1a1c26);
+  border: 1px solid var(--realm-line, #282a36);
+  color: var(--realm-text, #f8fafc);
+  font-weight: 600;
+}
+
+.badge-toast-btn.primary:hover {
+  border-color: var(--realm-accent, #38bdf8);
+  color: var(--realm-accent, #38bdf8);
+}
+
+.badge-toast-btn.dismiss {
+  font-size: 14px;
+  padding: 4px 6px;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-toast-card {
+    animation: none;
+  }
+  .badge-toast-card::after {
+    display: none;
+  }
+}

@@ -1,0 +1,184 @@
+/* STXIC Realm — Featured Badge Ribbon on 3D Profile Card */
+
+.profile-badge-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 0 6px;
+  padding: 6px 10px;
+  background: var(--realm-raised, #161822);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 8px;
+  position: relative;
+  z-index: 20;
+}
+
+.profile-badge-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-badge-pin {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+  padding: 3px;
+  margin: 0;
+}
+
+.profile-badge-pin:hover,
+.profile-badge-pin:focus-visible {
+  transform: translateY(-2px) scale(1.08);
+  outline: none;
+}
+
+.profile-badge-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+/* Floating Rich Tooltip anchored safely below the ribbon */
+.profile-badge-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  width: 260px;
+  max-width: calc(100% - 16px);
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 8px;
+  padding: 10px 12px;
+  z-index: 100;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  animation: badgeTooltipFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  box-sizing: border-box;
+}
+
+/* Pointer notch pointing up to the hovered pin */
+.profile-badge-tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: var(--notch-x, 24px);
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid var(--realm-line, #282a36);
+}
+
+.profile-badge-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: var(--notch-x, 24px);
+  transform: translateX(-50%);
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 5px solid var(--realm-surface, #12131a);
+}
+
+@keyframes badgeTooltipFade {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.badge-tooltip-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.badge-tooltip-rarity {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+  border: 1px solid;
+}
+
+.badge-tooltip-cat {
+  font-size: 9px;
+  color: var(--realm-muted, #94a3b8);
+  text-transform: capitalize;
+}
+
+.badge-tooltip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--realm-text, #f8fafc);
+  line-height: 1.2;
+}
+
+.badge-tooltip-sub {
+  font-size: 11px;
+  color: var(--realm-accent, #38bdf8);
+  line-height: 1.2;
+}
+
+.badge-tooltip-desc {
+  font-size: 11px;
+  color: var(--realm-muted, #94a3b8);
+  line-height: 1.4;
+  margin: 4px 0 0;
+}
+
+/* Hallmarks Trophy Case Trigger Button */
+.profile-hallmarks-btn {
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  color: var(--realm-muted, #94a3b8);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.profile-hallmarks-btn:hover {
+  color: var(--realm-text, #f8fafc);
+  border-color: var(--realm-accent, #38bdf8);
+}
+
+.profile-hallmarks-count {
+  background: var(--realm-raised, #1a1c26);
+  color: var(--realm-accent, #38bdf8);
+  padding: 1px 5px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-badge-pin,
+  .profile-badge-tooltip {
+    transition: none;
+    animation: none;
+  }
+}

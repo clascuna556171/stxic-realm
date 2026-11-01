@@ -9,6 +9,13 @@ import type {useWorldItems} from './useWorldItems'
 import './item-actions.css'
 import {focusSeconds} from './activity-state'
 import {SoundscapeControls} from './WorldAmbience'
+import {VinylTurntable} from './VinylTurntable'
+import {PetCompanion} from './PetCompanion'
+import {PassportPanel} from './PassportPanel'
+import {PixelWaterDrop} from './pixel-icons'
+import {BadgeModal} from '../BadgeModal'
+import {BadgeToastContainer} from '../BadgeToast'
+import {getUserBadgeState, type UserBadgeState} from '../badges'
 
 type Items=ReturnType<typeof useWorldItems>
 type Props={items:Items;scope:string;owner?:string;own?:boolean;hall?:boolean;resources?:ReactNode;chat?:string;onRest:()=>void;onSit:()=>void}
@@ -21,21 +28,27 @@ function ItemDialog({items,scope,owner,own=true,hall=false,resources,chat='/',on
  const target=items.target!,kind=target.kind??target.id,dialog=useRef<HTMLDialogElement>(null)
  useEffect(()=>{const previous=items.opener.current,element=dialog.current;element?.showModal();return()=>{element?.close();queueMicrotask(()=>{if(previous?.isConnected)previous.focus()})}},[])
  const [tab,setTab]=useState('personal')
+ const [hallmarksOpen,setHallmarksOpen]=useState(false)
+ const [badgeState,setBadgeState]=useState<UserBadgeState>(()=>getUserBadgeState(owner??'self',[],own))
  const description=!hall&&kind==='desk'?'A place for project links, notes and a focused moment.':!hall&&kind==='sofa'?'Soft cushions for a quiet pause between conversations.':target.description
  const notebook=['coffee-table','round-table'].includes(kind),work=['desk','console'].includes(kind)
  return <dialog ref={dialog} className="item-dialog" aria-labelledby="item-title" onKeyDown={e=>{if(e.key!=='Tab')return;const controls=[...e.currentTarget.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]')].filter(el=>el.getClientRects().length);const first=controls[0],last=controls.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}} onCancel={e=>{e.preventDefault();items.close()}} onClick={e=>{if(e.target===e.currentTarget){const b=e.currentTarget.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)items.close()}}}>
   <header><div><h2 id="item-title">{target.name}</h2><p>{description}</p></div><button autoFocus aria-label="Close item actions" onClick={items.close}>Close</button></header>
-  {notebook?<><div className="item-tabs" role="group" aria-label="Notebook sections">{[['personal','Personal Notes'],['sticky','Room Sticky Notes'],['guestbook','Guestbook']].map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>setTab(id)}>{label}</button>)}</div>
+  {notebook?<><div className="item-tabs" role="group" aria-label="Notebook sections">{[['personal','Personal Notes'],['sticky','Room Sticky Notes'],['guestbook','Guestbook'],['passport','Passport & Stamps'],['hallmarks','Hallmarks']].map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>setTab(id)}>{label}</button>)}</div>
    {tab==='personal'&&<LocalNotes storageKey={`stxic-realm:notes:v1:${scope}`} label="Personal Notes"/>}
    {tab==='sticky'&&(hall?<section><h3>Community notes</h3>{resources??<p>Choose a server to read its community resources.</p>}</section>:<ContentPanel owner={owner} own={own} scope={scope} section="notes"/>)}
    {tab==='guestbook'&&(owner?<HomeSocial owner={owner} selected="coffee-table" section="guestbook"/>:<p>Sign in and open an account home to use its shared guestbook.</p>)}
-  </>:work?<>{kind==='desk'&&<button onClick={()=>{onSit();items.close()}}>Sit at PC</button>}{owner?<ProjectCards owner={owner}/>:hall?<section><h3>Server workspace</h3>{resources}</section>:<p>Project links appear here when the home owner shares them in Home social settings.</p>}<FocusTimer items={items} onSit={onSit}/><SoundscapeControls sound={items.sound}/><LocalNotes storageKey={`stxic-realm:snippets:v1:${scope}`} label="Snippet log"/><a className="item-link-action" href={chat}>Return to Chat</a></>
+   {tab==='passport'&&<PassportPanel roomId={scope} roomName={target.name} ownerName={owner??'Explorer'} mood="tech"/>}
+   {tab==='hallmarks'&&<div className="item-hallmarks-panel"><p>Prestige crests, honors, and milestones across the Realm.</p><button type="button" className="item-open-hallmarks-btn" onClick={()=>setHallmarksOpen(true)}>Open Trophy Case ({Object.keys(badgeState.unlocked).length}/32)</button></div>}
+  </>:work?<>{kind==='desk'&&<><div className="item-actions"><button onClick={()=>{onSit();items.close()}}>Sit at PC</button></div><PetCompanion petKey="desk"/></>}{kind==='console'&&<VinylTurntable/>}{owner?<ProjectCards owner={owner}/>:hall?<section><h3>Server workspace</h3>{resources}</section>:<p>Project links appear here when the home owner shares them in Home social settings.</p>}<FocusTimer items={items} onSit={onSit}/><SoundscapeControls sound={items.sound}/><LocalNotes storageKey={`stxic-realm:snippets:v1:${scope}`} label="Snippet log"/><a className="item-link-action" href={chat}>Return to Chat</a></>
   :kind==='bookshelf'?<>{hall?<><h3>Server resources</h3>{resources??<p>Select a server in the directory to browse its channels and community guides.</p>}</>:<ContentPanel owner={owner} own={own} scope={scope} section="reading"/>}</>
   :['lantern','floor-lamp','hearth'].includes(kind)?<><h3>Ambience</h3><p>Lighting is {items.lights[target.id]===false?'off':'on'} for your view. Your visitors keep their own settings.</p><button aria-pressed={items.lights[target.id]!==false} onClick={()=>items.toggle(target.id)}>{kind==='hearth'?(items.lights[target.id]===false?'Stoke Fire':'Let Fire Rest'):'Toggle Light'}</button>{kind==='hearth'&&<p>Embers follow the fire setting and your reduced-motion preference.</p>}</>
-  :kind==='plant'?<><h3>{plantMood(items.watered[target.id])}</h3><p>{items.watered[target.id]?`Last watered ${new Date(items.watered[target.id]).toLocaleString()}`:'This plant has not been watered during this visit.'}</p><button onClick={()=>items.water(target.id)}>Water Plant</button><span key={items.splash} className={items.splash?'item-water-drop':''} aria-hidden="true">{items.splash?'💧':''}</span><p role="status">{items.watered[target.id]?'Watered. Looking greener already.':''}</p></>
-  :kind==='bed'?<><p>Pause here for a while. Any movement key or Stand up ends your rest.</p><button onClick={()=>{onRest();items.close()}}>Sleep</button></>
-  :kind==='sofa'?<><p>Take a seat beside the sofa and settle in.</p><button onClick={()=>{onSit();items.close()}}>Sit on sofa</button></>
+  :kind==='plant'?<><h3>{plantMood(items.watered[target.id])}</h3><p>{items.watered[target.id]?`Last watered ${new Date(items.watered[target.id]).toLocaleString()}`:'This plant has not been watered during this visit.'}</p><button onClick={()=>items.water(target.id)}>Water Plant</button><span key={items.splash} className={items.splash?'item-water-drop':''} aria-hidden="true">{items.splash?<PixelWaterDrop/>:null}</span><p role="status">{items.watered[target.id]?'Watered. Looking greener already.':''}</p></>
+  :kind==='bed'?<><p>Pause here for a while. Any movement key or Stand up ends your rest.</p><div className="item-actions"><button onClick={()=>{onRest();items.close()}}>Sleep</button></div><PetCompanion petKey="bed"/></>
+  :kind==='sofa'?<><p>Take a seat beside the sofa and settle in.</p><div className="item-actions"><button onClick={()=>{onSit();items.close()}}>Sit on sofa</button></div><PetCompanion petKey="sofa"/></>
   :<><p>A little piece of Realm’s identity. Make this space your own in the studio.</p><a className="item-link-action" href={hall?'/?hall-studio':'/?room-studio'}>Open {hall?'Hall':'Home'} Studio</a></>}
+   <BadgeModal isOpen={hallmarksOpen} onClose={()=>setHallmarksOpen(false)} userBadgeState={badgeState} userId={owner??'self'} isOwnProfile={own} onBadgeStateChange={setBadgeState}/>
+   <BadgeToastContainer onOpenTrophyCase={()=>setHallmarksOpen(true)}/>
  </dialog>
 }
 function useLocalValue<T>(key:string,initial:T){

@@ -1,18 +1,20 @@
 export const frameShapes = ['circle', 'rounded-square', 'square'] as const
 export type FrameShape = typeof frameShapes[number]
-export const frameIds = ['dark-realm', 'royal-legend', 'nature-spirit', 'cyber-core', 'minimal-mono', 'cozy-friends'] as const
+export const frameIds = ['realm-creator', 'dark-realm', 'royal-legend', 'nature-spirit', 'cyber-core', 'minimal-mono', 'cozy-friends'] as const
 export type FrameId = typeof frameIds[number]
 export type FrameCollection = {
  id: FrameId; name: string; description: string; category: string; material: string
  palette: readonly [string, string, string]; assets: Record<FrameShape, string>
- effect: 'ember' | 'glimmer' | 'firefly' | 'pulse' | 'sparkle' | 'twinkle'; available: boolean
+ effect: 'ember' | 'glimmer' | 'firefly' | 'pulse' | 'sparkle' | 'twinkle' | 'celestial'; available: boolean
+ founderOnly?: boolean
 }
-const collection = (id: FrameId, name: string, description: string, category: string, material: string, palette: FrameCollection['palette'], effect: FrameCollection['effect']): FrameCollection => ({
- id, name, description, category, material, palette, effect, available: true,
+const collection = (id: FrameId, name: string, description: string, category: string, material: string, palette: FrameCollection['palette'], effect: FrameCollection['effect'], founderOnly = false): FrameCollection => ({
+ id, name, description, category, material, palette, effect, available: true, founderOnly,
  assets: Object.fromEntries(frameShapes.map(shape => [shape, `/profile-frames/${id}-${shape}.svg`])) as Record<FrameShape, string>,
 })
-// Order intentionally moves from dark materials to light, playful ones.
+// Sovereign Realm Creator sits proudly at the head of the catalog, followed by the shared realm collections.
 export const frameCatalog: readonly FrameCollection[] = [
+ collection('realm-creator', 'Realm Creator', 'Forged for the Sovereign Architect. Crowned in gold and astral starlight.', 'Sovereign', 'Gilded crown · royal banners · astral ring', ['#d4a340', '#633984', '#ffe79a'], 'celestial', true),
  collection('dark-realm', 'Dark Realm', 'Blackened steel. A heart of crimson.', 'Dark fantasy', 'Obsidian · garnet', ['#242631', '#ab3045', '#d6c5c5'], 'ember'),
  collection('royal-legend', 'Royal Legend', 'A little ceremony for your everyday.', 'High fantasy', 'Gilded brass · sapphire', ['#d7ac54', '#315b8b', '#fff0b6'], 'glimmer'),
  collection('nature-spirit', 'Nature Spirit', 'Something wild, quietly taking root.', 'Woodland', 'Willow · fern · moonflower', ['#667f40', '#c9d88a', '#93e8d5'], 'firefly'),

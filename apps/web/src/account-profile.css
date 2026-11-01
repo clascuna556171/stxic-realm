@@ -31,3 +31,13 @@
 .profile-icon-button svg{width:13px;height:13px}
 .profile-icon-button input[type=file]{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer}
 @media(max-width:740px){.account-profile-avatar-wrap{width:104px;height:104px}}
+
+/* Pointer depth (card-tilt.ts). The card leans toward the pointer, the banner drifts back and the photo/frame lifts forward. Touch, coarse pointers and reduced motion never set data-tilt; at rest no transform is applied. */
+.account-profile-card{position:relative;transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s ease}
+.account-profile-card[data-tilt]{transform:perspective(1400px) rotateX(calc(var(--tilt-ny,0) * -4deg)) rotateY(calc(var(--tilt-nx,0) * 5deg));box-shadow:calc(var(--tilt-nx,0) * -14px) calc(20px + var(--tilt-ny,0) * -8px) 44px rgba(0,0,0,.45);transition-duration:.14s,.25s}
+.account-profile-card::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at var(--glare-x,50%) var(--glare-y,30%),rgba(255,255,255,.15),rgba(255,255,255,.04) 30%,transparent 58%);opacity:0;transition:opacity .4s ease}
+.account-profile-card[data-tilt]::after{opacity:1}
+.account-profile-banner>img,.account-banner-empty,.account-profile-avatar-wrap{transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.account-profile-card[data-tilt] .account-profile-banner>img,.account-profile-card[data-tilt] .account-banner-empty{transform:scale(1.05) translate(calc(var(--tilt-nx,0) * -7px),calc(var(--tilt-ny,0) * -4px));transition-duration:.14s}
+.account-profile-card[data-tilt] .account-profile-avatar-wrap{transform:translate(calc(var(--tilt-nx,0) * 6px),calc(var(--tilt-ny,0) * 4px)) scale(1.03);transition-duration:.14s}
+@media(prefers-reduced-motion:reduce){.account-profile-card,.account-profile-banner>img,.account-banner-empty,.account-profile-avatar-wrap{transform:none!important;transition:none!important}.account-profile-card::after{display:none}}

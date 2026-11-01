@@ -28,3 +28,8 @@
 .item-dialog .home-social-navigation{display:none}
 
 .item-dialog :is(.item-link-action,.home-social-toolbar>a){display:inline-flex;align-items:center;min-height:44px;min-width:44px;box-sizing:border-box;padding-block:8px}
+
+.item-hallmarks-panel{display:flex;flex-direction:column;gap:14px;padding:16px 0}
+.item-hallmarks-panel p{color:var(--realm-muted);margin:0}
+.item-open-hallmarks-btn{background:var(--realm-raised);border:1px solid var(--realm-accent);color:var(--realm-accent);font-weight:600;padding:10px 16px;border-radius:6px;cursor:pointer;align-self:flex-start;transition:all .15s ease}
+.item-open-hallmarks-btn:hover{background:var(--realm-surface);box-shadow:0 0 12px rgba(56,189,248,.25)}

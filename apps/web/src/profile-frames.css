@@ -28,6 +28,7 @@
 .effect-pulse{--trace-duration:2.4s}.effect-pulse .frame-energy-halo{stroke-width:12;animation-duration:3.6s}.effect-pulse .frame-energy-chase{stroke-width:5;stroke-dasharray:12 13}.effect-pulse .frame-energy-echo{stroke-width:3;stroke-dasharray:4 21}.effect-pulse .frame-edge-details{stroke-width:2}.effect-pulse .frame-mote{animation-name:frame-signal;animation-duration:2.4s}.effect-pulse .frame-jewel-glint{stroke:#b7ffff}
 .effect-sparkle{--trace-duration:6s}.effect-sparkle .frame-energy-halo{display:none}.effect-sparkle .frame-energy-track{opacity:.35}.effect-sparkle .frame-energy-chase{stroke-width:2.4;stroke-dasharray:6 44}.effect-sparkle .frame-energy-echo,.effect-sparkle .frame-edge-details{display:none}.effect-sparkle .frame-mote{animation-duration:4s}.effect-sparkle .mote-aura{display:none}.effect-sparkle .frame-motes>g:nth-child(even){display:none}
 .effect-twinkle{--trace-duration:4.5s}.effect-twinkle .frame-energy-halo{stroke-width:10}.effect-twinkle .frame-energy-chase{stroke:#ffe8ab;stroke-dasharray:4 21;stroke-width:3}.effect-twinkle .frame-energy-echo{stroke:#e0ccff;stroke-dasharray:2 23}.effect-twinkle .frame-edge-details{display:none}.effect-twinkle .frame-mote{animation-name:frame-charm;animation-duration:3s}.effect-twinkle .frame-motes>g:nth-child(3n) .mote-charm{fill:#d9cbff}
+.effect-celestial{--trace-duration:3.6s}.effect-celestial .frame-energy-halo{stroke-width:14;animation-duration:3.8s}.effect-celestial .frame-energy-halo path{stroke-dasharray:10 34}.effect-celestial .frame-energy-chase{stroke:#ffffff;stroke-dasharray:10 32;stroke-width:4.2;filter:drop-shadow(0 0 5px #ffd875)}.effect-celestial .frame-energy-echo{stroke:#c78aff;stroke-dasharray:3 25;stroke-width:2;filter:drop-shadow(0 0 5px #833ec9)}.effect-celestial .frame-edge-details{stroke:#ffd875;opacity:.85}.effect-celestial .frame-mote{animation-name:frame-celestial-spark;animation-duration:2.8s}.effect-celestial .frame-jewel-glint{transform-origin:128px 12px;stroke:#ffffff}
 .frame-spectacle{stroke-linejoin:round}.frame-spectacle>g>g{animation-delay:var(--piece-delay);transform-origin:0 0}
 .spectacle-flame{animation:frame-flame-dance 1.7s ease-in-out infinite}.flame-smoke{fill:#a91546;opacity:.65}.flame-outer{fill:#fa4546;stroke:#ff8b6a;stroke-width:1}.flame-inner{fill:#ffce86;stroke:#ffe9b7;stroke-width:.7}
 .spectacle-regalia{animation:frame-regalia-bloom 3.2s ease-in-out infinite}.regalia-ribbon{stroke:#dfad55;stroke-width:2.5}.regalia-star{fill:#fff2bd;stroke:#d69b47;stroke-width:1}.regalia-crystal{fill:#69cdf4;stroke:#e5f9ff;stroke-width:1.4}
@@ -35,7 +36,13 @@
 .spectacle-ink{animation:frame-ink-flare 3.3s ease-in-out infinite}.ink-comet{stroke:#f5f3ec;stroke-width:1.6}.ink-star{fill:#fffdf5;stroke:#363942;stroke-width:1}.ink-satellite{fill:#bdc6d2}
 .spectacle-sweets{animation:frame-sweet-float 3.6s ease-in-out infinite}.sweet-string{stroke:#f5c8e1;stroke-width:1.3}.sweet-heart{fill:#ffaecb;stroke:#fff1ed;stroke-width:1.8}.sweet-star{fill:#ffe5a8;stroke:#fff8e1;stroke-width:1.5}.frame-spectacle>g:nth-child(3n) .sweet-heart{fill:#cdb5fa}
 .spectacle-butterfly{animation:frame-butterfly-drift 3.2s ease-in-out infinite;animation-delay:var(--piece-delay)}.butterfly-wing{fill:#8be3b4;stroke:#d1ffe9;stroke-width:1.4;animation:frame-wing-beat .85s ease-in-out infinite;transform-origin:0 0}.butterfly-right{animation-delay:-.14s;fill:#98e9e5}.wing-inlay{stroke:#3b9185;stroke-width:2;fill:none}.butterfly-body{stroke:#efffd3;stroke-width:2.3}
+.spectacle-celestial{animation:frame-celestial-bloom 2.8s ease-in-out infinite}.celestial-ray{stroke:#ffe596;stroke-width:1.4;opacity:.7}.celestial-star{fill:#ffffff;stroke:#e0a838;stroke-width:1.2;filter:drop-shadow(0 0 3px #ffd875)}.celestial-core{fill:#ffe9a0}
 .cozy-bunny,.cozy-cat{animation:frame-companion-peek 3.4s ease-in-out infinite;transform-origin:0 22px}.cozy-cat{animation-delay:-1.7s}.companion-body{fill:#fff0e1;stroke:#b886a6;stroke-width:1.8}.cozy-cat .companion-body{fill:#ffe1b2;stroke:#c58e87}.companion-inner{stroke:#efaac8;stroke-width:4;stroke-linecap:round}.companion-face{stroke:#79516e;stroke-width:2.4;fill:none}.companion-cheek{stroke:#ed9cac;stroke-width:3;stroke-linecap:round}
+.frame-celestial-cosmos{pointer-events:none}
+.celestial-orbital-ring{stroke:#ffd978;stroke-width:2.2;opacity:.7;stroke-dasharray:16 12 6 18;animation:frame-trace 5.2s linear infinite;filter:drop-shadow(0 0 5px rgba(255,216,117,.6))}
+.celestial-orbital-ring-outer{stroke:#c88dff;stroke-width:1.4;opacity:.55;stroke-dasharray:5 28;animation:frame-trace-reverse 4.5s linear infinite;filter:drop-shadow(0 0 5px rgba(162,94,242,.5))}
+.celestial-shield-burst{animation:frame-shield-pulse 3s ease-in-out infinite;transform-origin:128px 230px}
+.shield-burst-star{stroke:#ffffff;stroke-width:1.4;filter:drop-shadow(0 0 4px #ffd875)}
 @keyframes frame-flame-dance{0%,100%{transform:skewX(-9deg) scale(.82,1);opacity:.85}35%{transform:skewX(11deg) scale(1.06,1.28);opacity:1}70%{transform:skewX(-4deg) scale(.9,.7);opacity:.9}}
 @keyframes frame-regalia-bloom{0%,100%{transform:translateY(3px) rotate(-8deg) scale(.65);opacity:.55}48%{transform:translateY(-5px) rotate(8deg) scale(1.14);opacity:1}}
 @keyframes frame-lightning-surge{0%,100%{transform:scale(.82,.7);opacity:.35}40%,60%{transform:scale(1.1,1.15);opacity:1}}
@@ -54,6 +61,9 @@
 @keyframes frame-firefly{0%,100%{opacity:.25;transform:translate(-3px,3px) scale(.7)}30%{opacity:1;transform:translate(var(--drift-x),-3px) scale(1.15)}65%{opacity:.65;transform:translate(4px,var(--drift-y)) scale(.9)}}
 @keyframes frame-signal{0%,100%{opacity:.25}35%,65%{opacity:1;transform:scale(1.15)}}
 @keyframes frame-charm{0%,100%{opacity:.35;transform:translate(0,3px) rotate(0deg) scale(.65)}50%{opacity:1;transform:translate(var(--drift-x),var(--drift-y)) rotate(var(--mote-turn)) scale(1)}}
+@keyframes frame-celestial-bloom{0%,100%{transform:translateY(2px) scale(.7) rotate(-8deg);opacity:.6}50%{transform:translateY(-4px) scale(1.18) rotate(8deg);opacity:1}}
+@keyframes frame-celestial-spark{0%,100%{opacity:.2;transform:translate(0,3px) scale(.6)}50%{opacity:1;transform:translate(var(--drift-x),var(--drift-y)) scale(1.22) rotate(var(--mote-turn))}}
+@keyframes frame-shield-pulse{0%,100%{opacity:.4;transform:scale(.75) rotate(0deg)}50%{opacity:1;transform:scale(1.2) rotate(45deg)}}
 .profile-frame[data-motion=paused] .profile-frame-effect *{animation-play-state:paused}
 .frame-collection:not([aria-pressed=true]):not(:hover):not(:focus-visible) .profile-frame-effect *{animation-play-state:paused}
 @container(max-width:63px){.has-effects .profile-frame-effect{display:none}.profile-frame-effect *{animation:none!important}}
@@ -79,6 +89,7 @@
 .frame-material-swatches{position:absolute;right:0;top:4px;display:flex;flex-direction:column;gap:4px}.frame-material-swatches i{width:6px;height:6px;display:block}
 .frame-collection-title{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px;font-weight:600;width:100%;margin-top:8px;flex-wrap:wrap}
 .account-profile-page .frame-collection-title small{font-size:10px;color:var(--realm-accent);font-weight:400}
+.account-profile-page .frame-collection-title small.frame-founder-badge{color:#ffd875;background:rgba(212,163,64,.15);border:1px solid rgba(212,163,64,.4);padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 .frame-collection-description{font-size:11px;color:var(--realm-muted);line-height:1.6;margin-top:5px}
 .frame-workshop-options{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .account-profile-page .frame-workshop-options label{display:flex;align-items:center;gap:8px;margin:0}.frame-workshop-options input{accent-color:var(--realm-accent);width:16px;height:16px}

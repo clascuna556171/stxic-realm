@@ -6,7 +6,7 @@ export type ItemTarget={id:string;name:string;description:string;kind?:string}
 export function useWorldItems(){
  const [focus,setFocus]=useState({...initialFocus}),[now,setNow]=useState(Date.now())
  const sound=useSoundscape()
- useEffect(()=>{const timer=setInterval(()=>{const time=Date.now();setNow(time);setFocus(value=>focusTransition(value,'tick',time))},1000);return()=>clearInterval(timer)},[])
+ useEffect(()=>{if(focus.status!=='running')return;const timer=setInterval(()=>{const time=Date.now();setNow(time);setFocus(value=>focusTransition(value,'tick',time))},1000);return()=>clearInterval(timer)},[focus.status])
  function syncAction(action:RoomAction|null){setFocus(value=>value.status==='running'&&(action?.type!=='sit'||action.target!==value.target)?focusTransition(value,'leave',Date.now()):value)}
  const opener=useRef<HTMLElement|null>(null)
  const [target,setTarget]=useState<ItemTarget|null>(null)

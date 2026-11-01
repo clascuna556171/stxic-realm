@@ -2,6 +2,7 @@ import {ProfileImage} from './ProfileImage'
 import {ProfileFrame} from './ProfileFrame'
 import {FrameGallery} from './FrameGallery'
 import {frameSelection} from './profile-frames'
+import {useCardTilt} from './card-tilt'
 import {useEffect,useRef,useState,type CSSProperties,type FormEvent} from 'react'
 import {AccountGate,useAccount} from './Account'
 import {rpc,invoke,errorText,type Profile} from './account-repository'
@@ -12,6 +13,10 @@ import {ReportForm} from './Safety'
 import {normalizeProfileImage,profileImageUrl} from './profile-media'
 import {IMAGE_LIMIT,moveSection,profileContrast,profileFonts,readableInk,sectionNames,type ProfileCard,type ProfileMedia,type ProfileStyle,type Section} from './profile-model'
 import {safeProjectUrl} from './world/project-links'
+import {BadgeRibbon} from './BadgeRibbon'
+import {BadgeModal} from './BadgeModal'
+import {BadgeToastContainer} from './BadgeToast'
+import {getUserBadgeState, trackHallmarkMilestone, type UserBadgeState} from './badges'
 import './account-profile.css'
 
 type Snapshot={profile:Profile;card:ProfileCard;media:ProfileMedia[];own:boolean;friends:boolean;roles:string[];note:{note:string;revision:number}}
@@ -19,13 +24,14 @@ type Draft={profile:Profile;card:ProfileCard}
 type UploadAttempt={kind:ProfileMedia['kind'];clientId:string;fingerprint:string;blob:Blob}
 export default function ProfilePage(){const {session}=useAccount();const requested=new URLSearchParams(location.search).get('profile');return <AccountGate><ProfileStudio key={`${session?.user.id}:${requested}`} user={requested||session?.user.id||''}/></AccountGate>}
 function ProfileStudio({user}:{user:string}){
- const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space')
+ const account=useAccount(),viewer=account.session!.user.id,space=new URLSearchParams(location.search).get('space'),own=user===viewer
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Draft|null>(null),[baseline,setBaseline]=useState(''),[media,setMedia]=useState<ProfileMedia[]>([]),[urls,setUrls]=useState<Record<string,string>>({})
  const [busy,setBusy]=useState(false),[uploading,setUploading]=useState(''),[error,setError]=useState(''),[loadError,setLoadError]=useState(''),[notice,setNotice]=useState(''),[tab,setTab]=useState<'identity'|'images'|'frames'|'style'|'sections'>('identity'),[phonePanel,setPhonePanel]=useState<'edit'|'preview'>('edit'),[report,setReport]=useState(false),[note,setNote]=useState(''),[noteBase,setNoteBase]=useState({note:'',revision:0})
- const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null)
+ const [retryUpload,setRetryUpload]=useState<UploadAttempt|null>(null),[badgeState,setBadgeState]=useState<UserBadgeState>(()=>getUserBadgeState(user,[],own)),[showHallmarks,setShowHallmarks]=useState(false)
+ useEffect(()=>{if(snapshot){setBadgeState(getUserBadgeState(user,snapshot.roles,own))}},[user,snapshot,own])
  const avatarInputRef=useRef<HTMLInputElement>(null),bannerInputRef=useRef<HTMLInputElement>(null),photoInputRef=useRef<HTMLInputElement>(null)
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
- const dirty=!!draft&&JSON.stringify(draft)!==baseline,own=user===viewer
+ const dirty=!!draft&&JSON.stringify(draft)!==baseline
  latest.current={dirty,noteDirty:note!==noteBase.note}
  const stale=!!snapshot&&!!draft&&(snapshot.card.revision!==draft.card.revision||snapshot.profile.revision!==draft.profile.revision)
  async function read(reset=false){const ticket=++serial.current;try{const next=await rpc<Snapshot>(client!,'get_profile_card',{p_user:user,p_space:space});if(!alive.current||ticket!==serial.current)return;setSnapshot(next);setMedia(next.media);setLoadError('');if(reset||!latest.current.dirty){const value={profile:next.profile,card:next.card};setDraft(value);setBaseline(JSON.stringify(value))}if(reset||!latest.current.noteDirty){setNote(next.note.note);setNoteBase(next.note)}}catch(e){if(alive.current&&ticket===serial.current){setSnapshot(null);setLoadError(errorText(e))}}}
@@ -38,7 +44,7 @@ function ProfileStudio({user}:{user:string}){
  async function save(e:FormEvent){e.preventDefault();if(!draft||busy||uploading||stale||!snapshot)return;setBusy(true);setError('');try{
  if(!draft.profile.display_name.trim()||!/^[a-z0-9_]{3,24}$/.test(draft.profile.username)){setTab('identity');throw new Error('Enter a display name and a handle with 3–24 lowercase letters, numbers or underscores.')}
  if(draft.card.connections.some(c=>!c.title.trim()||!safeProjectUrl(c.url))||draft.card.details.some(d=>!d.label.trim())){setTab('sections');throw new Error('Give every detail a label and every connection a title and full HTTPS link.')}
-const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:draft.card,p_revision:draft.card.revision,p_identity_revision:draft.profile.revision});serial.current++;const value={profile:next.profile,card:next.card};setSnapshot(next);setDraft(value);setBaseline(JSON.stringify(value));setMedia(next.media);await account.reload();setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
+const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:draft.card,p_revision:draft.card.revision,p_identity_revision:draft.profile.revision});serial.current++;const value={profile:next.profile,card:next.card};setSnapshot(next);setDraft(value);setBaseline(JSON.stringify(value));setMedia(next.media);if(draft.card.avatar_id&&draft.card.banner_id){trackHallmarkMilestone(user,'profile_media')}trackHallmarkMilestone(user,'profile_style');setBadgeState(getUserBadgeState(user,next.roles,own));await account.reload();setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function reload(){if((dirty||note!==noteBase.note)&&!confirm('Discard unsaved profile edits and reload?'))return;setBusy(true);await read(true);setBusy(false)}
  async function sendUpload(attempt:UploadAttempt){
   try{const result=await invoke<ProfileMedia>(client!,'realm-profile-media',attempt.blob,{'x-realm-slot':attempt.kind,'x-realm-client':attempt.clientId});if(!alive.current)return;setRetryUpload(null);serial.current++;setMedia(ms=>[...ms.filter(m=>m.id!==result.id),result]);if(attempt.kind==='avatar')card({avatar_id:result.id});else if(attempt.kind==='banner')card({banner_id:result.id});else card({gallery:[...(draft?.card.gallery??[]),result.id].slice(0,6)});setNotice('Image uploaded privately. Save your profile to share it.')}
@@ -62,7 +68,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
    {error&&<p role="alert" className="error">{error}</p>}{loadError&&<p role="alert" className="error">{loadError}</p>}{notice&&<p role="status" className="profile-notice">{notice}</p>}
    {own&&snapshot&&<div className="profile-mobile-switch" aria-label="Profile editor view"><button type="button" aria-pressed={phonePanel==='edit'} onClick={()=>setPhonePanel('edit')}>Edit profile</button><button type="button" aria-pressed={phonePanel==='preview'} onClick={()=>setPhonePanel('preview')}>Preview profile</button></div>}
    {!snapshot?<div className="social-empty"><p>{loadError?'Your profile could not be opened. Your unsaved edits are kept until you leave.':'Opening profile…'}</p><button onClick={()=>void read()}>Try opening profile again</button></div>:view&&<div className={`account-profile-layout ${own?`phone-${phonePanel}`:'is-public'}`}>
-    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
+    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} badgeState={badgeState} onOpenHallmarks={()=>setShowHallmarks(true)} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
      {!own&&<div className="account-profile-actions"><button className="profile-message" disabled={busy||!snapshot.friends} onClick={()=>void social('message')}>Message</button>{!snapshot.friends&&<button disabled={busy} onClick={()=>void social('friend')}>Add friend</button>}<a href={`/?home=${user}`}>Visit home</a><button onClick={()=>setReport(true)}>Report</button><button disabled={busy} onClick={()=>void social('block')}>Block</button></div>}
     </AccountCard>{!own&&<form className="private-profile-note" onSubmit={saveNote}><label>Note (only visible to you)<textarea aria-label="Private profile note" value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/></label><button disabled={busy||note===noteBase.note}>Save private note</button></form>}{own&&<p className="profile-preview-help">Live preview · Changes are shared when you save.</p>}</aside>
     {own&&draft&&<form className="account-profile-editor profile-form" onSubmit={save} noValidate>
@@ -108,7 +114,7 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
        <h3>Your upload library <small>{media.length}/30 files</small></h3><p>Unused uploads stay private. Remove an image from your saved profile before deleting its file.</p><ul className="profile-upload-library">{media.map(m=><li key={m.id}>{urls[m.id]&&<ProfileImage src={urls[m.id]} alt={`${m.kind} upload`} loading="lazy"/>}<span>{m.kind} · {m.width} × {m.height}{m.state!=='ready'?` · ${m.state}`:''}</span><div className="social-actions">{m.state==='ready'&&<button type="button" onClick={()=>{if(m.kind==='avatar')card({avatar_id:m.id});else if(m.kind==='banner')card({banner_id:m.id});else card({gallery:draft.card.gallery.includes(m.id)?draft.card.gallery.filter(id=>id!==m.id):[...draft.card.gallery,m.id].slice(0,6)})}}>{m.kind==='photo'?(draft.card.gallery.includes(m.id)?'Hide photo':'Show photo'):'Use image'}</button>}<button type="button" onClick={()=>void removeUpload(m)}>Delete upload</button></div></li>)}</ul>
       </div>
-      <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale}/></div>
+      <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale} isFounder={own && (account.access?.platform_admin || user === 'self' || user === 'guest')}/></div>
       <div id="profile-panel-style" role="tabpanel" aria-labelledby="profile-tab-style" hidden={tab!=='style'}><h3>Make it yours</h3><div className="profile-color-fields">{(['surface','text','accent'] as const).map(key=><label key={key}>{({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]}<input type="color" aria-label={({surface:'Profile background',text:'Profile text',accent:'Profile accent'})[key]} value={draft.card.style[key]} onChange={e=>style({[key]:e.target.value})}/><code>{draft.card.style[key]}</code></label>)}</div>
        <label>Profile font<select aria-label="Profile font" value={draft.card.style.font} onChange={e=>style({font:e.target.value as ProfileStyle['font']})}><option value="sans">Clean sans serif</option><option value="serif">Classic serif</option><option value="mono">Monospace</option></select></label>
        <label>Photo shape<select aria-label="Photo shape" value={draft.card.style.avatar_shape} onChange={e=>style({avatar_shape:e.target.value as ProfileStyle['avatar_shape']})}><option value="circle">Circle</option><option value="rounded">Rounded square</option><option value="square">Square</option></select></label>
@@ -125,12 +131,15 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
    {report&&<ReportForm kind="user" user={user} onClose={()=>setReport(false)} onReported={()=>{setReport(false);void read()}}/>}
    {own&&<nav className="account-profile-workshops" aria-label="Personalize your Realm"><a href="/?appearance">Character studio <small>Your in-app world avatar</small></a><a href="/?room-studio">Home Studio <small>Arrange your room</small></a><a href="/?hall-studio">Personal Hall Studio <small>Your cross-server hub</small></a></nav>}
   </div>
+   <BadgeModal isOpen={showHallmarks} onClose={()=>setShowHallmarks(false)} userBadgeState={badgeState} userId={user} isOwnProfile={own} onBadgeStateChange={setBadgeState}/>
+   <BadgeToastContainer onOpenTrophyCase={()=>setShowHallmarks(true)}/>
  </main>
 }
-function AccountCard({profile,card,urls,roles,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
+function AccountCard({profile,card,urls,roles,badgeState,onOpenHallmarks,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
  const theme=card.style,avatar=card.avatar_id?urls[card.avatar_id]:null,banner=card.banner_id?urls[card.banner_id]:null
  const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font]} as CSSProperties
- return <article className="account-profile-card" style={vars}>
+ const tilt=useCardTilt<HTMLElement>()
+ return <article ref={tilt} className="account-profile-card" style={vars}>
   <div className="account-profile-banner" style={{height:theme.banner_height}}>
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
    {onEditBanner&&<button type="button" className="profile-banner-pencil-btn" aria-label="Edit banner" title="Edit banner" onClick={onEditBanner}><Icon name="pencil"/><span>Edit banner</span></button>}
@@ -143,7 +152,7 @@ function AccountCard({profile,card,urls,roles,children,onEditAvatar,onEditBanner
     </div>
     {card.status&&<p className="account-profile-status">{card.status}</p>}
    </div>
-   <div className="account-profile-name"><h2>{profile.display_name||'Your display name'}</h2><p>@{profile.username||'your_handle'}{card.pronouns&&<> · {card.pronouns}</>}</p>{profile.bio&&<p className="account-profile-short-bio">{profile.bio}</p>}</div>{children}
+   <div className="account-profile-name"><h2>{profile.display_name||'Your display name'}</h2><p>@{profile.username||'your_handle'}{card.pronouns&&<> · {card.pronouns}</>}</p>{profile.bio&&<p className="account-profile-short-bio">{profile.bio}</p>}</div>{badgeState&&onOpenHallmarks&&<BadgeRibbon badgeIds={badgeState.featured} onOpenHallmarks={onOpenHallmarks} unlockedCount={Object.keys(badgeState.unlocked).length}/>}{children}
    {roles.length>0&&<section className="account-card-section"><h3>Server roles</h3><p>{roles.join(', ')}</p></section>}
    {theme.sections.filter(s=>!theme.hidden.includes(s)).map(section=><section className="account-card-section" key={section} data-profile-section={section}><h3>{sectionNames[section]}</h3>
     {section==='about'&&(card.about?<p>{card.about}</p>:<p className="profile-empty-copy">A little introduction goes a long way.</p>)}

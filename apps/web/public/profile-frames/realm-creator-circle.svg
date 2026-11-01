@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+<title>realm-creator / circle — Sovereign Architect Founder Frame</title>
+<defs>
+  <linearGradient id="rc-gold" x1="0" y1="0" x2="0.8" y2="1">
+    <stop offset="0%" stop-color="#fff8cc"/>
+    <stop offset="22%" stop-color="#f5d06e"/>
+    <stop offset="48%" stop-color="#a46d22"/>
+    <stop offset="74%" stop-color="#fed679"/>
+    <stop offset="100%" stop-color="#694013"/>
+  </linearGradient>
+  <linearGradient id="rc-gold-light" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#ffe89a"/>
+    <stop offset="50%" stop-color="#ffffff"/>
+    <stop offset="100%" stop-color="#ffd268"/>
+  </linearGradient>
+  <linearGradient id="rc-purple" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0%" stop-color="#55307e"/>
+    <stop offset="35%" stop-color="#361a4f"/>
+    <stop offset="75%" stop-color="#241038"/>
+    <stop offset="100%" stop-color="#160824"/>
+  </linearGradient>
+  <linearGradient id="rc-astral-ring" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+    <stop offset="30%" stop-color="#ffd978" stop-opacity="0.85"/>
+    <stop offset="70%" stop-color="#b488f2" stop-opacity="0.6"/>
+    <stop offset="100%" stop-color="#4b2875" stop-opacity="0"/>
+  </linearGradient>
+</defs>
+
+<!-- Orbital Ring - Back Segment -->
+<g opacity="0.85">
+  <path d="M 195 62 C 225 65 244 82 244 98 C 244 110 236 122 224 132" fill="none" stroke="url(#rc-astral-ring)" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M 198 60 C 228 63 246 80 246 98 C 246 112 238 124 226 134" fill="none" stroke="#fff4cf" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/>
+</g>
+
+<!-- Base Circular Laurel Rim -->
+<path d="M 128 28 a 100 100 0 1 1 0 200 a 100 100 0 1 1 0 -200" fill="none" stroke="#231406" stroke-width="14" stroke-linejoin="round"/>
+<path d="M 128 28 a 100 100 0 1 1 0 200 a 100 100 0 1 1 0 -200" fill="none" stroke="url(#rc-gold)" stroke-width="8" stroke-linejoin="round"/>
+<path d="M 128 34 a 94 94 0 1 1 0 188 a 94 94 0 1 1 0 -188" fill="none" stroke="#fff0ab" stroke-width="1.2" stroke-linejoin="round"/>
+<path d="M 128 22 a 106 106 0 1 1 0 212 a 106 106 0 1 1 0 -212" fill="none" stroke="#7a4b17" stroke-width="1.5" stroke-linejoin="round"/>
+
+<!-- Left Royal Purple Heraldic Banner -->
+<g>
+  <path d="M 42 62 L 64 62 L 64 165 L 53 154 L 42 165 Z" fill="url(#rc-purple)" stroke="#160824" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M 46 62 L 46 159" stroke="#6f4296" stroke-width="1" stroke-linecap="round"/>
+  <path d="M 60 62 L 60 159" stroke="#251236" stroke-width="1" stroke-linecap="round"/>
+  <!-- Gold Embroidered Monogram 'R' -->
+  <path d="M 49 97 H 55 Q 58.5 97 58.5 101 Q 58.5 105 55 105 H 52 M 52 97 V 113 M 55 105 L 58.5 113" fill="none" stroke="url(#rc-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 50 97.5 H 54.5" stroke="#fff5ca" stroke-width="0.8"/>
+  <!-- Clasp Bracket -->
+  <rect x="39" y="58" width="28" height="6" rx="1.5" fill="url(#rc-gold)" stroke="#3d2105" stroke-width="1.2"/>
+  <circle cx="53" cy="61" r="1.5" fill="#ffffff"/>
+</g>
+
+<!-- Right Royal Purple Heraldic Banner -->
+<g>
+  <path d="M 192 62 L 214 62 L 214 165 L 203 154 L 192 165 Z" fill="url(#rc-purple)" stroke="#160824" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M 196 62 L 196 159" stroke="#6f4296" stroke-width="1" stroke-linecap="round"/>
+  <path d="M 210 62 L 210 159" stroke="#251236" stroke-width="1" stroke-linecap="round"/>
+  <!-- Gold Embroidered Monogram 'R' -->
+  <path d="M 199 97 H 205 Q 208.5 97 208.5 101 Q 208.5 105 205 105 H 202 M 202 97 V 113 M 205 105 L 208.5 113" fill="none" stroke="url(#rc-gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 200 97.5 H 204.5" stroke="#fff5ca" stroke-width="0.8"/>
+  <!-- Clasp Bracket -->
+  <rect x="189" y="58" width="28" height="6" rx="1.5" fill="url(#rc-gold)" stroke="#3d2105" stroke-width="1.2"/>
+  <circle cx="203" cy="61" r="1.5" fill="#ffffff"/>
+</g>
+
+<!-- Golden Laurel Leaves Garland - Left Arc -->
+<g fill="url(#rc-gold)" stroke="#4d2f0a" stroke-width="1" stroke-linejoin="round">
+  <path d="M 68 168 Q 60 162 58 152 Q 68 156 72 165 Z"/>
+  <path d="M 72 172 Q 62 170 56 160 Q 67 163 74 170 Z"/>
+  <path d="M 78 184 Q 68 180 64 170 Q 75 174 81 181 Z"/>
+  <path d="M 82 188 Q 72 188 66 178 Q 77 181 84 186 Z"/>
+  <path d="M 90 200 Q 80 198 74 190 Q 85 192 92 198 Z"/>
+  <path d="M 96 205 Q 86 206 79 198 Q 90 200 98 203 Z"/>
+  <path d="M 104 214 Q 94 214 88 206 Q 98 207 106 212 Z"/>
+  <path d="M 112 219 Q 102 222 96 215 Q 106 215 114 218 Z"/>
+</g>
+
+<!-- Golden Laurel Leaves Garland - Right Arc -->
+<g fill="url(#rc-gold)" stroke="#4d2f0a" stroke-width="1" stroke-linejoin="round">
+  <path d="M 188 168 Q 196 162 198 152 Q 188 156 184 165 Z"/>
+  <path d="M 184 172 Q 194 170 200 160 Q 189 163 182 170 Z"/>
+  <path d="M 178 184 Q 188 180 192 170 Q 181 174 175 181 Z"/>
+  <path d="M 174 188 Q 184 188 190 178 Q 179 181 172 186 Z"/>
+  <path d="M 166 200 Q 176 198 182 190 Q 171 192 164 198 Z"/>
+  <path d="M 160 205 Q 170 206 177 198 Q 166 200 158 203 Z"/>
+  <path d="M 152 214 Q 162 214 168 206 Q 158 207 150 212 Z"/>
+  <path d="M 144 219 Q 154 222 160 215 Q 150 215 142 218 Z"/>
+</g>
+
+<!-- Bottom Central Heraldic Shield Crest -->
+<g>
+  <!-- Shield Body -->
+  <path d="M 114 212 H 142 V 226 Q 142 242 128 250 Q 114 242 114 226 Z" fill="url(#rc-purple)" stroke="#231406" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M 114 212 H 142 V 226 Q 142 242 128 250 Q 114 242 114 226 Z" fill="url(#rc-purple)" stroke="url(#rc-gold)" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M 117 215 H 139 V 225 Q 139 238 128 245 Q 117 238 117 225 Z" fill="#381d54" stroke="#68398f" stroke-width="0.8"/>
+  <!-- Central Radiant Star Crest -->
+  <path d="M 128 218 L 131.5 227.5 L 140 230 L 131.5 232.5 L 128 242 L 124.5 232.5 L 116 230 L 124.5 227.5 Z" fill="#ffffff" stroke="url(#rc-gold)" stroke-width="1" stroke-linejoin="round"/>
+  <circle cx="128" cy="230" r="1.5" fill="#fff5cc"/>
+</g>
+
+<!-- Top Ornate Sovereign Crown -->
+<g>
+  <!-- Velvet Lining Under Crown -->
+  <path d="M 103 40 Q 128 32 153 40 L 151 46 Q 128 38 105 46 Z" fill="#32174d" stroke="#160824" stroke-width="1.2"/>
+  <!-- Crown Base Band -->
+  <path d="M 100 42 Q 128 33 156 42 L 154 49 Q 128 40 102 49 Z" fill="url(#rc-gold)" stroke="#4a2a07" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M 103 44 Q 128 35 153 44" fill="none" stroke="#fff5ca" stroke-width="1"/>
+  <!-- Crown Spires -->
+  <path d="M 102 42 L 105 24 L 115 36 L 128 12 L 141 36 L 151 24 L 154 42 Z" fill="url(#rc-gold)" stroke="#3d2105" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Crown Center Spire Facet & Star -->
+  <path d="M 128 12 L 133 34 L 128 38 L 123 34 Z" fill="#fed679" stroke="#7a4812" stroke-width="1"/>
+  <path d="M 128 14 V 38" stroke="#fff8cc" stroke-width="1.2"/>
+  <!-- Top Finial Star -->
+  <path d="M 128 4 L 131.5 10 L 138 12 L 131.5 14 L 128 20 L 124.5 14 L 118 12 L 124.5 10 Z" fill="#ffffff" stroke="url(#rc-gold)" stroke-width="1.2" stroke-linejoin="round"/>
+  <circle cx="128" cy="12" r="1.8" fill="#ffeebb"/>
+  <!-- Side Spire Finials -->
+  <circle cx="105" cy="24" r="2.5" fill="url(#rc-gold)" stroke="#4a2a07" stroke-width="1"/>
+  <circle cx="151" cy="24" r="2.5" fill="url(#rc-gold)" stroke="#4a2a07" stroke-width="1"/>
+  <circle cx="105" cy="24" r="1" fill="#ffffff"/>
+  <circle cx="151" cy="24" r="1" fill="#ffffff"/>
+</g>
+
+<!-- Orbital Ring - Front Segment (Sweeping across bottom-left) -->
+<g>
+  <path d="M 16 138 C 10 158 22 182 48 196 C 70 208 98 214 116 216" fill="none" stroke="url(#rc-astral-ring)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M 18 139 C 12 157 24 180 49 194 C 71 206 97 212 115 214" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.9"/>
+  <path d="M 26 132 C 22 142 24 154 34 164" fill="none" stroke="#fff2bf" stroke-width="2.5" stroke-linecap="round"/>
+</g>
+
+<!-- Sparkling Stardust Motes & 4-Point Stars -->
+<g fill="#ffffff" stroke="url(#rc-gold)" stroke-width="0.8" stroke-linejoin="round">
+  <!-- Top-Left Crown Sparkle -->
+  <path d="M 98 26 L 100 30 L 104 31 L 100 32 L 98 36 L 96 32 L 92 31 L 96 30 Z"/>
+  <circle cx="98" cy="31" r="0.8" fill="#fff5cc"/>
+  <!-- Top-Far-Left Star -->
+  <path d="M 84 38 L 85.5 41 L 89 42 L 85.5 43 L 84 46 L 82.5 43 L 79 42 L 82.5 41 Z"/>
+  <!-- Left Shoulder Sparkle -->
+  <path d="M 40 76 L 42.5 82 L 48 83.5 L 42.5 85 L 40 91 L 37.5 85 L 32 83.5 L 37.5 82 Z"/>
+  <circle cx="40" cy="83.5" r="1.2" fill="#fff5cc"/>
+  <!-- Orbit Loop Sparkle (Bottom Left) -->
+  <path d="M 32 150 L 34 154 L 38 155.5 L 34 157 L 32 161 L 30 157 L 26 155.5 L 30 154 Z"/>
+  <!-- Right Flank Sparkle -->
+  <path d="M 226 132 L 228.5 137 L 233 138.5 L 228.5 140 L 226 145 L 223.5 140 L 219 138.5 L 223.5 137 Z"/>
+  <circle cx="226" cy="138.5" r="1" fill="#fff5cc"/>
+  <!-- Right Upper Comet Mote -->
+  <path d="M 218 78 L 219.5 81 L 223 82 L 219.5 83 L 218 86 L 216.5 83 L 213 82 L 216.5 81 Z"/>
+</g>
+</svg>

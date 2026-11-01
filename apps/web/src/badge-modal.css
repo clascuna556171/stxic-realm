@@ -1,0 +1,460 @@
+/* STXIC Realm — Hallmarks Showcase Trophy Case Modal */
+
+.badge-modal {
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 12px;
+  background: var(--realm-surface, #12131a);
+  color: var(--realm-text, #f8fafc);
+  padding: 0;
+  max-width: 960px;
+  width: 92vw;
+  max-height: 88vh;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+  overflow: hidden;
+}
+
+.badge-modal::backdrop {
+  background: rgba(8, 9, 13, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.badge-modal-container {
+  display: flex;
+  flex-direction: column;
+  height: 88vh;
+  max-height: 88vh;
+}
+
+/* Modal Header */
+.badge-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--realm-line, #282a36);
+  background: var(--realm-raised, #161822);
+}
+
+.badge-modal-title-wrap h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--realm-text, #f8fafc);
+  letter-spacing: -0.01em;
+}
+
+.badge-modal-sub {
+  font-size: 13px;
+  color: var(--realm-muted, #94a3b8);
+  margin: 4px 0 0;
+}
+
+.badge-modal-close-btn {
+  background: transparent;
+  border: 1px solid var(--realm-line, #282a36);
+  color: var(--realm-muted, #94a3b8);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.badge-modal-close-btn:hover {
+  color: var(--realm-text, #f8fafc);
+  background: var(--realm-surface, #12131a);
+  border-color: var(--realm-accent, #38bdf8);
+}
+
+/* Toolbar & Category Tabs */
+.badge-modal-toolbar {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--realm-line, #282a36);
+  background: var(--realm-surface, #12131a);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.badge-progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.badge-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--realm-muted, #94a3b8);
+}
+
+.badge-progress-label strong {
+  color: var(--realm-accent, #38bdf8);
+}
+
+.badge-progress-track {
+  width: 100%;
+  height: 6px;
+  background: var(--realm-raised, #1a1c26);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--realm-line, #282a36);
+}
+
+.badge-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.badge-category-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.badge-cat-tab {
+  background: var(--realm-raised, #161822);
+  border: 1px solid var(--realm-line, #282a36);
+  color: var(--realm-muted, #94a3b8);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.badge-cat-tab:hover {
+  color: var(--realm-text, #f8fafc);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.badge-cat-tab.is-active {
+  background: var(--realm-surface, #12131a);
+  border-color: var(--realm-accent, #38bdf8);
+  color: var(--realm-accent, #38bdf8);
+  font-weight: 600;
+}
+
+/* Modal Content: Split Pane */
+.badge-modal-content {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Grid Pane */
+.badge-grid-pane {
+  padding: 20px 24px;
+  overflow-y: auto;
+  border-right: 1px solid var(--realm-line, #282a36);
+}
+
+.badge-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.badge-grid-card {
+  position: relative;
+  background: var(--realm-raised, #161822);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 8px;
+  padding: 14px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.badge-grid-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--realm-accent, #38bdf8);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+.badge-grid-card.is-selected {
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+  background: rgba(26, 28, 38, 0.95);
+}
+
+.badge-grid-card.is-locked {
+  background: rgba(18, 19, 26, 0.6);
+  opacity: 0.7;
+}
+
+.badge-grid-card.is-locked:hover {
+  opacity: 0.9;
+}
+
+.badge-card-pin-pill {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
+  border: 1px solid #f59e0b;
+}
+
+.badge-card-icon-wrap {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+
+.badge-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+}
+
+.badge-grid-card:hover .badge-card-img {
+  transform: scale(1.08);
+}
+
+.badge-card-img.is-locked-img {
+  filter: grayscale(100%) brightness(0.25) contrast(1.2);
+}
+
+.badge-card-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.badge-card-rarity {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-bottom: 2px;
+}
+
+.badge-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--realm-text, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.badge-card-sub {
+  font-size: 10px;
+  color: var(--realm-muted, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+/* Detail Right Pane */
+.badge-detail-pane {
+  padding: 24px;
+  background: var(--realm-raised, #161822);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.badge-detail-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.badge-detail-icon-wrap {
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 12px;
+  padding: 8px;
+  transition: box-shadow 0.3s ease;
+}
+
+.badge-detail-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.7));
+}
+
+.badge-detail-img.is-locked-img {
+  filter: grayscale(100%) brightness(0.25);
+}
+
+.badge-detail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.badge-detail-rarity {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  letter-spacing: 0.04em;
+}
+
+.badge-detail-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--realm-text, #f8fafc);
+  margin: 2px 0 0;
+}
+
+.badge-detail-sub {
+  font-size: 13px;
+  color: var(--realm-muted, #94a3b8);
+  margin: 0;
+}
+
+.badge-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.badge-detail-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--realm-text, #f8fafc);
+  margin: 0;
+}
+
+.badge-detail-lore {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--realm-muted, #94a3b8);
+  border-left: 2px solid var(--realm-accent, #38bdf8);
+  padding-left: 10px;
+  margin: 0;
+}
+
+.badge-detail-status-box {
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.badge-status-unlocked,
+.badge-status-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.badge-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+
+.badge-status-dot.is-active {
+  background: #34d399;
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+}
+
+.badge-status-dot.is-locked {
+  background: #64748b;
+}
+
+.badge-status-unlocked strong,
+.badge-status-locked strong {
+  font-size: 13px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.badge-status-unlocked p,
+.badge-status-locked p {
+  font-size: 12px;
+  color: var(--realm-muted, #94a3b8);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.badge-detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.badge-pin-toggle-btn {
+  background: var(--realm-surface, #12131a);
+  border: 1px solid var(--realm-line, #282a36);
+  color: var(--realm-text, #f8fafc);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.badge-pin-toggle-btn:hover {
+  border-color: var(--realm-accent, #38bdf8);
+  color: var(--realm-accent, #38bdf8);
+}
+
+.badge-pin-toggle-btn.is-pinned {
+  border-color: #f59e0b;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.badge-pin-help {
+  font-size: 11px;
+  color: var(--realm-muted, #94a3b8);
+  text-align: center;
+}
+
+/* Mobile & Tablet Responsiveness */
+@media (max-width: 768px) {
+  .badge-modal-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    overflow-y: auto;
+  }
+  .badge-detail-pane {
+    border-top: 1px solid var(--realm-line, #282a36);
+    border-right: none;
+  }
+}

@@ -643,11 +643,8 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
  r(190, 32, 108, 2, c.trim)
  r(184, 49, 120, 4, woodLight)
  r(186, 53, 116, 3, woodDark)
- // Diagonal warm window light rays across floor
- r(194, 58, 42, 12, c.ray)
- r(248, 58, 42, 12, c.ray)
- r(200, 72, 38, 10, c.ray)
- r(254, 72, 38, 10, c.ray)
+ // Crisp under-sill shadow; translucent window light shafts are rendered by the lighting layer
+ r(186, 56, 116, 2, c.seam)
 
  // 6. BACK-WALL GALLERY, HANGING IVY & DISPLAY SHELVES
  // Left Framed Cosmic Ringed-Planet Poster (x: 42..78, y: 15..45)
