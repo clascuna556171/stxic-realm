@@ -13,8 +13,8 @@ export function roomLighting(mood: Appearance['mood'], objects: RoomObject[], en
  ]
  for (const item of objects) {
   if(enabled[item.id]===false)continue
-  if (item.id === 'lantern' || item.id === 'floor-lamp') lights.push({ x: item.x * 32 + 16, y: item.y * 32 + 18, rx: 46, ry: 34, color: '#ffd18b', strength: .22 })
-  if (item.id === 'desk' || item.id === 'console') lights.push({ x: (item.x + item.width / 2) * 32, y: item.y * 32 + 12, rx: item.width * 18, ry: 28, color: '#8fcac1', strength: .12 })
+  if (item.id === 'lantern' || item.id === 'floor-lamp') lights.push({ x: item.x * 32 + 16, y: item.y * 32 + 18, rx: 46, ry: 34, color: item.id === 'lantern' && mood === 'tech' ? '#96cbd9' : '#ffd18b', strength: item.id === 'floor-lamp' ? .18 : .22 })
+  if (item.id === 'desk' || item.id === 'console') lights.push({ x: (item.x + item.width / 2) * 32, y: item.y * 32 + 12, rx: item.width * 18, ry: 28, color: mood === 'tech' ? '#8fcac1' : '#c0c9b6', strength: mood === 'tech' ? .12 : .07 })
   if (item.id === 'bookshelf') lights.push({ x: item.x * 32 + 14, y: item.y * 32 - 10, rx: 30, ry: 28, color: '#ffd18b', strength: .14 })
  }
  return lights

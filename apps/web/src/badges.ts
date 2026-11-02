@@ -503,11 +503,31 @@ function notifyBadgeUnlock(badge: BadgeDefinition) {
   }
 }
 
+export const TEAM_BADGE_IDS = [
+  'early-pioneer',
+  'code-contributor',
+  'design-contributor',
+  'guardian',
+  'contributor',
+  'builder',
+  'feedback-giver',
+  'loyal-resident',
+] as const
+
 /**
  * Retrieve badge state for a user.
  * Evaluates role grants and initial founder grants.
+ * Strictly guarantees that only the verified Founder/Admin unlocks all 32 badges and the realm-creator hallmark.
  */
-export function getUserBadgeState(userId: string, roles: string[] = [], isOwner = false): UserBadgeState {
+export function getUserBadgeState(
+  userId: string,
+  roles: string[] = [],
+  isFounder = false,
+  isTeam = false,
+  serverState?: UserBadgeState | null,
+  _userEmail?: string | null
+): UserBadgeState {
+  const verifiedFounder = isFounder
   const key = `${STORAGE_PREFIX}${userId || 'guest'}`
   let state: UserBadgeState = { unlocked: {}, featured: [] }
 
@@ -515,6 +535,14 @@ export function getUserBadgeState(userId: string, roles: string[] = [], isOwner 
     const raw = localStorage.getItem(key)
     if (raw) state = JSON.parse(raw)
   } catch {}
+
+  // Public profile state comes only from the server, including explicit empties.
+  if (serverState) {
+    const unlocked = Object.fromEntries(Object.entries(serverState.unlocked ?? {}).filter(([id, record]) =>
+      Object.hasOwn(BADGE_CATALOG, id) && record && typeof record.unlockedAt === 'string'))
+    const featured = [...new Set(serverState.featured ?? [])].filter(id => Object.hasOwn(unlocked, id)).slice(0, 5)
+    return { unlocked, featured }
+  }
 
   let changed = false
   const now = new Date().toISOString()
@@ -526,32 +554,54 @@ export function getUserBadgeState(userId: string, roles: string[] = [], isOwner 
     }
   }
 
-  // 1. Founder rule: Owner / Founder gets ALL 32 Hallmarks unlocked!
-  if (isOwner || userId === 'self' || userId === 'guest') {
+  // 1. Founder rule: ONLY verified Founder / Sovereign Admin gets ALL 32 Hallmarks unlocked!
+  if (verifiedFounder) {
     for (const badgeId of Object.keys(BADGE_CATALOG)) {
       grant(badgeId, 'Founder Sovereign Access')
     }
-  }
+    if (!state.featured || state.featured.length === 0) {
+      state.featured = ['realm-creator', 'early-pioneer', 'code-contributor', 'guardian', 'treasure-hunter']
+      changed = true
+    }
+  } else {
+    // 2. Non-founders: STRICTLY strip realm-creator hallmark and unearned founder grants
+    if (state.unlocked['realm-creator']) {
+      delete state.unlocked['realm-creator']
+      changed = true
+    }
+    if (state.featured.includes('realm-creator')) {
+      state.featured = state.featured.filter(id => id !== 'realm-creator')
+      changed = true
+    }
 
-  // 2. Team rule: Team members get Pioneer, Contributors, Guardian, but NOT Realm Creator
-  const isTeam = roles.some(r => ['admin', 'moderator', 'team', 'staff', 'developer', 'contributor'].includes(r.toLowerCase()))
-  if (isTeam && !isOwner) {
-    grant('early-pioneer', 'Team Member Grant')
-    grant('code-contributor', 'Core Team')
-    grant('design-contributor', 'Core Team')
-    grant('guardian', 'Team Steward')
-    grant('contributor', 'Realm Builder')
+    // Strip unearned founder grants from previous runs/local storage
+    for (const [badgeId, record] of Object.entries(state.unlocked)) {
+      if (record.grantedBy === 'Founder Sovereign Access') {
+        delete state.unlocked[badgeId]
+        changed = true
+      }
+    }
+
+    // 3. Team rule: Team members get curated hallmarks, but NEVER Realm Creator and NOT everything
+    const teamMember = isTeam || roles.some(r => ['admin', 'moderator', 'team', 'staff', 'developer', 'contributor'].includes(r.toLowerCase()))
+    if (teamMember) {
+      for (const badgeId of TEAM_BADGE_IDS) {
+        grant(badgeId, 'Team Member Grant')
+      }
+      if (!state.featured || state.featured.length === 0) {
+        const unlockedIds = Object.keys(state.unlocked)
+        const priority = ['early-pioneer', 'code-contributor', 'guardian', 'contributor', 'builder']
+        state.featured = priority.filter(id => unlockedIds.includes(id)).slice(0, 5)
+        changed = true
+      }
+    }
   }
 
   // Default featured badges if none selected
-  if (!state.featured || state.featured.length === 0) {
+  state.featured = (state.featured || []).filter(id => !!state.unlocked[id]).slice(0, 5)
+  if (state.featured.length === 0) {
     const unlockedIds = Object.keys(state.unlocked)
-    // Priority order for initial pin
-    const priority = ['realm-creator', 'early-pioneer', 'code-contributor', 'guardian', 'treasure-hunter', 'pathfinder', 'collector']
-    state.featured = priority.filter(id => unlockedIds.includes(id)).slice(0, 5)
-    if (state.featured.length === 0 && unlockedIds.length > 0) {
-      state.featured = unlockedIds.slice(0, 5)
-    }
+    state.featured = unlockedIds.slice(0, 5)
     changed = true
   }
 
@@ -571,8 +621,19 @@ export function saveUserBadgeState(userId: string, state: UserBadgeState) {
   } catch {}
 }
 
-export function toggleBadgePin(userId: string, badgeId: string): UserBadgeState {
-  const state = getUserBadgeState(userId)
+export function toggleBadgePin(
+  userId: string,
+  badgeId: string,
+  isFounder = false,
+  isTeam = false,
+  currentState?: UserBadgeState
+): UserBadgeState {
+  if (!isFounder && badgeId === 'realm-creator') {
+    return currentState || getUserBadgeState(userId, [], false, isTeam)
+  }
+  const state = currentState
+    ? { ...currentState, featured: [...currentState.featured], unlocked: { ...currentState.unlocked } }
+    : getUserBadgeState(userId, [], isFounder, isTeam)
   if (!state.unlocked[badgeId]) return state
 
   if (state.featured.includes(badgeId)) {
@@ -588,6 +649,12 @@ export function toggleBadgePin(userId: string, badgeId: string): UserBadgeState 
 
   saveUserBadgeState(userId, state)
   return state
+}
+
+export async function syncBadgesToServer(client: { rpc: (name: string, args: object) => PromiseLike<{data: unknown; error: unknown}> }, state: UserBadgeState): Promise<UserBadgeState> {
+  const {data, error} = await client.rpc('save_user_badges', { p_badge_state: {featured: state.featured} })
+  if (error) throw error
+  return data as UserBadgeState
 }
 
 /**

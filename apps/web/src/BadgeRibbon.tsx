@@ -9,7 +9,16 @@ interface Props {
 }
 
 export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
-  const [activePin, setActivePin] = useState<{badge: BadgeDefinition; index: number} | null>(null)
+  const [activePin, setActivePin] = useState<{badge: BadgeDefinition; left: number; notch: number} | null>(null)
+
+  function showBadge(badge: BadgeDefinition, button: HTMLButtonElement) {
+    const ribbon = button.closest('.profile-badge-ribbon')!.getBoundingClientRect()
+    const pin = button.getBoundingClientRect()
+    const center = pin.left + pin.width / 2 - ribbon.left
+    const width = Math.min(260, ribbon.width - 16)
+    const left = Math.max(8, Math.min(center - width / 2, ribbon.width - width - 8))
+    setActivePin({badge, left, notch: center - left})
+  }
 
   const badges = badgeIds
     .map(id => BADGE_CATALOG[id])
@@ -18,7 +27,7 @@ export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
   return (
     <div className="profile-badge-ribbon" role="region" aria-label="Featured Hallmarks">
       <div className="profile-badge-list">
-        {badges.map((badge, index) => {
+        {badges.map(badge => {
           const rarity = BADGE_RARITY_COLORS[badge.rarity]
           const isCurrentActive = activePin?.badge.id === badge.id
 
@@ -27,9 +36,9 @@ export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
               key={badge.id}
               type="button"
               className="profile-badge-pin"
-              onMouseEnter={() => setActivePin({badge, index})}
+              onMouseEnter={event => showBadge(badge, event.currentTarget)}
               onMouseLeave={() => setActivePin(null)}
-              onFocus={() => setActivePin({badge, index})}
+              onFocus={event => showBadge(badge, event.currentTarget)}
               onBlur={() => setActivePin(null)}
               onClick={onOpenHallmarks}
               aria-label={`${badge.name} Hallmark: ${badge.subtitle}`}
@@ -42,8 +51,8 @@ export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
                 src={badge.icon}
                 alt=""
                 className="profile-badge-icon-img"
-                width={28}
-                height={28}
+                width={36}
+                height={36}
                 loading="lazy"
               />
             </button>
@@ -65,10 +74,6 @@ export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
       {activePin && (() => {
         const badge = activePin.badge
         const rarity = BADGE_RARITY_COLORS[badge.rarity]
-        // Each pin is 34px wide with 8px gap. Left offset starts at 10px.
-        const pinCenter = 10 + activePin.index * 42 + 17
-        const tooltipLeft = Math.max(8, Math.min(activePin.index * 42 + 4, 130))
-        const notchOffset = pinCenter - tooltipLeft
 
         return (
           <div
@@ -77,8 +82,8 @@ export function BadgeRibbon({badgeIds, onOpenHallmarks, unlockedCount}: Props) {
             style={{
               borderColor: rarity.border,
               boxShadow: `0 8px 24px rgba(0, 0, 0, 0.85), 0 0 16px ${rarity.glow}`,
-              left: `${tooltipLeft}px`,
-              ['--notch-x' as string]: `${notchOffset}px`,
+              left: `${activePin.left}px`,
+              ['--notch-x' as string]: `${activePin.notch}px`,
             }}
           >
             <div className="badge-tooltip-topline">

@@ -4,7 +4,7 @@ import {client} from './data'
 import {applyAppearance,readAppearance,setAccountAppearance,type Appearance} from './appearance'
 import {appearanceFor,errorText,getIdentity,saveIdentity,rpc,type Identity,type Profile} from './account-repository'
 
-export type Access={active:boolean;state:string;platform_admin:boolean;administration:boolean;account_invitations:boolean;privacy_jobs:boolean}
+export type Access={active:boolean;state:string;platform_admin:boolean;is_founder?:boolean;administration:boolean;account_invitations:boolean;privacy_jobs:boolean}
 type Account={session:Session|null;identity:Identity|null;access:Access|null;loading:boolean;error:string;reload:()=>Promise<Identity|null>;save:(profile:Profile,value:Appearance)=>Promise<Identity>}
 const Context=createContext<Account|null>(null)
 export function AccountProvider({children}:{children:ReactNode}){

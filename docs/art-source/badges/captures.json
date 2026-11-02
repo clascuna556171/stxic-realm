@@ -1,0 +1,455 @@
+{
+  "size": 128,
+  "artExtent": 112,
+  "transparentPadding": 8,
+  "captures": [
+    {
+      "id": "realm-creator",
+      "sourceBounds": {
+        "left": 6,
+        "top": 17,
+        "right": 122,
+        "bottom": 110
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 90
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "early-pioneer",
+      "sourceBounds": {
+        "left": 6,
+        "top": 12,
+        "right": 122,
+        "bottom": 115
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 99
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "realm-explorer",
+      "sourceBounds": {
+        "left": 13,
+        "top": 7,
+        "right": 115,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 99,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "pathfinder",
+      "sourceBounds": {
+        "left": 6,
+        "top": 17,
+        "right": 122,
+        "bottom": 111
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 91
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "house-founder",
+      "sourceBounds": {
+        "left": 8,
+        "top": 6,
+        "right": 119,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 107,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "realm-duelist",
+      "sourceBounds": {
+        "left": 15,
+        "top": 6,
+        "right": 112,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 94,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "builder",
+      "sourceBounds": {
+        "left": 9,
+        "top": 6,
+        "right": 118,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 105,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "contributor",
+      "sourceBounds": {
+        "left": 9,
+        "top": 6,
+        "right": 118,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 105,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "collector",
+      "sourceBounds": {
+        "left": 7,
+        "top": 6,
+        "right": 120,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 109,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "treasure-hunter",
+      "sourceBounds": {
+        "left": 6,
+        "top": 6,
+        "right": 122,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "event-champion",
+      "sourceBounds": {
+        "left": 6,
+        "top": 20,
+        "right": 122,
+        "bottom": 107
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 84
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "daily-devotee",
+      "sourceBounds": {
+        "left": 9,
+        "top": 6,
+        "right": 118,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 105,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "loyal-resident",
+      "sourceBounds": {
+        "left": 9,
+        "top": 7,
+        "right": 118,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 106,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "community-member",
+      "sourceBounds": {
+        "left": 6,
+        "top": 8,
+        "right": 122,
+        "bottom": 120
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 108
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "feedback-giver",
+      "sourceBounds": {
+        "left": 6,
+        "top": 7,
+        "right": 122,
+        "bottom": 121
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 110
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "bug-hunter",
+      "sourceBounds": {
+        "left": 9,
+        "top": 6,
+        "right": 118,
+        "bottom": 122
+      },
+      "outputBounds": {
+        "width": 105,
+        "height": 112
+      },
+      "captionRemoved": false
+    },
+    {
+      "id": "code-contributor",
+      "sourceBounds": {
+        "left": 12,
+        "top": 7,
+        "right": 115,
+        "bottom": 98
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 99
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "design-contributor",
+      "sourceBounds": {
+        "left": 11,
+        "top": 9,
+        "right": 109,
+        "bottom": 97
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 101
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "system-tinkerer",
+      "sourceBounds": {
+        "left": 10,
+        "top": 7,
+        "right": 112,
+        "bottom": 103
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 105
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "lore-reader",
+      "sourceBounds": {
+        "left": 11,
+        "top": 7,
+        "right": 117,
+        "bottom": 105
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 104
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "storyteller",
+      "sourceBounds": {
+        "left": 16,
+        "top": 6,
+        "right": 112,
+        "bottom": 105
+      },
+      "outputBounds": {
+        "width": 109,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "chronicle-keeper",
+      "sourceBounds": {
+        "left": 11,
+        "top": 6,
+        "right": 110,
+        "bottom": 104
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 111
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "milestone-explorer",
+      "sourceBounds": {
+        "left": 12,
+        "top": 6,
+        "right": 110,
+        "bottom": 105
+      },
+      "outputBounds": {
+        "width": 111,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "progress-seeker",
+      "sourceBounds": {
+        "left": 21,
+        "top": 8,
+        "right": 115,
+        "bottom": 106
+      },
+      "outputBounds": {
+        "width": 107,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "discord-ally",
+      "sourceBounds": {
+        "left": 15,
+        "top": 6,
+        "right": 112,
+        "bottom": 103
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "house-leader",
+      "sourceBounds": {
+        "left": 12,
+        "top": 6,
+        "right": 116,
+        "bottom": 105
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 107
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "guardian",
+      "sourceBounds": {
+        "left": 20,
+        "top": 6,
+        "right": 108,
+        "bottom": 104
+      },
+      "outputBounds": {
+        "width": 101,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "supporter",
+      "sourceBounds": {
+        "left": 9,
+        "top": 6,
+        "right": 119,
+        "bottom": 104
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 100
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "realm-patron",
+      "sourceBounds": {
+        "left": 12,
+        "top": 6,
+        "right": 121,
+        "bottom": 104
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 101
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "seasonal-veteran",
+      "sourceBounds": {
+        "left": 11,
+        "top": 6,
+        "right": 120,
+        "bottom": 99
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 96
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "event-participant",
+      "sourceBounds": {
+        "left": 17,
+        "top": 6,
+        "right": 112,
+        "bottom": 103
+      },
+      "outputBounds": {
+        "width": 110,
+        "height": 112
+      },
+      "captionRemoved": true
+    },
+    {
+      "id": "realm-legend",
+      "sourceBounds": {
+        "left": 13,
+        "top": 6,
+        "right": 116,
+        "bottom": 104
+      },
+      "outputBounds": {
+        "width": 112,
+        "height": 107
+      },
+      "captionRemoved": true
+    }
+  ]
+}

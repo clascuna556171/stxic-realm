@@ -263,12 +263,10 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
    const bh = 2 + ((i * 3) % 5)
    r(8 + i * 3, 24 - bh, 2, bh, i % 2 === 0 ? cyan : violet)
   }
-  // Floating pixel music note above turntable
-  r(24, -4, 5, 2, violet)
-  r(24, -4, 2, 6, violet)
-  r(28, -4, 2, 5, violet)
-  r(22, 0, 3, 2, '#d6bcfa')
-  r(26, -1, 3, 2, '#d6bcfa')
+  // Physical control labels, a lever and feet make the turntable inspectable.
+  r(6, 27, 4, 2, goldDark); r(21, 27, 4, 2, goldDark)
+  r(23, 17, 2, 2, '#e7d7bb'); r(23, 21, 2, 3, gold)
+
  }
 
  if (id === 'plant') {
@@ -297,8 +295,10 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
   r(19, -4, 12, 8, ink)
   r(20, -3, 10, 6, '#3b6e52')
   r(22, -2, 6, 3, '#7ebc92')
-  // Glowing firefly spark
-  r(25, -18, 2, 2, goldLight)
+  // Leaf notches and a low pebble rim keep the plant a grounded habitat.
+  r(13, -17, 2, 4, '#2a4736'); r(19, -9, 3, 2, '#2a4736')
+  r(7, 12, 18, 1, '#e2b28c'); r(11, 25, 11, 1, '#8a4e33')
+
  }
 
  if (id === 'bed') {
@@ -417,6 +417,27 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
   r(14, -20, 4, 3, gold)
  }
 
+ // Material details use the selected mood without changing object footprints.
+ const material = worldPalettes[mood]
+ if (id === 'desk') {
+  r(8, 23, 18, 1, material.timber[0]); r(9, 20, 12, 1, material.timber[2])
+  r(9, 15, 10, 5, '#ded0b4'); r(10, 16, 6, 1, '#9e8a6b') // folded project note
+  r(86, 29, 1, 18, material.timber[2])
+ }
+ if (id === 'bed') {
+  // Woven seam and hem distinguish linen from timber and metal.
+  for(let x=9;x<56;x+=4) r(x,79,2,1,material.cloth[2])
+  r(58,39,1,42,material.cloth[0]); r(5,38,54,1,'#f5ece0')
+ }
+ if (id === 'coffee-table') {
+  r(8,19,48,1,material.timber[0]); r(35,13,4,1,material.timber[2])
+  r(45,15,8,1,material.timber[0]) // mug contact, not a glow
+ }
+ if (id === 'lantern' && mood === 'tech') {
+  r(10,9,12,15,material.stone[0]); r(12,11,8,11,material.sky[1])
+  r(14,12,2,9,material.sky[2]); r(18,12,2,9,material.sky[2])
+  r(10,23,12,1,material.trim)
+ }
  const c = worldPalettes[mood]
  const colors: Record<string,string> = {
   '#191722':'#19202b', '#523829':c.timber[0], '#7d563c':c.timber[1], '#9c6d4c':c.timber[1], '#c49166':c.timber[2], '#e3b587':mood==='tech'?'#9fb8c8':'#e8bb87',
@@ -555,19 +576,25 @@ export function roomPixels(mood: Appearance['mood']): Pixel[] {
    const left = Math.max(32, x)
    const right = Math.min(480, x + 80)
    if (right <= left) continue
-   const shade = c.floor[(row * 5 + col + 10) % c.floor.length]
+   const shade = c.floor[(row + col + 10) % c.floor.length]
    r(left, y, right - left, 13, shade)
    r(left, y + 13, right - left, 1, c.seam)
-   if (x >= 32 && x < 480) {
+   if (mood !== 'tech' && x >= 32 && x < 480) {
     r(x, y, 1, 14, c.seam)
     r(x + 3, y + 3, 1, 1, woodLight)
     r(x + 3, y + 10, 1, 1, woodLight)
    }
-   if (right - left > 24) {
+   if (mood !== 'tech' && right - left > 24) {
     r(left + 8, y + 4, Math.min(36, right - left - 12), 1, c.floor[(row + col + 7) % c.floor.length])
     r(left + 16, y + 9, Math.min(22, right - left - 18), 1, c.floor[(row + col + 9) % c.floor.length])
    }
   }
+ }
+ // Slate panels replace plank grain in the observatory. Muted joints leave
+ // the movement lane quieter than the instruments and characters.
+ if(mood==='tech') for(let y=56;y<348;y+=28) for(let x=32;x<480;x+=56) {
+  r(x,y,55,27,material.floor[((x/56+y/28)|0)%2+1])
+  r(x+2,y+1,51,1,material.stone[1]); r(x+53,y+23,1,2,material.trim)
  }
  // Top & side floor cast shadows for 3D depth
  r(32, 48, 448, 8, '#382a26')

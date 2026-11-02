@@ -8,6 +8,7 @@ import {
   getUserBadgeState,
   toggleBadgePin,
   trackHallmarkMilestone,
+  syncBadgesToServer,
 } from '../src/badges.ts'
 
 // Mock localStorage for node environment
@@ -62,11 +63,34 @@ test('pinning badges supports up to 5 featured badges with toggle behavior', () 
   // Create user with founder badges
   getUserBadgeState(userId, [], true)
 
-  const unpinned = toggleBadgePin(userId, 'realm-creator')
+  const unpinned = toggleBadgePin(userId, 'realm-creator', true)
   assert.ok(!unpinned.featured.includes('realm-creator'), 'Should unpin badge')
 
-  const repinned = toggleBadgePin(userId, 'realm-creator')
+  const repinned = toggleBadgePin(userId, 'realm-creator', true)
   assert.ok(repinned.featured.includes('realm-creator'), 'Should repin badge')
+
+  // Non-founder must never be allowed to pin realm-creator
+  const nonFounderUnpinned = toggleBadgePin('non-founder-user', 'realm-creator', false)
+  assert.ok(!nonFounderUnpinned.featured.includes('realm-creator'), 'Non-founder can never pin realm-creator')
+})
+
+test('purges dirty localStorage unearned founder badges for non-founders', () => {
+  storage.clear()
+  const dirtyUserId = 'dirty-client-user'
+  storage.set('stxic-realm:badges:v1:' + dirtyUserId, JSON.stringify({
+    unlocked: {
+      'realm-creator': { unlockedAt: '2026-01-01T00:00:00Z', grantedBy: 'Founder Sovereign Access' },
+      'bug-hunter': { unlockedAt: '2026-01-01T00:00:00Z', grantedBy: 'Founder Sovereign Access' },
+      'community-member': { unlockedAt: '2026-01-01T00:00:00Z' }
+    },
+    featured: ['realm-creator', 'bug-hunter']
+  }))
+
+  const cleaned = getUserBadgeState(dirtyUserId, [], false)
+  assert.equal(cleaned.unlocked['realm-creator'], undefined, 'realm-creator must be purged')
+  assert.equal(cleaned.unlocked['bug-hunter'], undefined, 'unearned bug-hunter must be purged')
+  assert.ok(cleaned.unlocked['community-member'], 'earned community-member must be preserved')
+  assert.ok(!cleaned.featured.includes('realm-creator'), 'realm-creator must be unfeatured')
 })
 
 test('milestone tracking unlocks badges upon reaching required conditions', () => {
@@ -81,4 +105,29 @@ test('milestone tracking unlocks badges upon reaching required conditions', () =
 
   const stateAfterVisits = getUserBadgeState(userId, [], false)
   assert.ok(stateAfterVisits.unlocked['realm-explorer'], 'Must unlock realm-explorer after 3 room visits')
+})
+
+test('email and display-role hints cannot establish founder authority', () => {
+  storage.clear()
+  for(const email of ['founder@stxic.realm','clascuna556171@gmail.com','attacker-clascuna@sample.com']) {
+    const state=getUserBadgeState('untrusted-uuid',[],false,false,null,email)
+    assert.equal(state.unlocked['realm-creator'],undefined)
+  }
+})
+
+test('server badge snapshots replace forged storage and preserve explicit empty pins', () => {
+  const id='server-resident'
+  localStorage.setItem('stxic-realm:badges:v1:'+id, JSON.stringify({unlocked:{guardian:{unlockedAt:'old'}},featured:['guardian']}))
+  assert.deepEqual(getUserBadgeState(id,['admin'],true,true,{unlocked:{},featured:[]}),{unlocked:{},featured:[]})
+  const server={unlocked:{'event-champion':{unlockedAt:'2026-11-02'}},featured:[]}
+  assert.deepEqual(getUserBadgeState(id,[],false,false,server),server)
+})
+
+
+test('badge sync sends pins only, uses server result and propagates RPC errors', async () => {
+ const state={unlocked:{guardian:{unlockedAt:'forged'}},featured:['guardian']}
+ const server={unlocked:{guardian:{unlockedAt:'trusted'}},featured:['guardian']}
+ assert.equal(await syncBadgesToServer({rpc:async(name,args)=>{assert.equal(name,'save_user_badges');assert.deepEqual(args,{p_badge_state:{featured:['guardian']}});return {data:server,error:null}}},state),server)
+ const error={message:'Only unlocked badges can be pinned.'}
+ await assert.rejects(syncBadgesToServer({rpc:async()=>({data:null,error})},state),e=>e===error)
 })

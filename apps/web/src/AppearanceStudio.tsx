@@ -13,15 +13,17 @@ import {
  skins,
  type Appearance,
 } from './appearance'
-import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels } from './character'
+import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, idleCharacterPixels, seatedCharacterPixels, restingCharacterPixels } from './character'
 import type { Direction } from './world/room'
 import { WorkspaceNav } from './WorkspaceNav'
 import { Icon } from './Icon'
 import { CharacterAlcove } from './world/CharacterAlcove'
 import { useAccount } from './Account'
 import { appearanceFor, errorText } from './account-repository'
+import './character-inspection.css'
 
-export function PixelCharacter({ value, portrait = false, direction='down', frame=0 }: { value: Appearance; portrait?: boolean; direction?: Direction; frame?: number }) {
+export function PixelCharacter({ value, portrait = false, direction='down', frame=0, pose='standing', tick }: { value: Appearance; portrait?: boolean; direction?: Direction; frame?: number; pose?: string; tick?: number }) {
+ const pixels=pose==='seated'?seatedCharacterPixels(value,direction):pose==='resting'?restingCharacterPixels(value,direction):tick!==undefined&&pose==='idle'?idleCharacterPixels(value,direction,tick):characterPixels(value,direction,frame)
  return (
   <svg
    className={portrait ? 'pixel-portrait' : 'pixel-character'}
@@ -30,11 +32,22 @@ export function PixelCharacter({ value, portrait = false, direction='down', fram
    role="img"
    aria-label={`${value.hairStyle} hair, ${value.outfit} outfit, ${value.accessory} accessory character preview`}
   >
-   {characterPixels(value,direction,frame).map((p, i) => (
+   {pixels.map((p, i) => (
     <rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} fill={p.color} />
    ))}
   </svg>
  )
+}
+
+function CharacterInspection({value,direction,pose}:{value:Appearance;direction:Direction;pose:string}){
+ const [{tick,reduced},setAnimation]=useState({tick:1,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches})
+ useEffect(()=>{
+  const media=matchMedia('(prefers-reduced-motion: reduce)');let timer:ReturnType<typeof setInterval>|undefined
+  const start=()=>{clearInterval(timer);setAnimation({tick:1,reduced:media.matches});if(!media.matches&&!document.hidden&&(pose==='idle'||pose==='walking'))timer=setInterval(()=>setAnimation(s=>({...s,tick:s.tick+1})),pose==='walking'?110:250)}
+  start();media.addEventListener('change',start);document.addEventListener('visibilitychange',start)
+  return()=>{clearInterval(timer);media.removeEventListener('change',start);document.removeEventListener('visibilitychange',start)}
+ },[pose])
+ return <PixelCharacter value={value} direction={direction} pose={pose} tick={reduced?undefined:tick} frame={pose==='walking'&&!reduced?tick%2+1:0}/>
 }
 
 const starters: { name: string; bg: string; look: Partial<Appearance> }[] = [
@@ -77,6 +90,8 @@ export default function AppearanceStudio() {
  const [value, setValue] = useState(readAppearance)
  const [saved, setSaved] = useState(value)
  const [notice, setNotice] = useState('')
+ const [direction,setDirection]=useState<Direction>('down')
+ const [pose,setPose]=useState('idle')
  const [section, setSection] = useState<'character' | 'space'>(new URLSearchParams(location.search).get('section')==='interface'?'space':'character')
  const dirty = JSON.stringify(value) !== JSON.stringify(saved)
  useEffect(()=>{if(new URLSearchParams(location.search).get('section')==='interface'){const frame=requestAnimationFrame(()=>document.getElementById('interface-settings')?.scrollIntoView({block:'start'}));return()=>cancelAnimationFrame(frame)}},[])
@@ -341,11 +356,15 @@ export default function AppearanceStudio() {
       <div className="character-stage">
        <CharacterAlcove mood={value.mood} />
        <div className="stage-orbit" aria-hidden="true" />
-       <PixelCharacter value={value} />
+       <CharacterInspection value={value} direction={direction} pose={pose}/>
        <span className="stage-caption">
         {outfitLabels[value.outfit]} · {value.hairStyle}
        </span>
       </div>
+      <div className="stage-toolbar character-facing" aria-label="Character facing">
+       {(['down','left','up','right'] as Direction[]).map((d,i)=><button key={d} type="button" aria-pressed={direction===d} onClick={()=>setDirection(d)}>{['Front','Left','Rear','Right'][i]}</button>)}
+      </div>
+      <label className="logo-select appearance-pose-control">Preview pose<select aria-label="Preview pose" value={pose} onChange={e=>setPose(e.target.value)}>{['idle','walking','seated','resting'].map(p=><option key={p} value={p}>{p}</option>)}</select></label>
       <div className="stage-toolbar">
        <button type="button" onClick={randomizeCharacter} title="Randomize character">
         <Icon name="shuffle" /> Randomize

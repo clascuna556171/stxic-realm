@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { errorText } from '../account-repository.ts'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { errorText, getOwnHome } from '../account-repository.ts'
 import { client } from '../data.ts'
 import { describeHabitatProgress, evaluateRoomHabitats } from '../world/wildlife-engine.ts'
 import {
@@ -27,6 +27,7 @@ import './pets.css'
 interface PetCollectionProps {
   userId: string
   isOwn: boolean
+  notifyOnLoad?: boolean
   roomObjects?: ReadonlyArray<{ id: string }>
   onBannerPetChange?: (pet: EquippedPetSummary | null) => void
   onHousePetsChange?: (pets: EquippedPetSummary[]) => void
@@ -35,7 +36,8 @@ interface PetCollectionProps {
 export function PetCollection({
   userId,
   isOwn,
-  roomObjects = [],
+  notifyOnLoad = true,
+  roomObjects,
   onBannerPetChange,
   onHousePetsChange,
 }: PetCollectionProps) {
@@ -55,33 +57,48 @@ export function PetCollection({
   const [previewState, setPreviewState] = useState<PetAnimationState>('idle')
   const [nicknameInput, setNicknameInput] = useState('')
 
-  async function loadPets() {
-    if (!client || !userId) {
-      setLoading(false)
-      return
-    }
+  const lifecycle = useRef(0)
+  const callbacks = useRef({onBannerPetChange,onHousePetsChange,notifyOnLoad})
+  callbacks.current = {onBannerPetChange,onHousePetsChange,notifyOnLoad}
+  const [savedObjects,setSavedObjects] = useState<ReadonlyArray<{id:string}> | null>(null)
+  const [habitatError,setHabitatError] = useState('')
+
+  const loadPets = useCallback(async () => {
+    const ticket = ++lifecycle.current
+    setLoading(true)
+    setError('')
     try {
-      setLoading(true)
-      const data = await getUserPets(client, userId)
+      if (!client || !userId) throw new Error('Sign in to load your companions, then try again.')
+      const data = await getUserPets(client,userId)
+      if (ticket !== lifecycle.current) return
       setSnapshot(data)
-      setError('')
-      if (data.owned.length > 0) {
-        const firstOwned = data.owned[0]
-        setSelectedSpeciesId(firstOwned.species_id)
-        setNicknameInput(firstOwned.nickname ?? '')
+      setSelectedSpeciesId(previous => data.owned.some(p=>p.species_id===previous) ? previous : data.owned[0]?.species_id ?? 'cat')
+      if (callbacks.current.notifyOnLoad) {
+        callbacks.current.onBannerPetChange?.(data.equipment.banner_pet)
+        callbacks.current.onHousePetsChange?.(data.equipment.house_pets)
       }
-      onBannerPetChange?.(data.equipment.banner_pet)
-      onHousePetsChange?.(data.equipment.house_pets)
     } catch (e) {
-      setError(errorText(e))
+      if (ticket === lifecycle.current) setError(errorText(e))
     } finally {
-      setLoading(false)
+      if (ticket === lifecycle.current) setLoading(false)
     }
-  }
+  },[userId])
 
   useEffect(() => {
+    setSnapshot(null); setNotice(''); setBusy(false); setPreviewState('idle')
     void loadPets()
-  }, [userId])
+    return () => { lifecycle.current++ }
+  },[loadPets])
+
+  useEffect(() => {
+    let active=true
+    setSavedObjects(null); setHabitatError('')
+    if (isOwn && roomObjects === undefined && client) {
+      void getOwnHome(client,userId).then(home=>{if(active)setSavedObjects(home.layout.objects)})
+        .catch(()=>{if(active)setHabitatError('Saved home habitats could not be loaded. Reopen this view to retry, or check your room in Home Studio.')})
+    }
+    return()=>{active=false}
+  },[userId,isOwn,roomObjects])
 
   const ownedBySpecies = new Map<PetSpeciesId, OwnedPet>(
     (snapshot?.owned ?? []).map(p => [p.species_id, p]),
@@ -94,12 +111,13 @@ export function PetCollection({
     setNicknameInput(selectedOwned?.nickname ?? '')
   }, [selectedSpeciesId, selectedOwned?.nickname])
 
-  function applySnapshot(next: UserPetsSnapshot, message: string) {
+  function applySnapshot(next: UserPetsSnapshot, message: string, ticket: number) {
+    if (ticket !== lifecycle.current) return
     setSnapshot(next)
     setNotice(message)
     setError('')
-    onBannerPetChange?.(next.equipment.banner_pet)
-    onHousePetsChange?.(next.equipment.house_pets)
+    callbacks.current.onBannerPetChange?.(next.equipment.banner_pet)
+    callbacks.current.onHousePetsChange?.(next.equipment.house_pets)
   }
 
   async function handleAdoptStarter(e: FormEvent) {
@@ -110,21 +128,23 @@ export function PetCollection({
       setError(validationErr)
       return
     }
+    const ticket = lifecycle.current
     setBusy(true)
     setError('')
     try {
       const next = await adoptStarterPet(client, starterChoice, starterNickname)
-      setSelectedSpeciesId(starterChoice)
-      applySnapshot(next, 'Starter companion welcomed to your Realm!')
+      if (ticket === lifecycle.current) setSelectedSpeciesId(starterChoice)
+      applySnapshot(next, 'Starter companion welcomed to your Realm!', ticket)
     } catch (err) {
-      setError(errorText(err))
+      if (ticket === lifecycle.current) setError(errorText(err))
     } finally {
-      setBusy(false)
+      if (ticket === lifecycle.current) setBusy(false)
     }
   }
 
   async function handleToggleBanner(pet: OwnedPet) {
     if (!client || busy || !isOwn || !snapshot) return
+    const ticket = lifecycle.current
     setBusy(true)
     setError('')
     try {
@@ -136,11 +156,12 @@ export function PetCollection({
         isEquipped
           ? `${petDisplayName(pet)} removed from profile banner.`
           : `${petDisplayName(pet)} equipped to your profile banner.`,
+        ticket,
       )
     } catch (err) {
-      setError(errorText(err))
+      if (ticket === lifecycle.current) setError(errorText(err))
     } finally {
-      setBusy(false)
+      if (ticket === lifecycle.current) setBusy(false)
     }
   }
 
@@ -152,6 +173,7 @@ export function PetCollection({
       setError('Up to 3 pets can roam in your house at once. Unequip one first.')
       return
     }
+    const ticket = lifecycle.current
     setBusy(true)
     setError('')
     try {
@@ -164,11 +186,12 @@ export function PetCollection({
         isEquipped
           ? `${petDisplayName(pet)} is resting in your collection.`
           : `${petDisplayName(pet)} is now roaming in your home.`,
+        ticket,
       )
     } catch (err) {
-      setError(errorText(err))
+      if (ticket === lifecycle.current) setError(errorText(err))
     } finally {
-      setBusy(false)
+      if (ticket === lifecycle.current) setBusy(false)
     }
   }
 
@@ -180,30 +203,36 @@ export function PetCollection({
       setError(validationErr)
       return
     }
+    const ticket = lifecycle.current
     setBusy(true)
     setError('')
     try {
       const next = await updatePetNickname(client, selectedOwned.id, nicknameInput)
-      applySnapshot(next, 'Companion nickname saved.')
+      applySnapshot(next, 'Companion nickname saved.', ticket)
     } catch (err) {
-      setError(errorText(err))
+      if (ticket === lifecycle.current) setError(errorText(err))
     } finally {
-      setBusy(false)
+      if (ticket === lifecycle.current) setBusy(false)
     }
   }
 
   const visibleCatalog = PET_SPECIES_CATALOG.filter(
     sp => sp.id !== 'triarch' || snapshot?.is_founder || ownedBySpecies.has('triarch'),
   )
-  const roomHabitatCounts = evaluateRoomHabitats(roomObjects)
+  const roomHabitatCounts = evaluateRoomHabitats(roomObjects ?? savedObjects ?? [])
 
   if (loading) {
     return (
-      <section className="pet-collection-panel" aria-label="Pet companions">
+      <section className="pet-collection-panel" aria-label="Pet companions" aria-busy="true">
         <p role="status">Loading companion collection…</p>
       </section>
     )
   }
+
+  if (!snapshot) return <section className="pet-collection-panel" aria-label="Pet companions">
+    <h3>Companions could not be loaded</h3><p role="alert" className="error">{error}</p>
+    <button type="button" onClick={()=>void loadPets()}>Try loading companions again</button>
+  </section>
 
   return (
     <section className="pet-collection-panel" aria-label="Pets and Realm Wildlife">
@@ -216,19 +245,17 @@ export function PetCollection({
               : 'Companions discovered and cared for in this Realm.'}
           </p>
         </div>
-        <div className="pet-subnav" role="tablist" aria-label="Companion views">
+        <div className="pet-subnav" role="group" aria-label="Companion views">
           <button
             type="button"
-            role="tab"
-            aria-selected={subView === 'collection'}
+            aria-pressed={subView === 'collection'}
             onClick={() => setSubView('collection')}
           >
             Pet Collection ({snapshot?.owned.length ?? 0})
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={subView === 'journal'}
+            aria-pressed={subView === 'journal'}
             onClick={() => setSubView('journal')}
           >
             Wildlife Journal
@@ -247,6 +274,9 @@ export function PetCollection({
         </p>
       )}
 
+      <p className="pet-equipment-summary">{snapshot.owned.length} companions · {snapshot.equipment.house_pet_ids.length} / 3 in house · {snapshot.equipment.banner_pet ? 'Banner companion equipped' : 'No banner companion'}</p>
+      {snapshot.owned.length === 0 && <p className="pet-empty-copy">{isOwn ? 'Your collection is ready for its first companion. Choose a starter below.' : 'This resident has not welcomed any companions yet.'}</p>}
+      {snapshot.active_encounter && isOwn && <p className="pet-visitor-notice" role="status">A {snapshot.active_encounter.name} is visiting your home. <a href={`/?home=${userId}`}>Visit home to bond</a></p>}
       {/* First-Time Starter Pet Adoption */}
       {isOwn && !hasStarter && (
         <div className="pet-starter-adoption-box" role="region" aria-label="Adopt a starter pet">
@@ -262,6 +292,7 @@ export function PetCollection({
                 key={starter.id}
                 type="button"
                 className="pet-starter-choice"
+                disabled={busy}
                 aria-pressed={starterChoice === starter.id}
                 onClick={() => setStarterChoice(starter.id)}
               >
@@ -309,14 +340,13 @@ export function PetCollection({
                   key={sp.id}
                   role="listitem"
                   className={`pet-card ${selected ? 'is-selected' : ''} ${!owned ? 'is-locked' : ''}`}
-                  onClick={() => setSelectedSpeciesId(sp.id)}
                 >
-                  <div className="pet-card-top">
+                  <button type="button" className="pet-card-top pet-card-select" aria-pressed={selected} aria-label={`Inspect ${owned ? petDisplayName(owned) : sp.name}`} onClick={() => setSelectedSpeciesId(sp.id)}>
                     <div className="pet-card-stage">
                       <PetSprite
                         speciesId={sp.id}
                         state={selected ? previewState : 'idle'}
-                        scale={sp.id === 'triarch' ? 1.1 : 1.5}
+                        scale={2}
                         silhouette={!owned}
                         label={owned ? petDisplayName(owned) : `Undiscovered ${sp.name}`}
                       />
@@ -332,7 +362,7 @@ export function PetCollection({
                           : sp.discovery_origin}
                       </small>
                     </div>
-                  </div>
+                  </button>
 
                   {isOwn && owned && (
                     <div className="pet-card-actions" onClick={e => e.stopPropagation()}>
@@ -342,7 +372,7 @@ export function PetCollection({
                         disabled={busy}
                         onClick={() => void handleToggleBanner(owned)}
                       >
-                        {isBannerEquipped ? '✓ On Banner' : 'Equip Banner'}
+                        {isBannerEquipped ? 'On banner' : 'Equip Banner'}
                       </button>
                       <button
                         type="button"
@@ -350,7 +380,7 @@ export function PetCollection({
                         disabled={busy}
                         onClick={() => void handleToggleHouse(owned)}
                       >
-                        {isHouseEquipped ? '✓ In House' : 'Display in House'}
+                        {isHouseEquipped ? 'In house' : 'Display in House'}
                       </button>
                     </div>
                   )}
@@ -365,7 +395,7 @@ export function PetCollection({
               <PetSprite
                 speciesId={selectedSpecies.id}
                 state={previewState}
-                scale={selectedSpecies.id === 'triarch' ? 2 : 2.5}
+                scale={selectedSpecies.id === 'triarch' ? 2 : 3}
                 silhouette={!selectedOwned}
                 label={selectedOwned ? petDisplayName(selectedOwned) : selectedSpecies.name}
               />
@@ -445,13 +475,15 @@ export function PetCollection({
           <div className="wildlife-journal-summary">
             <span>
               <strong>Wildlife Discovery Progress:</strong>{' '}
-              {(snapshot?.owned ?? []).filter(p => p.species_id !== 'triarch').length} / 7 Realm Creatures Discovered
+              {(snapshot?.owned ?? []).filter(p => ['fox','wisp','bat','owl'].includes(p.species_id)).length} / 4 wildlife companions
             </span>
             <span>House Companions Equipped: {snapshot?.equipment.house_pet_ids.length ?? 0} / 3</span>
           </div>
 
+          {isOwn && <p className="pet-journal-context">{habitatError || (roomObjects !== undefined || savedObjects ? 'Habitat counts reflect your saved home. Save changes in Home Studio to invite a visitor.' : 'Loading your saved home habitats…')}</p>}
+          {!isOwn && <p className="pet-journal-context">Habitat requirements are shown below. This resident’s home arrangement is private.</p>}
           <div className="pet-collection-grid">
-            {visibleCatalog.map(sp => {
+            {visibleCatalog.filter(sp=>sp.type==='wildlife'||sp.type==='achievement').map(sp => {
               const discovered = ownedBySpecies.has(sp.id)
               const progress = describeHabitatProgress(roomHabitatCounts, sp)
               return (
@@ -464,7 +496,7 @@ export function PetCollection({
                       <PetSprite
                         speciesId={sp.id}
                         state="idle"
-                        scale={sp.id === 'triarch' ? 1.1 : 1.5}
+                        scale={2}
                         silhouette={!discovered}
                       />
                     </div>
@@ -484,9 +516,9 @@ export function PetCollection({
                       {progress.map(req => (
                         <span
                           key={req.tag}
-                          className={`habitat-tag-pill ${req.met ? 'is-met' : ''}`}
+                          className={`habitat-tag-pill ${(roomObjects !== undefined || savedObjects) && req.met ? 'is-met' : ''}`}
                         >
-                          {req.tag}: {req.current}/{req.required}
+                          {req.tag}: {roomObjects !== undefined || savedObjects ? `${req.current}/${req.required}` : `${req.required} needed`}
                         </span>
                       ))}
                     </div>

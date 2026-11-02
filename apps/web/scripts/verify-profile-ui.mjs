@@ -43,6 +43,8 @@ const blobs=new Map()
 let loseNextUploadResponse=false
 const uploadAttempts=[]
 const failedReads=new Set()
+const missingBannerUsers=new Set()
+let delayPetUser=null,releasePetRead=null,petReadPending=false
 function serialized(task) { const next=queue.then(task); queue=next.catch(()=>{}); return next }
 async function asUser(id,task) {
  return serialized(async()=>{await db.exec('begin;set local role authenticated');await db.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);try{const result=await task();await db.exec('commit');return result}catch(e){await db.exec('rollback');throw e}})
@@ -50,7 +52,7 @@ async function asUser(id,task) {
 async function serviceOperation(actor,args){return serialized(async()=>{await db.exec('begin;set local role service_role');try{const result=await sqlRpc('profile_media_operation',{p_actor:actor,...args});await db.exec('commit');return result}catch(e){await db.exec('rollback');throw e}})}
 const sqlRpc=(name,args)=>{
  assert.match(name,/^[a-z_]+$/);for(const arg of Object.keys(args))assert.match(arg,/^p_[a-z_]+$/)
- return db.query(`select public."${name}"(${Object.keys(args).map((key,i)=>`"${key}"=>$${i+1}`).join(',')}) as result`,Object.values(args).map(v=>v&&typeof v==='object'?JSON.stringify(v):v)).then(r=>r.rows[0].result)
+ return db.query(`select public."${name}"(${Object.keys(args).map((key,i)=>`"${key}"=>$${i+1}`).join(',')}) as result`,Object.entries(args).map(([key,v])=>key==='p_pet_ids'?'{'+v.join(',')+'}':v&&typeof v==='object'?JSON.stringify(v):v)).then(r=>r.rows[0].result)
 }
 // Local intercepted transport only; Chrome otherwise blocks the Vite websocket.
 const browser=await chromium.launch({channel:process.env.REALM_BROWSER_CHANNEL??'chrome',headless:true,args:['--disable-features=LocalNetworkAccessChecks']})
@@ -82,9 +84,15 @@ async function contextFor(name,brokenRenderer=false) {
    if(url.pathname.includes('/rpc/')) {
     const name=url.pathname.split('/').pop(),args=req.postDataJSON()??{};requests.push({user:user.id,name,args})
     if(failedReads.has(`${user.id}:${name}`))return reply({code:'fixture_offline',message:'Temporary connection failure.'},503)
-    return reply(await asUser(user.id,()=>sqlRpc(name,args)))
+    const data=await asUser(user.id,()=>sqlRpc(name,args))
+    if(name==='get_profile_card' && missingBannerUsers.has(user.id)) delete data.banner_pet
+    if(name==='get_user_pets' && delayPetUser===user.id) {
+      delayPetUser=null;petReadPending=true
+      await new Promise(resolve=>{releasePetRead=resolve})
+    }
+    return reply(data)
    }
-   const table=url.pathname.split('/').pop();assert.ok(['spaces','channels','homes','profiles','profile_appearances','user_blocks','account_portraits','direct_conversations'].includes(table),`Unhandled fixture table ${table}`)
+   const table=url.pathname.split('/').pop();assert.ok(['spaces','channels','homes','profiles','profile_appearances','user_blocks','account_portraits','direct_conversations','space_members'].includes(table),`Unhandled fixture table ${table}`)
    const values=[],filters=[]
    for(const [column,value] of url.searchParams)if(value.startsWith('eq.')){assert.match(column,/^[a-z_]+$/);values.push(value.slice(3));filters.push(`"${column}"=$${values.length}`)}
    const rows=await asUser(user.id,()=>db.query(`select * from public."${table}"${filters.length?' where '+filters.join(' and '):''}`,values).then(r=>r.rows))
@@ -171,10 +179,63 @@ try{
  await alice.getByRole('button',{name:'No frame',exact:true}).click();await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
  await alice.reload();await alice.getByRole('tab',{name:'Profile frames',exact:true}).click();assert.equal(await alice.getByRole('button',{name:'No frame',exact:true}).getAttribute('aria-pressed'),'true')
  await alice.getByRole('button',{name:'Select Dark Realm',exact:true}).click();await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
+ // Pin saves use the server result, show failures inside the modal, and keep
+ // an unrelated content draft saveable at its original revision.
+ await serialized(()=>db.query("insert into realm_private.badge_grants(user_id,badge_id,granted_by) values($1,'guardian','Local UI fixture')",[users.alice]))
+ await alice.reload();await alice.getByLabel('Profile status',{exact:true}).fill('Draft alongside a pinned honor')
+ await alice.getByRole('button',{name:'View Hallmarks Trophy Case',exact:true}).click()
+ await alice.locator('.badge-grid-card').filter({has:alice.locator('.badge-card-title',{hasText:'Guardian'})}).click()
+ failedReads.add(`${users.alice}:save_user_badges`)
+ await alice.getByRole('button',{name:'Pin to Profile Card (Max 5)',exact:true}).click()
+ await alice.locator('dialog[open]').getByRole('alert').filter({hasText:'Your pins have not changed.'}).waitFor()
+ assert.equal(await alice.locator('.profile-badge-pin').count(),0,'failed pin does not claim server success')
+ failedReads.delete(`${users.alice}:save_user_badges`)
+ await alice.getByRole('button',{name:'Pin to Profile Card (Max 5)',exact:true}).click()
+ await alice.getByRole('button',{name:'Unpin from Profile Card',exact:true}).waitFor()
+ await alice.getByRole('button',{name:'Close Hallmarks showcase',exact:true}).click()
+ assert.equal(await alice.getByText('Profile changed on another device. Reload before saving.',{exact:true}).count(),0)
+ await alice.getByRole('button',{name:'Save profile',exact:true}).click();await alice.getByText('Profile saved to your account.',{exact:true}).waitFor()
+ assert.deepEqual(await asUser(users.alice,()=>sqlRpc('get_profile_card',{}).then(s=>s.badge_state.featured)),['guardian'])
+ // Server-owned equipment clears on null; a delayed compatibility read must
+ // not resurrect it after a fresher profile snapshot or component teardown.
+ await asUser(users.alice,()=>sqlRpc('adopt_starter_pet',{p_species_id:'cat',p_nickname:'Miso of the Quiet Hours'}))
+ await bob.goto(peerUrl);await bob.locator('.profile-banner-pet').waitFor()
+ assert.equal(await bob.locator('.account-profile-companions').count(),1)
+ assert.equal(await bob.locator('.account-profile-companions .pet-pixel-sprite').evaluate(el=>el.getBoundingClientRect().width),64)
+ await asUser(users.alice,()=>sqlRpc('equip_pet',{p_slot:'banner',p_pet_ids:[]}))
+ const petReadsBefore=requests.filter(r=>r.user===users.bob&&r.name==='get_user_pets').length
+ await bob.evaluate(()=>window.dispatchEvent(new Event('online')))
+ await bob.locator('.profile-banner-pet').waitFor({state:'detached'})
+ assert.equal(requests.filter(r=>r.user===users.bob&&r.name==='get_user_pets').length,petReadsBefore,'authoritative null does not trigger a fallback read')
+ const cat=await asUser(users.alice,()=>sqlRpc('get_user_pets',{}).then(s=>s.owned.find(p=>p.species_id==='cat')))
+ await asUser(users.alice,()=>sqlRpc('equip_pet',{p_slot:'banner',p_pet_ids:[cat.id]}))
+ missingBannerUsers.add(users.bob);delayPetUser=users.bob;petReadPending=false
+ await bob.evaluate(()=>window.dispatchEvent(new Event('online')))
+ for(let attempt=0;!petReadPending&&attempt<100;attempt++)await new Promise(r=>setTimeout(r,50))
+ assert.equal(petReadPending,true,'legacy profile response starts compatibility lookup')
+ missingBannerUsers.delete(users.bob)
+ await asUser(users.alice,()=>sqlRpc('equip_pet',{p_slot:'banner',p_pet_ids:[]}))
+ const freshProfile=bob.waitForResponse(r=>r.url().includes('/rpc/get_profile_card'))
+ await bob.evaluate(()=>window.dispatchEvent(new Event('online')));await freshProfile;await bob.waitForTimeout(150)
+ releasePetRead();await bob.waitForTimeout(150)
+ assert.equal(await bob.locator('.profile-banner-pet').count(),0,'late equipment response cannot resurrect removed pet')
+ // Unmount with another legacy request outstanding, then deliver it.
+ missingBannerUsers.add(users.bob);delayPetUser=users.bob;petReadPending=false
+ await bob.evaluate(()=>window.dispatchEvent(new Event('online')))
+ for(let attempt=0;!petReadPending&&attempt<100;attempt++)await new Promise(r=>setTimeout(r,50))
+ assert.equal(petReadPending,true)
+ await bob.goto(origin+'/?friends');releasePetRead();missingBannerUsers.delete(users.bob)
+ await asUser(users.alice,()=>sqlRpc('equip_pet',{p_slot:'banner',p_pet_ids:[cat.id]}))
+ await bob.goto(peerUrl);await bob.locator('.profile-banner-pet').waitFor()
+ for(const width of [1440,390,320]) {
+  await bob.setViewportSize({width,height:900});await overflow(bob)
+  await bob.screenshot({animations:'disabled',path:resolve(output,`companion-visitor-${width}.png`),fullPage:true})
+ }
+ await bob.setViewportSize({width:1440,height:1000})
  await bob.goto(peerUrl);await bob.getByRole('heading',{name:'Stxic',exact:true}).waitFor();await bob.getByAltText('Stxic account photo',{exact:true}).waitFor();await bob.getByRole('heading',{name:'Server roles',exact:true}).waitFor();assert.equal(await bob.getByRole('button',{name:'Save profile',exact:true}).count(),0)
  await bob.getByLabel('Private profile note',{exact:true}).fill('Only I can read this note.');await bob.getByRole('button',{name:'Save private note',exact:true}).click();await bob.getByText('Your private note is saved.',{exact:true}).waitFor();await bob.reload();await bob.getByLabel('Private profile note',{exact:true}).waitFor();assert.equal(await bob.getByLabel('Private profile note',{exact:true}).inputValue(),'Only I can read this note.')
  await o.page.goto(peerUrl);await o.page.getByLabel('Private profile note',{exact:true}).waitFor();assert.equal(await o.page.getByLabel('Private profile note',{exact:true}).inputValue(),'');assert.equal(await o.page.getByRole('heading',{name:'Server roles',exact:true}).count(),0)
- await bob.screenshot({animations:'disabled',path:resolve(output,'member-desktop.png'),fullPage:true});await bob.emulateMedia({reducedMotion:'reduce'});await bob.waitForFunction(()=>[...document.querySelectorAll('.account-profile-card img:not(.profile-frame-art)')].every(img=>img.getAttribute('data-reduced-motion')==='true'&&img.src.startsWith('data:image/png')));await bob.emulateMedia({reducedMotion:'no-preference'})
+ await bob.screenshot({animations:'disabled',path:resolve(output,'member-desktop.png'),fullPage:true});await bob.emulateMedia({reducedMotion:'reduce'});await bob.waitForFunction(()=>[...document.querySelectorAll('.account-profile-card img[data-reduced-motion]')].every(img=>img.getAttribute('data-reduced-motion')==='true'&&img.src.startsWith('data:image/png')));await bob.emulateMedia({reducedMotion:'no-preference'})
  for(const width of [390,320]){await bob.setViewportSize({width,height:844});await overflow(bob);await bob.screenshot({animations:'disabled',path:resolve(output,`member-${width}.png`),fullPage:true});await alice.setViewportSize({width,height:844});await overflow(alice);await alice.screenshot({animations:'disabled',path:resolve(output,`editor-${width}.png`),fullPage:true});await alice.getByRole('button',{name:'Preview profile',exact:true}).click();await overflow(alice);await alice.screenshot({animations:'disabled',path:resolve(output,`owner-preview-${width}.png`),fullPage:true});await alice.getByRole('button',{name:'Edit profile',exact:true}).click()}
  await alice.getByRole('tab',{name:'Identity',exact:true}).click();await alice.getByLabel('Profile status',{exact:true}).fill('Unsaved reconnect draft')
  failedReads.add(`${users.alice}:get_profile_card`);await alice.evaluate(()=>window.dispatchEvent(new Event('online')));await alice.getByRole('alert').filter({hasText:'Temporary connection failure.'}).waitFor();failedReads.delete(`${users.alice}:get_profile_card`);await alice.getByRole('button',{name:'Try opening profile again',exact:true}).click();await alice.getByLabel('Profile status',{exact:true}).waitFor();assert.equal(await alice.getByLabel('Profile status',{exact:true}).inputValue(),'Unsaved reconnect draft')
@@ -183,5 +244,5 @@ try{
  await asUser(users.alice,()=>sqlRpc('set_block',{p_user:users.bob,p_block:true}));await bob.reload();await bob.getByRole('alert').filter({hasText:'Profile unavailable.'}).waitFor();assert.equal(await bob.locator('.account-profile-card').count(),0)
  // Account portrait is used in communication; avatar editor still draws the independent character.
  await alice.goto(origin);await alice.waitForFunction(()=>document.querySelector('.account .account-portrait img')?.naturalWidth>0);await alice.goto(origin+'/?appearance');await alice.locator('.pixel-character').first().waitFor()
- assert.deepEqual(pageErrors,[]);const result={passed:true,transport:'Intercepted Auth/PostgREST/Storage/Edge with actual local PGlite SQL/RLS and image parser; not hosted Supabase',checks:['seven frame collections and three shapes','all eighteen centers transparent','frame preview, reset, no-frame, save and reload','two-user DM bubbles and long-message phone layout','lost-response upload retry via file selection and button','image uploads and publish/reload','separate character identity','private notes','shared roles','hidden media','blocked access','stale saves','failed-read draft recovery','desktop/390/320px']};await writeFile(resolve(output,'verification.json'),JSON.stringify(result,null,2));console.log('PASS',JSON.stringify(result))
+ assert.deepEqual(pageErrors,[]);const result={passed:true,transport:'Intercepted Auth/PostgREST/Storage/Edge with actual local PGlite SQL/RLS and image parser; not hosted Supabase',checks:['seven frame collections and three shapes','all eighteen centers transparent','frame preview, reset, no-frame, save and reload','two-user DM bubbles and long-message phone layout','lost-response upload retry via file selection and button','image uploads and publish/reload','separate character identity','private notes','shared roles','pin failure recovery and draft revision independence','visitor companion showcase at integer scale','authoritative null equipment and no fallback','late compatibility reads discarded after newer snapshots and unmount','hidden media','blocked access','stale saves','failed-read draft recovery','desktop/390/320px']};await writeFile(resolve(output,'verification.json'),JSON.stringify(result,null,2));console.log('PASS',JSON.stringify(result))
 }catch(e){for(const [i,c]of browser.contexts().entries())for(const [j,p]of c.pages().entries()){console.error('PAGE',i,j,(await p.locator('body').innerText().catch(()=>'' )).slice(-1800));await p.screenshot({animations:'disabled',path:resolve(output,`failure-${i}-${j}.png`),fullPage:true}).catch(()=>{})}throw e}finally{await browser.close();await queue;await db.close()}

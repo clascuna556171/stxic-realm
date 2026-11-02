@@ -5,510 +5,205 @@ export type Pixel = { x: number; y: number; w: number; h: number; color: string 
 export const CHARACTER_WIDTH = 48
 export const CHARACTER_HEIGHT = 64
 
-/** Mix two 6-digit hex colors deterministically without mutating saved palette values. */
+/** Derived material ramps never change the owner's saved palette. */
 function mix(a: string, b: string, ratio: number): string {
- const channel = (at: number) =>
-  Math.max(0, Math.min(255, Math.round(parseInt(a.slice(at, at + 2), 16) * (1 - ratio) + parseInt(b.slice(at, at + 2), 16) * ratio)))
-   .toString(16)
-   .padStart(2, '0')
+ const channel = (at: number) => Math.round(parseInt(a.slice(at, at + 2), 16) * (1 - ratio) + parseInt(b.slice(at, at + 2), 16) * ratio).toString(16).padStart(2, '0')
  return `#${channel(1)}${channel(3)}${channel(5)}`
 }
 
+type Pose = 'stand' | 'sit' | 'rest'
 /**
- * High-detail 48x64 pixel-art RPG character sprite, shared by SVG portraits,
- * the Appearance Studio stage, and the Phaser room renderer.
+ * Original, layered 48×64 residents. Body parts are authored together, never
+ * animated by moving arbitrary rectangles. The bottom-center pivot stays (24,64).
+ * Face: y17–31; shoulders: y34; hips: y49; soles: y63. Lighting is upper-left.
  */
-function frontCharacterPixels(a: Appearance): Pixel[] {
- const p: Pixel[] = []
- const block = (x: number, y: number, w: number, h: number, color: string) => {
-  const x0 = Math.max(0, Math.floor(x))
-  const y0 = Math.max(0, Math.floor(y))
-  const x1 = Math.min(CHARACTER_WIDTH, Math.floor(x + w))
-  const y1 = Math.min(CHARACTER_HEIGHT, Math.floor(y + h))
-  if (x1 > x0 && y1 > y0) p.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, color })
+function resident(a: Appearance, direction: Direction, frame: number, pose: Pose, blink = false, inhale = false): Pixel[] {
+ const pixels: Pixel[] = []
+ const side = direction === 'left' || direction === 'right', rear = direction === 'up'
+ // Left profiles use the same anatomy, but retain world-space upper-left lighting.
+ const left = direction === 'left'
+ const r = (x: number, y: number, w: number, h: number, color: string) => {
+  if (left) x = 48 - x - w
+  const x0 = Math.max(0, x), y0 = Math.max(0, y), x1 = Math.min(48, x + w), y1 = Math.min(64, y + h)
+  if (x1 > x0 && y1 > y0) pixels.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, color })
  }
- const sym = (x: number, y: number, w: number, h: number, color: string) => {
-  block(x, y, w, h, color)
-  const mirrorX = CHARACTER_WIDTH - x - w
-  if (mirrorX !== x) block(mirrorX, y, w, h, color)
- }
+ const ink = '#202029', seam = '#34333b', skin = a.skin, skinShade = mix(skin, '#502d28', .28), skinLight = mix(skin, '#ffead0', .18)
+ const hair = a.hair, hairDark = mix(hair, '#151722', .4), hairLight = mix(hair, '#ecd5b5', .24)
+ const cloth = outfits[a.outfit], clothShade = mix(cloth, '#1b2330', .34), clothLight = mix(cloth, '#ece5d5', .23)
+ const pants = a.outfit === 'everyday' ? '#414858' : a.outfit === 'medieval' ? '#51443a' : '#303f4e'
+ const pantsLight = mix(pants, '#b4b5b4', .2), leather = '#745038', leatherLight = '#a37850'
+ const gold = '#c7a35f', goldLight = '#f2d99a', metal = '#738795', cyan = '#8bd7d5', linen = '#e8deca'
+ const phase = frame === 1 ? 1 : frame === 2 ? -1 : 0
+ const seated = pose === 'sit', resting = pose === 'rest'
+ const shoulderY = 34 - (inhale ? 1 : 0)
 
- const ink = '#181520'
- const outlineSoft = '#292433'
- const skin = a.skin
- const skinLight = mix(skin, '#fff4df', 0.26)
- const skinShadow = mix(skin, '#613931', 0.28)
- const skinDeep = mix(skin, '#3d211e', 0.46)
- const blush = mix(skin, '#9b654e', 0.16)
-
- const hair = a.hair
- const hairDeep = mix(hair, '#100e18', 0.52)
- const hairShade = mix(hair, '#181422', 0.32)
- const hairLight = mix(hair, '#f5dec2', 0.28)
- const hairShine = mix(hair, '#fff6e8', 0.46)
-
- const clothing = outfits[a.outfit]
- const clothDeep = mix(clothing, '#12151f', 0.5)
- const clothShade = mix(clothing, '#191d28', 0.32)
- const clothLight = mix(clothing, '#e8e4f2', 0.25)
- const clothAccent = mix(clothing, '#ffffff', 0.4)
-
- const eyeBase = eyeColors[a.eyes]
- const eyeDeep = mix(eyeBase, '#10121c', 0.45)
- const eyeLight = mix(eyeBase, '#b8f2ee', 0.38)
-
- const gold = '#e5c168'
- const goldShade = '#9e7836'
- const goldLight = '#fff0b8'
- const cyan = '#5ce6dc'
- const cyanLight = '#b8faf5'
- const paper = '#f2ead8'
-
- // 1. BACK LAYER: Flowing capes, collars, and back hair silhouettes
+ // Cloak sits behind the limbs. Its folded hem never replaces either leg.
  if (a.outfit === 'medieval') {
-  // Flowing hooded adventurer cloak behind shoulders & torso
-  sym(6, 35, 36, 1, ink)
-  sym(5, 36, 38, 18, ink)
-  sym(4, 42, 40, 14, ink)
-  block(7, 36, 34, 18, '#344238')
-  block(6, 42, 36, 13, '#29352d')
-  sym(6, 37, 4, 17, '#495c4e')
-  sym(8, 39, 2, 14, '#627866')
-  // Burgundy inner cloak lining glimpse
-  sym(10, 48, 3, 7, '#6b2d3b')
-  block(10, 54, 28, 2, ink)
- } else if (a.outfit === 'tech') {
-  // High cyber-collar & back pack fins
-  block(13, 31, 22, 6, ink)
-  block(14, 32, 20, 5, '#202b38')
-  sym(15, 32, 3, 4, '#36495e')
-  sym(16, 33, 1, 2, cyan)
+  if (side) {
+   r(13,35,10,20,ink);r(14,36,8,18,'#3b5046');r(left?19:15,37,2,15,'#627669');r(14,52,7,2,'#713f46')
+  } else {
+   r(11,35,26,19,ink);r(10,42,28,12,ink);r(12,36,24,17,'#3b5046');r(11,43,26,10,'#35463d')
+   r(13,37,3,15,'#627669');r(33,39,2,14,'#293c35');r(12,52,24,2,'#713f46')
+  }
+ }
+ const leg = (x: number, far: boolean, step: number) => {
+  // A support sole stays on y63; only the swing leg lifts. Thigh and shoe move as a unit.
+  const lift = step > 0 ? 2 : 0, dx = side ? step * 3 : step
+  const lx = x + dx, y = seated ? 49 : 48
+  r(lx,y,7,14-lift,ink);r(lx+1,y,5,12-lift,far?mix(pants,ink,.15):pants)
+  r(lx+(left?4:1),y+2,2,7-lift,pantsLight)
+  const bootY = (seated ? 56 : 58) - lift
+  const boot = a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:'#283744'
+  r(lx-1,bootY,9,5,ink);r(lx,bootY,7,4,boot)
+  r(lx,bootY+3,8,1,a.outfit==='everyday'?'#a7a294':'#202630')
+  r(lx+(left?4:1),bootY+1,3,1,a.outfit==='medieval'?leatherLight:a.outfit==='tech'?metal:'#fff2da')
+  if(a.outfit==='medieval'){r(lx,bootY-3,6,3,leather);r(lx+3,bootY-2,2,1,gold)}
+  if(a.outfit==='tech'){r(lx+1,bootY-3,4,3,metal);r(lx+2,bootY+1,3,1,cyan)}
+ }
+ if(!resting){
+  if(side){leg(18,true,-phase);leg(24,false,phase)}
+  else {leg(15,false,phase);leg(26,true,-phase)}
+  if(seated){
+   if(side){r(20,48,15,7,ink);r(21,49,13,5,pants);r(23,49,10,1,pantsLight)}
+   else {r(14,48,20,6,ink);r(15,49,18,4,pants);r(16,49,6,1,pantsLight);r(27,49,5,1,pantsLight)}
+  }
  }
 
- if (a.hairStyle === 'long') {
-  // Cascading long hair behind shoulders down to waist
-  sym(7, 13, 6, 32, ink)
-  sym(6, 18, 6, 25, ink)
-  block(10, 12, 28, 33, ink)
-  block(9, 14, 30, 29, hairDeep)
-  sym(8, 16, 5, 27, hairShade)
-  sym(7, 19, 4, 22, hair)
-  sym(8, 22, 2, 15, hairLight)
-  // Stepped strand tips at bottom
-  sym(7, 43, 3, 3, ink)
-  sym(8, 42, 2, 3, hairShade)
-  sym(11, 44, 3, 2, hairDeep)
- } else if (a.hairStyle === 'curly') {
-  // Voluminous curly cloud clusters framing head & neck
-  sym(6, 12, 7, 22, ink)
-  sym(5, 16, 6, 15, ink)
-  block(9, 11, 30, 24, hairDeep)
-  sym(7, 13, 6, 19, hairShade)
-  sym(6, 17, 5, 12, hair)
-  sym(7, 19, 2, 4, hairLight)
-  sym(8, 26, 2, 4, hairLight)
+ // Neck and tailored torso. Wider shoulders taper to the waist rather than a box.
+ r(side?21:21,29,6,8,ink);r(22,30,4,6,skinShade);r(22,30,2,4,skin)
+ const tx=side?17:15,tw=side?15:18
+ r(tx,shoulderY,tw,17+(inhale?1:0),ink);r(tx+1,shoulderY+1,tw-2,15,clothShade)
+ r(tx+2,shoulderY+1,tw-5,14,cloth);r(left?tx+tw-4:tx+2,shoulderY+2,2,11,clothLight)
+ const arm=(x:number,far:boolean,swing:number)=>{
+  // Continuous shoulder, elbow, cuff and hand; counter-swings the corresponding leg.
+  const y=shoulderY+2,dx=side?swing*2:0,handY=resting?42:seated?44:48+(swing<0?-1:0)
+  r(x,y,6,7,ink);r(x+dx,y+5,6,handY-y-2,ink)
+  r(x+1,y+1,4,6,far?clothShade:cloth);r(x+dx+1,y+6,4,handY-y-3,far?clothShade:cloth)
+  r(x+dx+(left?4:1),y+1,1,6,clothLight)
+  r(x+dx,handY-2,6,3,ink);r(x+dx+1,handY-2,4,2,a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:metal)
+  r(x+dx+1,handY,4,4,ink);r(x+dx+1,handY,3,3,skinShade);r(x+dx+1,handY,2,2,skin);r(x+dx+1,handY,1,1,skinLight)
+  if(a.outfit==='medieval'||a.outfit==='tech'){
+   r(x-1,y-1,8,5,ink);r(x,y-1,6,4,a.outfit==='medieval'?gold:metal);r(x+1,y-1,3,1,a.outfit==='medieval'?goldLight:'#c3ced0')
+  }
  }
-
- // 2. LEGS, TROUSERS & BOOTS (y: 49..63)
- // Left & right leg outlines
- sym(13, 50, 9, 12, ink)
- sym(11, 58, 11, 5, ink)
-
- if (a.outfit === 'everyday') {
-  // Cuffed dark denim jeans & two-tone street sneakers
-  sym(14, 50, 7, 7, '#31374d')
-  sym(15, 50, 3, 6, '#404863')
-  sym(14, 56, 7, 2, '#7d849c') // Denim cuff
-  // Sneakers
-  sym(12, 58, 9, 4, '#ded7c8')
-  sym(13, 58, 5, 2, '#f5efe2')
-  sym(16, 58, 3, 1, clothing) // Tongue/lace accent
-  sym(12, 61, 9, 1, '#b0a695') // Sole
- } else if (a.outfit === 'medieval') {
-  // Wool breeches & buckled leather riding boots
-  sym(14, 50, 7, 4, '#453b37')
-  sym(15, 50, 3, 4, '#594d48')
-  // Folded boot cuffs
-  sym(13, 54, 9, 2, ink)
-  sym(14, 54, 7, 2, '#875e42')
-  sym(12, 56, 9, 6, '#63422d')
-  sym(14, 56, 4, 5, '#7a533a')
-  sym(15, 57, 2, 2, gold) // Boot buckle
-  sym(12, 61, 9, 1, '#3b2619')
- } else {
-  // Cyber-armored tactical trousers & neon-trimmed boots
-  sym(14, 50, 7, 5, '#25303d')
-  sym(15, 51, 4, 3, '#384759')
-  sym(13, 55, 9, 2, ink)
-  sym(14, 55, 7, 2, '#4d6178') // Knee/shin guard
-  sym(12, 57, 9, 5, '#1d2630')
-  sym(14, 57, 5, 4, '#2f3d4c')
-  sym(14, 59, 4, 1, cyan) // Glowing boot strip
-  sym(12, 61, 9, 1, '#121820')
+ if(!side){arm(10,false,-phase);arm(32,true,phase)}
+ if(a.outfit==='everyday'){
+  if(rear){r(19,34,10,4,ink);r(20,34,8,3,clothShade);r(19,40,10,1,clothLight);r(18,46,12,1,clothShade)}
+  else if(side){r(29,36,2,12,linen);r(28,35,2,5,clothLight);r(28,43,3,3,clothShade)}
+  else {
+   r(21,35,6,13,linen);r(22,36,4,2,'#c6baa6');r(22,41,4,2,'#ad7160')
+   r(19,35,2,13,clothLight);r(27,35,2,13,clothShade);r(20,37,1,5,linen);r(27,37,1,5,linen)
+   r(16,44,4,3,clothShade);r(29,44,3,3,clothShade);r(16,44,4,1,clothLight)
+  }
+  r(tx+1,49,tw-2,2,clothShade)
+ }else if(a.outfit==='medieval'){
+  if(rear){r(16,35,16,16,'#3b5046');r(17,36,3,14,'#627669');r(23,36,2,15,'#2d4037');r(29,37,2,13,'#293c35')}
+  else {
+   r(side?28:19,35,side?3:10,2,gold);r(side?28:23,36,2,2,'#8c4d4d')
+   for(let n=0;n<4;n++)r((side?27:17)+n,38+n*2,3,3,leather)
+   r(tx+1,47,tw-2,3,leather);r(side?28:23,47,3,3,gold);r(side?29:24,48,1,1,ink)
+   if(!side){r(16,38,1,8,clothLight);r(30,38,1,7,clothShade)}
+  }
+ }else{
+  r(tx+1,35,tw-2,3,'#293c49')
+  if(rear){r(19,38,10,10,ink);r(20,39,8,8,'#536a7a');r(21,40,6,1,'#8d9fa7');r(22,43,4,1,cyan);r(21,46,6,1,'#2b3c49')}
+  else if(side){r(28,38,3,9,'#283b48');r(29,39,1,4,cyan);r(28,46,3,2,metal)}
+  else {r(18,38,4,9,clothLight);r(26,38,4,9,clothShade);r(22,38,4,10,'#253540');r(23,39,1,5,metal);r(19,39,2,3,cyan);r(27,44,2,1,cyan)}
+  r(tx+1,48,tw-2,3,'#25323d');r(side?28:23,48,3,2,metal)
  }
-
- // 3. TORSO, ARMS, HANDS & OUTFIT DETAILS (y: 33..52)
- // Neck & collar shadow
- block(19, 32, 10, 6, ink)
- block(20, 33, 8, 4, skinDeep)
- block(21, 33, 6, 3, skinShadow)
-
- // Outer torso & sleeves silhouette
- block(11, 36, 26, 15, ink)
- sym(8, 38, 5, 11, ink)
- sym(7, 40, 5, 9, ink)
-
- // Hands
- sym(7, 47, 5, 5, ink)
- sym(8, 47, 4, 4, skinShadow)
- sym(9, 47, 3, 3, skin)
- sym(9, 47, 2, 1, skinLight)
-
- // Base jacket/tunic fill
- block(12, 37, 24, 13, clothShade)
- block(13, 37, 22, 12, clothing)
- sym(8, 39, 4, 8, clothShade)
- sym(9, 39, 3, 7, clothing)
- sym(9, 40, 1, 5, clothLight)
-
- if (a.outfit === 'everyday') {
-  // Cream inner tee with subtle pixel motif + open layered hoodie/jacket
-  block(19, 37, 10, 12, paper)
-  block(20, 37, 8, 2, '#dfd4be')
-  block(21, 40, 6, 3, '#d48a76') // Shirt graphic stripe
-  block(22, 41, 4, 1, '#f7efe0')
-  // Jacket lapels & zipper edges
-  sym(16, 37, 3, 12, clothLight)
-  sym(18, 38, 1, 11, ink)
-  // Hoodie drawstrings
-  sym(19, 38, 1, 5, '#ffffff')
-  // Pockets & ribbed hem
-  sym(13, 44, 4, 4, clothDeep)
-  sym(13, 44, 4, 1, clothLight)
-  block(12, 49, 24, 2, clothDeep)
-  block(21, 49, 6, 2, '#424658')
-  // Sleeve cuffs
-  sym(8, 46, 4, 1, paper)
- } else if (a.outfit === 'medieval') {
-  // Sculpted pauldrons (shoulder armor)
-  sym(7, 35, 8, 6, ink)
-  sym(8, 36, 6, 4, goldShade)
-  sym(9, 36, 5, 3, gold)
-  sym(10, 36, 3, 1, goldLight)
-  // Tunic embroidery & chest baldric strap
-  block(14, 38, 20, 11, clothing)
-  sym(14, 38, 3, 10, clothShade)
-  block(19, 37, 10, 3, gold)
-  block(21, 38, 6, 2, '#7d2e3d') // Cloak gem at throat
-  block(22, 38, 2, 1, '#ff9aa8')
-  // Diagonal leather baldric
-  block(15, 39, 4, 3, '#6e4930')
-  block(18, 41, 5, 3, '#6e4930')
-  block(22, 43, 5, 3, '#6e4930')
-  block(26, 45, 5, 3, '#6e4930')
-  block(21, 42, 4, 3, gold)
-  // Royal waist belt & buckle
-  block(12, 47, 24, 3, '#422c1d')
-  block(21, 47, 6, 3, gold)
-  block(22, 48, 4, 1, '#5e3f28')
-  // Wrist bracers
-  sym(8, 44, 4, 3, '#6e4930')
-  sym(9, 45, 2, 1, gold)
- } else if (a.outfit === 'tech') {
-  // Angular titanium shoulder guards
-  sym(7, 36, 8, 5, ink)
-  sym(8, 37, 6, 3, '#7b91a8')
-  sym(9, 37, 4, 1, '#c7d8e8')
-  sym(9, 39, 3, 1, cyan)
-  // Cyber jacket panels & neon conduits
-  block(14, 37, 20, 12, '#273545')
-  sym(14, 38, 4, 10, clothing)
-  sym(17, 38, 1, 10, cyan)
-  sym(18, 38, 1, 10, ink)
-  // Central holo-core chest piece
-  block(20, 39, 8, 5, '#16202b')
-  block(21, 40, 6, 3, cyan)
-  block(22, 40, 4, 1, cyanLight)
-  // Sleeve neon stripe
-  sym(9, 43, 3, 1, cyan)
-  // Utility belt with glowing cells
-  block(12, 48, 24, 2, '#1a222c')
-  sym(15, 48, 3, 2, cyan)
-  block(22, 48, 4, 2, '#9faec0')
+ if(side)arm(20,false,-phase)
+ // Long hair is behind the head, but falls over the shoulder/back clothing.
+ if(a.hairStyle==='long'){
+  if(side){r(12,15,10,28,ink);r(13,16,8,26,hairDark);r(left?18:14,18,2,22,hair);r(14,41,4,3,hairDark)}
+  else {for(const x of [12,32]){r(x,15,4,26,ink);r(x+1,16,2,24,hairDark)}r(14,18,2,21,hair);r(32,19,2,20,hair);r(13,39,3,3,hairDark);r(32,39,3,3,hairDark)}
  }
-
- // 4. HEAD, EARS & EXPRESSIVE RPG FACE (y: 8..34)
- // Stepped rounded head outline
- block(15, 8, 18, 27, ink)
- block(13, 9, 22, 25, ink)
- block(11, 11, 26, 21, ink)
- block(10, 13, 28, 17, ink)
-
- // Ears
- sym(8, 19, 3, 7, ink)
- sym(9, 20, 2, 5, skinShadow)
- sym(9, 20, 1, 3, skin)
-
- // Face skin fill with 3D contour shading
- block(15, 10, 18, 23, skinShadow)
- block(13, 11, 22, 21, skinShadow)
- block(11, 13, 26, 17, skinShadow)
- block(12, 12, 24, 18, skin)
- block(14, 11, 20, 20, skin)
- block(16, 31, 16, 1, skin)
-
- // Forehead & cheek highlights
- block(14, 16, 4, 7, skinLight)
- block(21, 15, 6, 4, skinLight)
- // Warm cheek blush
- sym(12, 25, 4, 2, blush)
-
- // Eyebrows
- sym(14, 18, 6, 1, hairDeep)
- sym(15, 17, 4, 1, hairShade)
-
- // Compact RPG eyes: restrained highlights and brow shading, rather than oversized anime eyes.
- sym(14, 20, 5, 1, skinDeep)
- sym(15, 21, 4, 3, eyeDeep)
- sym(16, 21, 3, 3, eyeBase)
- sym(17, 21, 2, 2, ink)
- sym(16, 21, 1, 1, '#f2ead8')
- sym(17, 23, 1, 1, eyeLight)
-
- // Nose & gentle smile
- block(23, 25, 2, 2, skinShadow)
- block(23, 24, 1, 1, skinLight)
- block(21, 29, 6, 1, skinDeep)
- block(22, 29, 4, 1, outlineSoft)
- block(22, 30, 4, 1, skinShadow)
-
- // 5. FRONT & CROWN HAIRSTYLES (short, long, curly, swept)
- if (a.hairStyle === 'short') {
-  // Tousled RPG hero hair with layered spikes & crown halo highlight
-  block(14, 4, 20, 4, ink)
-  block(11, 6, 26, 5, ink)
-  block(9, 8, 30, 8, ink)
-  block(8, 11, 32, 6, ink)
-  // Spiky crown tufts
-  block(18, 3, 6, 2, ink)
-  block(26, 4, 5, 2, ink)
-  block(10, 7, 4, 2, ink)
-  block(35, 8, 4, 2, ink)
-  // Hair fill
-  block(14, 5, 20, 5, hairShade)
-  block(11, 7, 26, 7, hair)
-  block(10, 10, 28, 6, hair)
-  block(19, 4, 4, 2, hair)
-  block(26, 5, 4, 2, hair)
-  // Sideburns framing temples
-  sym(9, 14, 3, 7, ink)
-  sym(10, 14, 3, 6, hairShade)
-  sym(10, 14, 2, 5, hair)
-  // Forehead bangs (stepped, not boxy!)
-  block(12, 15, 24, 1, skinShadow) // Soft shadow under bangs
-  block(12, 13, 5, 4, hair)
-  block(14, 17, 2, 1, hairShade)
-  block(18, 13, 6, 3, hair)
-  block(20, 16, 3, 2, hair)
-  block(25, 13, 6, 4, hairShade)
-  block(26, 13, 4, 3, hair)
-  block(31, 13, 5, 3, hair)
-  // Halo crown highlights
-  block(14, 8, 7, 2, hairLight)
-  block(16, 8, 3, 1, hairShine)
-  block(25, 8, 8, 2, hairLight)
-  block(27, 8, 4, 1, hairShine)
- } else if (a.hairStyle === 'long') {
-  // Sleek parted crown with cheek-framing side locks
-  block(13, 5, 22, 4, ink)
-  block(10, 7, 28, 6, ink)
-  block(8, 10, 32, 7, ink)
-  block(13, 6, 22, 5, hairShade)
-  block(10, 8, 28, 7, hair)
-  // Cheek-framing front locks cascading past jawline
-  sym(8, 14, 4, 18, ink)
-  sym(9, 14, 3, 17, hair)
-  sym(9, 24, 2, 7, hairShade)
-  sym(10, 16, 1, 7, hairLight)
-  // Soft parted bangs
-  block(13, 15, 22, 1, skinShadow)
-  block(12, 12, 8, 4, hair)
-  block(13, 16, 4, 2, hair)
-  block(21, 12, 6, 3, hairShade)
-  block(28, 12, 8, 4, hair)
-  block(31, 16, 4, 2, hair)
-  // Crown specular band
-  block(13, 9, 9, 2, hairLight)
-  block(15, 9, 4, 1, hairShine)
-  block(26, 9, 9, 2, hairLight)
-  block(28, 9, 4, 1, hairShine)
- } else if (a.hairStyle === 'curly') {
-  // Fluffy, cloud-like curl puffs across the crown & brow
-  block(15, 3, 18, 4, ink)
-  block(10, 5, 28, 6, ink)
-  block(7, 8, 34, 9, ink)
-  // Individual curl puffs
-  block(16, 4, 7, 6, hair)
-  block(24, 4, 8, 6, hair)
-  block(11, 6, 7, 7, hair)
-  block(30, 6, 7, 7, hair)
-  block(8, 10, 6, 8, hairShade)
-  block(34, 10, 6, 8, hairShade)
-  block(10, 10, 28, 5, hair)
-  // Ringlet bangs over brow
-  block(13, 15, 22, 1, skinShadow)
-  block(12, 13, 5, 4, hair)
-  block(14, 17, 2, 1, ink)
-  block(19, 13, 5, 3, hairShade)
-  block(20, 13, 3, 3, hair)
-  block(26, 13, 5, 4, hair)
-  block(28, 17, 2, 1, ink)
-  block(32, 14, 4, 5, hair)
-  // Curly specular highlights
-  block(13, 8, 3, 2, hairLight)
-  block(18, 5, 4, 2, hairLight)
-  block(19, 5, 2, 1, hairShine)
-  block(26, 6, 4, 2, hairLight)
-  block(27, 6, 2, 1, hairShine)
-  block(32, 9, 3, 2, hairLight)
- } else if (a.hairStyle === 'swept') {
-  // Dynamic wind-swept diagonal fringe & asymmetrical volume
-  block(13, 5, 23, 4, ink)
-  block(10, 7, 29, 6, ink)
-  block(7, 10, 32, 7, ink)
-  block(6, 13, 8, 4, ink) // Swept outer wing on left
-  block(13, 6, 22, 5, hairShade)
-  block(10, 8, 27, 7, hair)
-  block(8, 12, 18, 5, hair)
-  block(7, 13, 6, 3, hairLight)
-  // Diagonal swept bangs across forehead
-  block(13, 15, 21, 1, skinShadow)
-  block(10, 14, 12, 3, hair)
-  block(11, 17, 7, 2, hair)
-  block(12, 19, 3, 1, hairShade)
-  block(23, 13, 8, 3, hairShade)
-  block(24, 13, 6, 2, hair)
-  block(33, 14, 5, 6, ink)
-  block(33, 14, 4, 5, hairShade)
-  block(33, 14, 3, 4, hair)
-  // Sweeping highlight ribbons
-  block(12, 8, 12, 2, hairLight)
-  block(14, 8, 6, 1, hairShine)
-  block(22, 11, 10, 2, hairLight)
+ // Head volume and face are shared across every pose and walk frame.
+ if(side){
+  r(16,10,15,20,ink);r(14,14,19,13,ink);r(18,12,12,18,skinShade);r(21,14,11,14,skin)
+  r(30,22,5,4,ink);r(30,22,4,3,skin);r(30,27,2,3,skinShade);r(left?28:22,17,2,4,skinLight)
+  r(28,21,3,1,hairDark)
+  if(blink||resting)r(29,24,3,1,ink)
+  else {r(29,23,3,3,ink);r(29,23,2,2,eyeColors[a.eyes]);r(29,23,1,1,linen)}
+  r(29,28,2,1,seam)
+ }else{
+  r(16,10,16,21,ink);r(14,14,20,14,ink);r(15,12,18,17,ink)
+  if(!rear){
+   r(16,14,16,14,skinShade);r(16,13,14,14,skin);r(18,27,12,3,skin);r(20,30,8,1,skinShade)
+   r(13,21,3,5,ink);r(14,22,2,3,skin);r(32,21,3,5,ink);r(32,22,2,3,skinShade)
+   r(17,18,2,4,skinLight);r(21,17,6,2,skinLight)
+   r(17,21,4,1,hairDark);r(27,21,4,1,hairDark)
+   for(const ex of [18,28]){
+    if(blink||resting)r(ex,24,3,1,ink)
+    else {r(ex,23,3,3,ink);r(ex,23,2,2,eyeColors[a.eyes]);r(ex,23,1,1,linen)}
+   }
+   r(24,25,1,2,skinShade);r(23,28,4,1,mix(skin,ink,.48));r(24,29,2,1,skinShade)
+  }
  }
-
- // 6. FOREGROUND ACCESSORIES (glasses, headphones, crown)
- if (a.accessory === 'glasses') {
-  // Crisp pixel eyewear with gold bridge & sky-blue lens glint
-  sym(13, 19, 8, 1, ink)
-  sym(13, 25, 8, 1, ink)
-  sym(13, 19, 1, 7, ink)
-  sym(20, 19, 1, 7, ink)
-  sym(11, 20, 2, 1, ink) // Temple arms
-  block(21, 21, 6, 1, gold) // Gold nose bridge
-  // Diagonal lens reflections
-  sym(14, 20, 2, 1, '#d8f6ff')
-  sym(15, 21, 1, 1, '#d8f6ff')
- } else if (a.accessory === 'headphones') {
-  // Studio/cyber over-ear headset with padded arch & glowing rings
-  block(13, 4, 22, 3, ink)
-  block(10, 6, 4, 4, ink)
-  block(34, 6, 4, 4, ink)
-  block(14, 5, 20, 2, '#3a4154')
-  block(18, 5, 12, 1, '#7c859e')
-  // Earcups
-  sym(6, 16, 5, 10, ink)
-  sym(8, 10, 3, 6, ink)
-  sym(9, 10, 1, 6, '#6e768f')
-  sym(7, 17, 3, 8, '#3b4254')
-  sym(8, 18, 2, 6, '#8d99bc')
-  sym(8, 19, 1, 4, cyanLight)
- } else if (a.accessory === 'crown') {
-  // Ornate 5-point royal gold crown with inset ruby & sapphire gems
-  block(13, 1, 22, 7, ink)
-  block(14, 5, 20, 2, goldShade)
-  block(14, 4, 20, 2, gold)
-  // Five spires
-  block(14, 2, 3, 3, gold)
-  block(18, 3, 3, 2, gold)
-  block(22, 1, 4, 4, gold)
-  block(27, 3, 3, 2, gold)
-  block(31, 2, 3, 3, gold)
-  // Specular gold tips
-  block(15, 2, 1, 1, goldLight)
-  block(23, 1, 2, 1, goldLight)
-  block(32, 2, 1, 1, goldLight)
-  // Crown jewels (sapphire, central ruby, sapphire)
-  block(17, 5, 2, 1, '#4ca8e8')
-  block(23, 4, 2, 2, '#e0485c')
-  block(29, 5, 2, 1, '#4ca8e8')
+ // Each hairstyle has its own stepped perimeter, part and nape in all views.
+ const hx=side?13:13,hw=side?19:22
+ if(a.hairStyle==='curly'){
+  const curls=side?[[15,7],[23,8],[11,12],[27,13],[12,20],[13,26]]: [[17,7],[24,7],[12,11],[29,11],[11,18],[30,18],[13,25],[28,25]]
+  r(15,10,18,9,hairDark)
+  for(const [x,y] of curls){r(x,y,7,7,ink);r(x+1,y+1,5,5,hair);r(x+2,y+1,3,1,hairLight);r(x+4,y+4,2,2,hairDark)}
+  if(rear){r(15,17,18,13,hair);r(16,18,4,3,hairLight);r(21,24,3,4,hairDark);r(29,21,3,6,hairDark)}
+ }else{
+  const swept=a.hairStyle==='swept',long=a.hairStyle==='long'
+  r(hx+3,8,hw-6,3,ink);r(hx+1,10,hw-2,5,ink);r(hx,13,hw,5,ink)
+  r(hx+3,9,hw-6,3,hair);r(hx+1,11,hw-2,6,hair);r(left?hx+hw-9:hx+3,11,6,2,hairLight)
+  if(rear){
+   r(14,16,20,long?24:13,ink);r(15,16,18,long?23:12,hair);r(16,18,3,long?18:7,hairLight);r(29,18,3,long?20:9,hairDark)
+   r(21,21,2,long?18:7,hairDark);r(17,long?38:28,4,2,hairDark)
+   if(swept){r(10,13,6,6,ink);r(11,14,5,4,hair);r(12,14,2,1,hairLight);r(26,18,5,2,hairDark)}
+  }else if(side){
+   r(13,16,8,long?24:13,ink);r(14,16,6,long?23:12,hairDark);r(left?18:15,17,2,long?21:8,hair)
+   if(swept){r(26,12,8,6,ink);r(26,13,7,4,hair);r(29,17,4,3,hair);r(27,13,3,1,hairLight)}
+   else if(long){r(26,14,6,3,hair);r(29,17,3,3,hairDark)}
+   else {r(27,14,5,4,hair);r(29,18,2,2,hairDark);r(18,7,4,3,hair)}
+  }else{
+   r(13,16,3,long?20:7,ink);r(14,16,2,long?19:6,hair);r(32,16,3,long?20:7,ink);r(32,16,2,long?19:6,hairDark)
+   if(swept){r(11,14,15,4,hair);r(12,18,10,2,hair);r(14,20,4,1,hairDark);r(24,14,7,3,hairDark);r(12,13,9,1,hairLight)}
+   else if(long){r(15,15,7,3,hair);r(16,18,3,2,hair);r(26,15,7,3,hair);r(30,18,3,2,hairDark);r(23,12,2,4,hairDark)}
+   else {r(15,16,5,3,hair);r(22,16,4,4,hair);r(28,16,5,3,hairDark);r(18,7,5,3,hair);r(29,9,4,3,hair)}
+  }
  }
+ // Ear sits in front of the profile hair. Headgear follows this same skull envelope.
+ if(side){r(20,22,4,6,ink);r(21,23,3,4,skinShade);r(21,23,2,2,skin)}
+ if(a.accessory==='glasses'){
+  if(rear){r(13,22,2,1,ink);r(33,22,2,1,ink)}
+  else if(side){r(26,22,8,1,ink);r(26,26,8,1,ink);r(26,22,1,5,ink);r(33,22,1,5,ink);r(22,23,4,1,ink);r(27,23,2,1,'#b8d9dd')}
+  else {for(const x of [16,26]){r(x,22,7,1,ink);r(x,26,7,1,ink);r(x,22,1,5,ink);r(x+6,22,1,5,ink);r(x+1,23,1,1,'#b8d9dd')}r(23,23,3,1,gold);r(14,23,2,1,ink);r(33,23,2,1,ink)}
+ }else if(a.accessory==='headphones'){
+  if(side){r(20,7,4,15,ink);r(21,8,2,12,metal);r(18,21,8,9,ink);r(19,22,6,7,'#445462');r(20,23,3,5,metal);r(20,24,1,2,cyan)}
+  else {r(15,7,18,3,ink);r(16,8,16,1,metal);for(const x of [11,34]){r(x,14,3,9,ink);r(x,21,4,8,ink);r(x+1,22,2,6,metal);r(x+1,23,1,3,cyan)}}
+ }else if(a.accessory==='crown'){
+  const x=side?15:15,w=side?17:18
+  r(x-1,5,w+2,6,ink);r(x,7,w,3,gold);r(x,9,w,1,'#8c713f')
+  for(const px of [x,x+7,x+w-3]){r(px,3,3,5,ink);r(px+1,4,1,4,goldLight)}
+  r(x+1,7,w-2,1,goldLight);if(!rear)r(x+(side?13:8),8,2,1,'#984a50')
+ }
+ if(resting){
+  // Supine on the existing north/south bed: retain the costume, close the eyes,
+  // relax the elbows and bring the legs together beneath the foreground quilt.
+  for(const x of [18,25]){r(x,50,6,12,ink);r(x+1,50,4,10,pants);r(x+1,51,1,8,pantsLight);r(x,60,6,3,a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:metal)}
+ }
+ return pixels
+}
 
+export function characterPixels(a:Appearance,direction:Direction='down',frame=0):Pixel[]{return resident(a,direction,frame,'stand')}
+export function seatedCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{return resident(a,direction,0,'sit')}
+export function restingCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{return resident(a,direction,0,'rest',true)}
+/** Four-second breathing phrase; one brief blink per phrase. Feet and head stay fixed. */
+export function idleCharacterPixels(a:Appearance,direction:Direction='down',tick=1,pose:Pose='stand'):Pixel[]{
+ const step=Math.max(0,Math.floor(tick))%16
+ return resident(a,direction,0,pose,step===0,step>=3&&step<=7&&pose!=='rest')
+}
+/** Compatibility overlay, used by room-life consumers; rendered after the open eye. */
+export function characterEyeBlinkPixels(a:Appearance,direction:Direction,tick:number):Pixel[]{
+ if(direction==='up'||Math.max(0,Math.floor(tick))%16!==0)return []
+ const eyes=direction==='down'?[18,28]:[direction==='left'?16:29]
+ const p:Pixel[]=[]
+ for(const x of eyes){p.push({x,y:23,w:3,h:3,color:a.skin},{x,y:24,w:3,h:1,color:'#202029'})}
+ // Keep eyewear reflection and bridge intact.
+ if(a.accessory==='glasses')for(const x of direction==='down'?[17,27]:[direction==='left'?19:27])p.push({x,y:23,w:1,h:1,color:'#b8d9dd'})
  return p
-}
-
-/** Original rear/profile layers use the same palette, equipment and 48×64 body grid. */
-export function characterPixels(a:Appearance,direction:Direction='down',frame=0):Pixel[]{
- let pixels=frontCharacterPixels(a)
- const p:Pixel[]=[],ink='#181520',hair=a.hair,hairShade=mix(hair,ink,.32),hairLight=mix(hair,'#f5dec2',.28),cloth=outfits[a.outfit],shade=mix(cloth,ink,.32),light=mix(cloth,'#e8e4f2',.25),skin=a.skin,skinShade=mix(skin,'#613931',.28)
- const r=(x:number,y:number,w:number,h:number,color:string)=>p.push({x,y,w,h,color})
- if(direction==='up'){
-  // Retain matching boots, sleeves, hands and shoulder equipment; replace the front panels.
-  pixels=pixels.filter(b=>b.y>=34)
-  r(12,36,24,15,ink);r(13,37,22,13,shade);r(15,37,18,11,cloth);r(16,38,2,9,light);r(13,49,22,2,mix(cloth,ink,.5))
-  if(a.outfit==='medieval'){r(6,35,36,20,ink);r(7,36,34,18,'#344238');r(9,37,4,16,'#495c4e');r(32,37,4,16,'#29352d');r(20,39,2,14,'#627866')}
-  if(a.outfit==='tech'){r(15,37,18,11,'#273545');r(18,38,12,9,ink);r(19,39,10,7,'#384759');r(21,41,6,1,'#5ce6dc');r(14,48,20,2,'#1a222c')}
-  r(19,31,10,5,ink);r(20,32,8,3,skinShade)
-  const top=a.hairStyle==='curly'?3:5,bottom=a.hairStyle==='long'?45:a.hairStyle==='curly'?34:31
-  r(13,top,22,bottom-top,ink);r(10,top+3,28,bottom-top-5,ink);r(9,top+7,30,bottom-top-12,ink)
-  r(13,top+1,22,bottom-top-2,hairShade);r(11,top+4,26,bottom-top-7,hair);r(15,top+3,7,3,hairLight);r(27,top+5,6,2,hairLight)
-  for(const x of [12,19,29,34])r(x,top+12,2,bottom-top-14,hairShade)
-  if(a.hairStyle==='short'){r(18,3,6,3,ink);r(19,4,4,2,hair);r(31,7,6,4,hair)}
-  if(a.hairStyle==='swept'){r(6,13,8,4,ink);r(7,13,7,3,hairLight);r(12,11,12,2,hairLight)}
-  if(a.hairStyle==='curly')for(const [x,y] of [[8,11],[34,12],[12,27],[29,28]]){r(x,y,6,6,ink);r(x+1,y+1,4,4,hairShade);r(x+1,y+1,2,1,hairLight)}
-  if(a.accessory==='glasses'){r(9,20,3,2,ink);r(36,20,3,2,ink)}
-  if(a.accessory==='headphones'){r(12,4,24,3,ink);r(14,5,20,1,'#7c859e');for(const x of [6,37]){r(x,16,5,10,ink);r(x+1,17,3,8,'#8d99bc');r(x+2,19,1,4,'#b8faf5')}}
-  if(a.accessory==='crown'){r(13,1,22,7,ink);r(14,4,20,3,'#e5c168');for(const x of [14,18,22,27,31])r(x,x===22?1:2,x===22?4:3,3,'#e5c168');r(15,6,18,1,'#9e7836')}
-  pixels.push(...p)
- }else if(direction==='left'||direction==='right'){
-  // Draw a real profile (nose, single eye, ear and back hair), rather than flipping a front face.
-  const long=a.hairStyle==='long',curly=a.hairStyle==='curly'
-  if(a.outfit==='medieval'){r(11,35,24,20,ink);r(12,36,22,18,'#344238');r(13,38,4,15,'#627866')}
-  r(16,49,9,13,ink);r(23,49,9,13,ink);r(17,50,7,9,'#31374d');r(24,50,7,9,'#404863')
-  const boot=a.outfit==='everyday'?'#ded7c8':a.outfit==='medieval'?'#63422d':'#2f3d4c'
-  r(15,58,11,5,ink);r(23,58,12,5,ink);r(16,59,9,3,boot);r(24,59,10,3,boot)
-  if(a.outfit==='tech'){r(17,60,6,1,'#5ce6dc');r(26,60,6,1,'#5ce6dc')}
-  if(a.outfit==='medieval'){r(18,57,3,2,'#e5c168');r(27,57,3,2,'#e5c168')}
-  r(19,31,9,7,ink);r(20,32,7,4,skinShade);r(14,36,19,15,ink);r(15,37,17,13,shade);r(19,37,11,12,cloth);r(29,38,2,11,light)
-  r(17,38,8,13,ink);r(18,39,6,9,cloth);r(19,40,2,7,light);r(18,48,6,5,ink);r(19,48,4,4,skin);r(20,48,2,1,mix(skin,'#fff4df',.26))
-  if(a.outfit==='everyday'){r(29,38,2,10,'#f2ead8');r(16,49,16,2,shade);r(19,46,5,2,'#f2ead8')}
-  if(a.outfit==='medieval'){r(16,35,11,6,ink);r(17,36,9,4,'#e5c168');r(18,36,5,1,'#fff0b8');r(18,44,6,4,'#6e4930');r(26,47,6,3,'#6e4930')}
-  if(a.outfit==='tech'){r(16,35,11,6,ink);r(17,36,9,3,'#7b91a8');r(18,37,6,1,'#c7d8e8');r(19,44,5,1,'#5ce6dc');r(29,40,2,5,'#5ce6dc')}
-  r(14,8,18,26,ink);r(12,12,22,18,ink);r(16,10,14,22,skinShade);r(20,12,12,18,skin);r(30,21,6,5,ink);r(30,21,5,4,skin);r(30,26,3,4,skinShade)
-  r(28,19,4,1,hairShade);r(29,21,3,4,ink);r(29,21,2,3,eyeColors[a.eyes]);r(29,21,1,1,'#f2ead8');r(29,29,3,1,ink)
-  r(12,curly?3:5,19,8,ink);r(10,9,24,9,ink);r(11,10,22,7,hair);r(13,curly?4:6,17,6,hair);r(12,14,9,long?30:17,ink);r(13,14,7,long?29:16,hairShade);r(14,15,3,long?26:13,hair);r(15,8,12,2,hairLight)
-  if(a.hairStyle==='swept'){r(28,11,7,6,ink);r(28,12,6,4,hair);r(30,16,3,3,hair)}
-  if(curly)for(const [x,y] of [[10,6],[26,5],[9,16],[11,26]]){r(x,y,7,7,ink);r(x+1,y+1,5,5,hair);r(x+2,y+1,2,1,hairLight)}
-  r(18,20,5,7,ink);r(19,21,3,5,skinShade);r(20,21,2,3,skin)
-  if(a.accessory==='glasses'){r(26,19,8,1,ink);r(26,25,8,1,ink);r(26,20,1,5,ink);r(33,20,1,5,ink);r(20,20,6,1,ink);r(28,20,2,1,'#d8f6ff')}
-  if(a.accessory==='headphones'){r(18,4,5,17,ink);r(19,5,2,12,'#7c859e');r(17,17,8,11,ink);r(18,18,6,9,'#3b4254');r(19,19,4,7,'#8d99bc');r(20,20,2,4,'#b8faf5')}
-  if(a.accessory==='crown'){r(12,1,21,7,ink);r(13,4,19,3,'#e5c168');for(const x of [13,20,28])r(x,2,3,3,'#e5c168');r(29,5,2,1,'#e0485c')}
-  pixels=direction==='left'?p.map(b=>({...b,x:CHARACTER_WIDTH-b.x-b.w})):p
- }
- if(!frame)return pixels
- // Opposing foot/arm phases stay on the same body grid and never change identity.
- return pixels.map(b=>{const leg=b.y>=54,arm=b.y>=39&&b.y<53&&(b.x<13||b.x>34);const dy=leg?(b.x<24?1:-1)*(frame===1?1:-1):arm?(b.x<24?-1:1)*(frame===1?1:-1):0;return {...b,y:Math.max(0,Math.min(CHARACTER_HEIGHT-b.h,b.y+dy))}})
-}
-
-/** Bent knees and short, forward feet replace the standing legs; identity stays intact. */
-export function seatedCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{
- const upper=characterPixels(a,direction).filter(p=>p.y<49).map(p=>({...p,h:Math.min(p.h,49-p.y)}))
- const ink='#181520',trousers=a.outfit==='medieval'?'#453b37':a.outfit==='tech'?'#273545':'#31374d'
- const boot=a.outfit==='everyday'?'#ded7c8':a.outfit==='medieval'?'#63422d':'#2f3d4c'
- return [...upper,
-  {x:11,y:47,w:26,h:8,color:ink},{x:13,y:48,w:22,h:5,color:trousers},
-  {x:12,y:52,w:9,h:6,color:ink},{x:27,y:52,w:9,h:6,color:ink},
-  {x:13,y:52,w:7,h:4,color:trousers},{x:28,y:52,w:7,h:4,color:trousers},
-  {x:10,y:56,w:12,h:5,color:ink},{x:26,y:56,w:12,h:5,color:ink},
-  {x:11,y:57,w:10,h:3,color:boot},{x:27,y:57,w:10,h:3,color:boot}]
 }

@@ -26,7 +26,7 @@ test('seated artwork bends the legs and reuses clothing, hair and accessory colo
  for(const direction of ['up','down'])for(const outfit of ['everyday','medieval','tech']){
   const appearance={...defaults,outfit,accessory:'headphones'},standing=characterPixels(appearance,direction),seated=seatedCharacterPixels(appearance,direction)
   assert.notDeepEqual(seated,standing)
-  assert.deepEqual(seated.filter(p=>p.y<47),standing.filter(p=>p.y<47).map(p=>({...p,h:Math.min(p.h,49-p.y)})))
+  assert.deepEqual(seated.filter(p=>p.y<29),standing.filter(p=>p.y<29),'head identity and fitted accessories survive bending at the hips and elbows')
   for(const p of seated)assert.ok(p.x>=0&&p.y>=0&&p.w>0&&p.h>0&&p.x+p.w<=48&&p.y+p.h<=64)
  }
 })

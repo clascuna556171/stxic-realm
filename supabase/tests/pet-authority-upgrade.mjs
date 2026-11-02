@@ -18,8 +18,17 @@ export async function verifyPetAuthorityUpgrade(root, setup, migrations) {
       update public.profiles set display_name='stxic' where id='62000000-0000-4000-8000-000000000002';`)
     await db.exec(await readFile(resolve(root, 'supabase/migrations', migrations[original]), 'utf8'))
     assert.equal((await db.query("select count(*)::int n from public.user_pets where species_id='triarch'")).rows[0].n, 2, 'fixture must reproduce old automatic grants')
-    for (const file of migrations.slice(original + 1)) await db.exec(await readFile(resolve(root, 'supabase/migrations', file), 'utf8'))
+    for (const file of migrations.slice(original + 1)) {
+      if(file==='20261102030000_creator_exclusives_and_badge_sync.sql') {
+        await db.exec(`insert into auth.users(id,email,email_confirmed_at) values
+          ('63000000-0000-4000-8000-000000000003','founder@stxic.realm',now()),
+          ('64000000-0000-4000-8000-000000000004','attacker-clascuna@untrusted.com',now());`)
+      }
+      await db.exec(await readFile(resolve(root,'supabase/migrations',file),'utf8'))
+    }
     assert.equal((await db.query("select count(*)::int n from realm_private.founder_accounts where verified_at is not null")).rows[0].n, 0)
+    assert.equal((await db.query("select count(*)::int n from realm_private.accounts where user_id in ('63000000-0000-4000-8000-000000000003','64000000-0000-4000-8000-000000000004') and state<>'invited'")).rows[0].n,0,'email grants cannot activate an account')
+    assert.equal((await db.query("select count(*)::int n from realm_private.platform_admins where user_id in ('63000000-0000-4000-8000-000000000003','64000000-0000-4000-8000-000000000004')")).rows[0].n,0,'email grants cannot confer platform admin')
     assert.equal((await db.query("select count(*)::int n from public.user_pets where species_id='triarch'")).rows[0].n, 2, 'quarantine preserves audit records')
     assert.equal((await db.query('select count(*)::int n from public.user_pet_equipment where banner_pet_id is not null or cardinality(house_pet_ids)>0')).rows[0].n, 0)
     await db.exec("set role authenticated;select set_config('request.jwt.claim.sub','62000000-0000-4000-8000-000000000002',false)")

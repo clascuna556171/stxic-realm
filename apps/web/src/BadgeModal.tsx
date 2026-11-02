@@ -16,6 +16,10 @@ interface Props {
   userBadgeState: UserBadgeState
   userId: string
   isOwnProfile?: boolean
+  isFounder?: boolean
+  isTeam?: boolean
+  saving?: boolean
+  error?: string
   onBadgeStateChange?: (newState: UserBadgeState) => void
 }
 
@@ -27,6 +31,10 @@ export function BadgeModal({
   userBadgeState,
   userId,
   isOwnProfile = false,
+  isFounder = false,
+  isTeam = false,
+  saving = false,
+  error = '',
   onBadgeStateChange,
 }: Props) {
   const [filter, setFilter] = useState<CategoryFilter>('all')
@@ -60,7 +68,7 @@ export function BadgeModal({
 
   function handleTogglePin(badgeId: string) {
     if (!isOwnProfile) return
-    const updated = toggleBadgePin(userId, badgeId)
+    const updated = toggleBadgePin(userId, badgeId, isFounder, isTeam, userBadgeState)
     onBadgeStateChange?.(updated)
   }
 
@@ -233,6 +241,7 @@ export function BadgeModal({
             </div>
 
             <div className="badge-detail-body">
+              {error && <p className="error" role="alert">{error} Your pins have not changed. Try pinning again.</p>}
               <p className="badge-detail-desc">{selectedBadge.description}</p>
               {selectedBadge.loreSnippet && (
                 <blockquote className="badge-detail-lore">
@@ -277,9 +286,10 @@ export function BadgeModal({
                   <button
                     type="button"
                     className={`badge-pin-toggle-btn ${isSelectedFeatured ? 'is-pinned' : ''}`}
+                    disabled={saving}
                     onClick={() => handleTogglePin(selectedBadge.id)}
                   >
-                    {isSelectedFeatured ? 'Unpin from Profile Card' : 'Pin to Profile Card (Max 5)'}
+                    {saving ? 'Saving pins…' : isSelectedFeatured ? 'Unpin from Profile Card' : 'Pin to Profile Card (Max 5)'}
                   </button>
                   <small className="badge-pin-help">
                     Pinned Hallmarks appear prominently on your 3D profile card.

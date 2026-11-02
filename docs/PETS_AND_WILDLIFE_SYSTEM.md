@@ -31,7 +31,7 @@ Pets in STXIC Realm are living inhabitants of a resident's personal Realm rather
 
 ### Pixel-Art Sprite Sheets & Animations
 
-Each species is authored in [`pet-sprites.ts`](../apps/web/src/pets/pet-sprites.ts) and exported to static SVG sprite sheets in `apps/web/public/pets/<species>-sheet.svg` via [`generate-pet-sprites.mjs`](../apps/web/scripts/generate-pet-sprites.mjs).
+Species artwork is authored in `village-cat-art.ts`, `triarch-art.ts` and `companion-art.ts`, exposed through [`pet-sprites.ts`](../apps/web/src/pets/pet-sprites.ts) and exported to static SVG sprite sheets in `apps/web/public/pets/<species>-sheet.svg` via [`generate-pet-sprites.mjs`](../apps/web/scripts/generate-pet-sprites.mjs).
 
 Every species supports 5 animation states (`idle`, `walk`, `sit`, `sleep`, `happy`) with 4 frames per state:
 - Standard companions (`cat`, `slime`, `pup`, `fox`, `wisp`, `bat`, `owl`) render on a `32×32` pixel grid.
@@ -144,6 +144,16 @@ Regression checks: `pnpm test`, `pnpm test:database` (including `pet_authority.s
 
 ## 8. Pets at home — art and behavior pass
 
-The Village Cat now has four authored directions and a curled sleeping pose; `cat-turns.svg` exports all views. A mood-matched woven mat and ceramic water dish sit on valid floor beside the sofa and follow layout edits. All house companions use native pixel scale, contextual labels, grounded shadows and personality-specific destinations with cardinal path routing. Shy pets react to nearby visitors as well as the owner. The other seven species retain their original authored artwork with horizontal facing support; they have not all been redrawn into four views.
+The Village Cat now has four authored directions and a curled sleeping pose; `cat-turns.svg` exports all views. A mood-matched woven mat and ceramic water dish sit on valid floor beside the sofa and follow layout edits. All house companions use native pixel scale, contextual labels, grounded shadows and personality-specific destinations with cardinal path routing. Shy pets react to nearby visitors as well as the owner. All eight species now have authored four-direction artwork and expressive rest poses. Floating/flying presentation changes lift, wing poses and shadows while retaining furniture-safe cardinal routes.
 
 See [visual target, scope, source provenance and asset layout](PET_HOME_ART_DIRECTION.md). Run `pnpm test:pets:art:ui` for the real Phaser art/resting/reduced-motion checks and desktop/phone captures. This pass adds no catalog IDs, saved geometry or database migration.
+
+## 9. Creator badges, equipment lifecycle and continued art — 2 November 2026
+
+Local migrations `20261102030000`, `20261102040000` and `20261102040001` preserve the explicit trusted-UUID boundary. They never verify founders, activate accounts or grant platform administration by matching emails. The Creator frame rejects unauthorized saves with `42501`; preexisting non-founder frames are cleared with a content-revision increment. Unverified Triarch records remain quarantined for audit by the earlier hardening migration; they are not deleted. Existing trusted verification is retained. Do not guess the creator UUID. Hosted status of edits made by other sessions has not been verified here; if an older email-based draft was applied externally, an operator must audit those grants against independent ownership evidence before rollout.
+
+`realm_private.badge_grants` stores explicit operator awards. `get_user_badges` derives public honors from these grants, verified founder authority (32) and platform-admin membership (eight curated team badges). Space-local roles and browser milestone storage do not establish public badge authority. Client milestone hints remain local until a trusted server rule or operator award exists. `save_user_badges` accepts up to five distinct, known, unlocked pins; it rejects malformed structures, unknown IDs, forged unlocks and locked pins. Client timestamps/grant labels are never persisted. An empty pin list is authoritative. Pin saves leave profile-content revisions unchanged, and full profile saves preserve pins, so unrelated drafts stay valid while genuine content conflicts still fail.
+
+The client replaces local badge hints with the complete server snapshot, including empty unlocks/pins, and surfaces failed pin saves inside the modal. Visitor profiles show only projected equipment. An explicit banner `null` clears immediately; missing-field compatibility reads are discarded after newer snapshots or unmount. Initial collection reads cannot override a newer profile projection. Collection state, nickname/equipment responses and bonding responses are guarded by lifecycle checks.
+
+See [art direction and species details](PET_HOME_ART_DIRECTION.md) and the local verification report for native-scale Phaser, collection, bonding, banner, profile, furniture-pose and shared-home coverage. These checks use local fixtures/PGlite and do not establish hosted deployment, real multi-user networking or independent QA approval.

@@ -1,0 +1,5 @@
+.appearance-preview .appearance-pose-control { margin-bottom:20px; max-width:none; }
+.appearance-page .character-facing button[aria-pressed=true] { border-color:var(--realm-accent); color:var(--realm-text); }
+@media(max-width:650px) {
+ .appearance-preview .appearance-pose-control { grid-column:2; margin-bottom:0; }
+}

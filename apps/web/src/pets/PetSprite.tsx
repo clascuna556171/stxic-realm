@@ -52,6 +52,7 @@ export function PetSprite({
       className={`pet-pixel-sprite ${silhouette ? 'is-silhouette' : ''} ${className}`.trim()}
       width={width * scale}
       height={height * scale}
+      style={{ width: width * scale, height: height * scale }}
       viewBox={`0 0 ${width} ${height}`}
       shapeRendering="crispEdges"
       role={label ? 'img' : 'presentation'}

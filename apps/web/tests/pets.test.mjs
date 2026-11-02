@@ -1,3 +1,4 @@
+import { petLocomotion } from '../src/pets/companion-art.ts'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
@@ -313,4 +314,29 @@ test('banner routes keep the entire pet inside its measured lane, clear of avata
       }
     }
   }
+})
+
+
+test('all six new companions keep directional frames bounded and have genuine resting silhouettes', () => {
+ for(const id of ['slime','pup','fox','wisp','bat','owl']) {
+  for(const direction of ['up','down','left','right']) for(const state of ['idle','walk','sit','sleep','happy']) for(let frame=0;frame<4;frame++) {
+   for(const pixel of getPetPixels(id,state,frame,direction)) {
+    const {x,y,w,h}=pixel
+    assert.ok([x,y,w,h].every(Number.isInteger) && x>=0 && y>=0 && w>0 && h>0 && x+w<=32 && y+h<=32,`${id} ${direction} ${state} ${frame}: ${JSON.stringify(pixel)}`)
+   }
+  }
+  assert.notDeepEqual(getPetPixels(id,'idle',0,'up'),getPetPixels(id,'idle',0,'down'),id+' rear differs from face')
+  assert.notDeepEqual(getPetPixels(id,'idle',0,'right'),getPetPixels(id,'idle',0,'down'),id+' profile differs from face')
+  assert.notDeepEqual(getPetPixels(id,'sleep',0),getPetPixels(id,'idle',0),id+' sleep changes pose')
+ }
+})
+
+test('flight presentation keeps shadows on the floor and grounded rest for winged species', () => {
+ for(const id of ['bat','owl']) {
+  assert.equal(petLocomotion(id,'walk').airborne,true)
+  assert.equal(petLocomotion(id,'sleep').lift,0)
+ }
+ assert.equal(petLocomotion('wisp','sleep').airborne,true)
+ assert.ok(petLocomotion('wisp','sleep').lift < petLocomotion('wisp','walk').lift)
+ assert.equal(petLocomotion('triarch','walk').airborne,false)
 })

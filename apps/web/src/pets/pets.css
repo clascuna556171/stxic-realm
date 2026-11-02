@@ -515,3 +515,91 @@
   .wildlife-journal-summary { align-items: flex-start; flex-direction: column; gap: .75rem; }
   .pet-panel-header > div { min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* Public Profile Companions Row */
+.account-profile-companions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.6rem;
+  background: color-mix(in srgb, var(--realm-surface) 60%, transparent);
+  border: 1px solid var(--realm-line);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+.profile-companions-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--realm-muted);
+}
+.profile-companions-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.profile-companion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--realm-raised);
+  border: 1px solid var(--realm-line);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--realm-text);
+}
+
+/* Collection controls share the app's quiet surfaces; the pixel art leads. */
+.pet-collection-panel { min-width: 0; }
+.pet-equipment-summary, .pet-empty-copy, .pet-journal-context {
+  margin: 0;
+  color: var(--realm-muted);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+.pet-visitor-notice { margin: 0; line-height: 1.6; }
+.pet-visitor-notice a { display: inline-flex; align-items: center; min-height: 44px; }
+.pet-collection-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 245px), 1fr)); }
+.pet-card { min-width: 0; gap: .75rem; }
+.pet-card.is-locked { opacity: 1; }
+.pet-card.is-locked .pet-pixel-sprite { opacity: .5; }
+.pet-card-stage { width: 96px; height: 76px; border: 0; background: transparent; }
+.pet-card-meta strong { white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.pet-card-meta small { font-size: .8125rem; line-height: 1.5; text-align: left; }
+.pet-rarity-badge { font-size: .6875rem; text-transform: none; letter-spacing: 0; }
+.pet-subnav { flex-wrap: wrap; }
+.pet-subnav button[aria-pressed="true"] { background: var(--realm-raised); color: var(--realm-text); border-color: var(--realm-accent); }
+.pet-collection-panel button.pet-card-select,
+.account-profile-page .pet-collection-panel button.pet-card-select {
+  display: flex;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--realm-text);
+  text-align: left;
+  font: inherit;
+}
+.pet-card-select:hover .pet-card-meta strong { text-decoration: underline; text-underline-offset: 4px; }
+.pet-details-preview { border: 0; padding: 0; }
+.pet-details-body { min-width: 0; }
+.pet-details-body h4 { overflow-wrap: anywhere; line-height: 1.4; }
+.pet-details-body p { font-size: .875rem; line-height: 1.6; }
+.pet-anim-states button { font-size: .8125rem; }
+.pet-collection-panel input { width: 100%; min-width: 0; }
+.pet-collection-panel label { min-width: 0; }
+.pet-starter-choice small { font-size: .8125rem; line-height: 1.5; }
+.wildlife-journal-summary { flex-wrap: wrap; gap: .75rem; line-height: 1.5; }
+.wildlife-encounter-modal h3 { line-height: 1.4; overflow-wrap: anywhere; }
+.account-profile-companions { display: block; padding: .75rem 0; border: 0; background: transparent; }
+.profile-companions-label { display: block; margin-bottom: .5rem; font-size: .875rem; text-transform: none; letter-spacing: 0; }
+.profile-companions-chips { display: grid; gap: .5rem; }
+.profile-companion-chip { border: 0; padding: .25rem 0; background: transparent; min-width: 0; gap: .75rem; }
+.profile-companion-chip > span { display: flex; flex-direction: column; gap: .25rem; min-width: 0; overflow-wrap: anywhere; }
+.profile-companion-chip strong { font-size: .875rem; }
+.profile-companion-chip small { color: var(--realm-muted); line-height: 1.4; }

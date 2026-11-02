@@ -1,6 +1,6 @@
 import type { Appearance } from '../appearance.ts'
 import type { Pixel } from '../character.ts'
-import { CHARACTER_WIDTH } from '../character.ts'
+import { characterEyeBlinkPixels } from '../character.ts'
 import { worldPalettes } from './palette.ts'
 import type { Direction, RoomObject } from './room.ts'
 
@@ -328,22 +328,5 @@ export function lightPulse(index: number, timeSeconds: number): { scale: number;
  * overlay graphics layer so the base character commandBuffer remains untouched.
  */
 export function characterBlinkPixels(a: Appearance, direction: Direction, tick: number): Pixel[] {
- if (direction === 'up') return []
- const step = Math.max(0, Math.floor(tick))
- if (step % 11 !== 0) return []
- const ink = '#181520'
- const skin = a.skin
- if (direction === 'down') {
-  return [
-   { x: 15, y: 21, w: 4, h: 2, color: skin },
-   { x: 29, y: 21, w: 4, h: 2, color: skin },
-   { x: 15, y: 23, w: 4, h: 1, color: ink },
-   { x: 29, y: 23, w: 4, h: 1, color: ink },
-  ]
- }
- const ex = direction === 'left' ? CHARACTER_WIDTH - 29 - 3 : 29
- return [
-  { x: ex, y: 21, w: 3, h: 3, color: skin },
-  { x: ex, y: 24, w: 3, h: 1, color: ink },
- ]
+ return Math.max(0,Math.floor(tick))%11===0?characterEyeBlinkPixels(a,direction,0):[]
 }

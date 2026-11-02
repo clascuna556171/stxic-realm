@@ -1,5 +1,13 @@
 # Design and experience
 
+## World resident artwork — 2 November 2026
+
+The shared 48×64 character family now uses smaller stepped heads, visible necks, tapered shoulders, connected sleeves/hands and separated legs with grounded shoes. Short, long, curly and swept hair retain distinct silhouettes through four views. Everyday jacket/denim, medieval cloak/leather/brass and paneled tech clothing share anatomy while retaining their construction and selected colors. Complete limb groups drive opposing walk phases; idle breathing/blinking, bent-knee seating and closed-eye bed rest preserve identity and existing furniture anchors/occlusion. Character Studio adds facing and pose inspection only. Source, provenance, coverage and local verification limits: [world character artwork](CHARACTER_ART.md).
+
+## Companions and home materials — 2 November 2026
+
+All eight companions use original directional pixel art at native world scale and intentional integer UI scales. The collection keeps inspection, equipment and saved-home habitat clues readable with keyboard/touch controls and explicit loading, empty and retry states. Public profiles show the server-projected companion name, species, title and personality. Cozy oak/sage, medieval limestone/wine and tech slate/cyan remain distinct; linen, physical controls and restrained source lighting refine the existing furniture without changing saved geometry. See [pet/home art direction](PET_HOME_ART_DIRECTION.md) for behavior, authority and verification boundaries.
+
 ## Viewport workspaces — 30 October 2026
 
 Chat/DMs and the main Home/Halls views stay within the browser viewport. The workspace rail, channel heading/account controls, chat header and composer stay in place; messages and long lists scroll inside their own panels. Worlds fit their original proportions within the available stage. Home social features and shared-hall boards/settings sit beside the scene, with Scene/Details buttons on narrower windows and retained drafts. Short windows use compact navigation and scrollable detail fallbacks. Full editors and long profile/settings forms keep normal document scrolling. See [workspace layout](WORKSPACE_LAYOUT.md) for boundaries and verification.

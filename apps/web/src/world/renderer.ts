@@ -1,12 +1,13 @@
+import { petLocomotion } from '../pets/companion-art.ts'
 import Phaser from 'phaser'
 import { readAppearance, type Appearance } from '../appearance'
 import type { Visitor } from '../account-repository'
-import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, type Pixel } from '../character'
+import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, restingCharacterPixels, idleCharacterPixels, type Pixel } from '../character'
 import { ROOM, type Direction, type Point, type RoomObject, type RoomAction } from './room'
 import { facingFrom, samePoint } from './navigation'
 import { furniturePixels, roomPixels, furnitureActionForeground } from './art'
 import { roomLighting } from './lighting'
-import { roomAmbientPixels, characterBlinkPixels } from './room-life'
+import { roomAmbientPixels } from './room-life'
 import { furniturePose } from './furniture-pose'
 import { activityOverlay } from './activity-overlay'
 import type { WorldSnapshot, FocusState } from './activity-state'
@@ -313,16 +314,17 @@ export function createRoom(
     until: number
     sequence: number
     seated: boolean
+    resting: boolean
     blinking: boolean
    }
    const baseY = -CHARACTER_HEIGHT * 0.66
-   const paint = (actor: Actor, frame = 0) => {
+   const paint = (actor: Actor, frame = 0, idleTick?: number) => {
     actor.art.clear()
     actor.blink.clear()
     actor.blinking = false
     actor.art.setY(baseY)
     actor.blink.setY(baseY)
-    draw(actor.art, actor.seated ? seatedCharacterPixels(actor.appearance, actor.direction) : characterPixels(actor.appearance, actor.direction, frame))
+    draw(actor.art, actor.resting ? restingCharacterPixels(actor.appearance, actor.direction) : idleTick !== undefined ? idleCharacterPixels(actor.appearance, actor.direction, idleTick, actor.seated ? 'sit' : 'stand') : actor.seated ? seatedCharacterPixels(actor.appearance, actor.direction) : characterPixels(actor.appearance, actor.direction, frame))
    }
    const makeActor = (p: Point, value: Appearance): Actor => {
     const art = this.add.graphics().setScale(0.66).setPosition(-CHARACTER_WIDTH * 0.33, baseY)
@@ -340,6 +342,7 @@ export function createRoom(
      until: 0,
      sequence: -1,
      seated: false,
+     resting: false,
      blinking: false,
     }
     paint(actor)
@@ -404,6 +407,7 @@ export function createRoom(
     this.tweens.killTweensOf(avatar.container)
     avatar.until = 0
     avatar.seated = pose?.type === 'sit'
+    avatar.resting = pose?.type === 'rest'
     avatar.shadow.setVisible(!pose)
     avatar.art.setPosition(-CHARACTER_WIDTH * 0.33, baseY).setRotation(0)
     avatar.blink.setPosition(-CHARACTER_WIDTH * 0.33, baseY).setRotation(0)
@@ -449,9 +453,12 @@ export function createRoom(
     node.art.clear()
     const dims = getPetSpriteDimensions(node.summary.species_id)
     const scale = 1
-    node.art.setScale(scale).setPosition((-dims.width * scale) / 2, -dims.height * scale + 2)
+    const locomotion = petLocomotion(node.summary.species_id, node.state.animState)
+    node.art.setScale(scale).setPosition((-dims.width * scale) / 2, -dims.height * scale + 2 - locomotion.lift)
+    node.container.setData('airborne', locomotion.airborne)
+    node.shadow.setAlpha(locomotion.shadowAlpha)
     node.label.setVisible(hoveredPetId === node.summary.id || node.state.animState === 'happy')
-    node.shadow.setDisplaySize(node.state.animState === 'sleep' ? 23 : node.summary.species_id === 'triarch' ? 30 : 19, node.state.animState === 'sleep' ? 4 : 5)
+    node.shadow.setDisplaySize(node.state.animState === 'sleep' ? 23 : locomotion.shadowWidth, node.state.animState === 'sleep' ? 4 : 5)
     node.container.setData('pet-state', node.state)
     const frame = motion.matches ? 0 : frameTick % 4
     draw(node.art, getPetPixels(node.summary.species_id, node.state.animState, frame, node.state.direction))
@@ -651,6 +658,7 @@ export function createRoom(
     loop: true,
     callback: () => {
      const now = this.time.now
+     if (document.hidden) return
      for (const actor of [avatar, ...guests.values()]) {
       if (actor.until > now && !motion.matches) paint(actor, Math.floor(now / 85) % 2 + 1)
      }
@@ -695,16 +703,7 @@ export function createRoom(
       const actors = [avatar, ...guests.values()]
       actors.forEach((actor, idx) => {
        if (actor.until > now) return
-       const blink = characterBlinkPixels(actor.appearance, actor.direction, lifeTick + idx * 3)
-       if (blink.length > 0 || actor.blinking) {
-        actor.blink.clear()
-        if (blink.length > 0) {
-         draw(actor.blink, blink)
-         actor.blinking = true
-        } else {
-         actor.blinking = false
-        }
-       }
+       if (!actor.resting) paint(actor, 0, lifeTick + idx * 3)
       })
      }
     },
@@ -732,7 +731,10 @@ export function createRoom(
    }
    motion.addEventListener('change', reduce)
 
-   this.events.once('shutdown', () => {
+   let cleanedUp = false
+   const cleanup = () => {
+    if (cleanedUp) return
+    cleanedUp = true
     this.game.events.off('room:layout', drawObjects)
     this.game.events.off('room:layout', reconcilePose)
     this.game.events.off('room:move', position)
@@ -747,7 +749,9 @@ export function createRoom(
     motion.removeEventListener('change', reduce)
     animation.remove()
     disposeActivity()
-   })
+   }
+   this.events.once('shutdown', cleanup)
+   this.events.once('destroy', cleanup)
   }
  }
  const game = new Phaser.Game({

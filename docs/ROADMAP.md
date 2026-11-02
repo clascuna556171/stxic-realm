@@ -72,3 +72,7 @@ The **Pets & Realm Wildlife System** is implemented locally across schema, Phase
 ### Pets QA hardening — 2 November 2026
 
 Local corrective migration `20261102020000_pet_authority_hardening.sql` requires explicit operator verification of the actual creator UUID; legacy name/email/admin-derived founder entries are quarantined. Pet RPCs fail closed, shared-home snapshots clear empty pet state, and banner/modal/token regressions are addressed. See [pets rollout and verification](PETS_AND_WILDLIFE_SYSTEM.md#7-qa-hardening--2-november-2026). Hosted rollout and creator-ID verification remain separate operator steps.
+
+### Companion/home design continuation — 2 November 2026
+
+The six remaining species now have original directional art, rest/greeting poses and grounded or airborne locomotion presentation. Triarch has fresh local actual-Phaser checks. Existing home furniture/materials and companion/profile interfaces are refined without new inventory IDs or layout changes. Local creator/badge migrations keep explicit trusted-UUID authority, operator-owned awards and revision-independent pins. See [current art scope](PET_HOME_ART_DIRECTION.md) and [authority/rollout boundaries](PETS_AND_WILDLIFE_SYSTEM.md#9-creator-badges-equipment-lifecycle-and-continued-art--2-november-2026). Hosted release and independent creator-account verification remain separate steps.

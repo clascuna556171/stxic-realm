@@ -54,14 +54,16 @@ try{
  // Exercise actual Phaser graphics, authoritative guest snapshots and retained facing.
  await page.bringToFront()
  await page.evaluate(async()=>{
-  const {createRoom}=await import('/src/world/renderer.ts'),{defaults}=await import('/src/appearance.ts'),{characterPixels}=await import('/src/character.ts')
+  const {createRoom}=await import('/src/world/renderer.ts'),{defaults}=await import('/src/appearance.ts'),{characterPixels,idleCharacterPixels}=await import('/src/character.ts')
   const mount=document.createElement('div');mount.style.cssText='position:fixed;inset:0;width:512px;height:384px';document.body.append(mount)
   const visitors=[{id:'fixture',name:'Visitor',x:8,y:8,sequence:8,character:defaults}]
   const game=createRoom(mount,()=>{},()=>({x:8,y:9}),()=>[],{appearance:defaults,people:()=>visitors})
   const wait=ms=>new Promise(r=>setTimeout(r,ms)),check=(ok,message)=>{if(!ok)throw new Error(message)}
   try{
    await new Promise(r=>game.events.once('postrender',r));const scene=game.scene.getScene('room'),actors=scene.children.list.filter(o=>o.type==='Container'),own=actors.find(o=>!o.list.some(c=>c.type==='Text')),guest=actors.find(o=>o.list.some(c=>c.text==='Visitor'))
-   const matches=(actor,direction)=>{const expected=scene.add.graphics().clear();for(const p of characterPixels(defaults,direction)){expected.fillStyle(parseInt(p.color.slice(1),16));expected.fillRect(p.x,p.y,p.w,p.h)}const actual=actor.list.find(c=>c.type==='Graphics').commandBuffer;check(Array.isArray(actual)&&expected.commandBuffer.length>100,'graphics command buffers exist');const ok=JSON.stringify(actual.slice(-expected.commandBuffer.length))===JSON.stringify(expected.commandBuffer);expected.destroy();return ok}
+   // Settled actors may breathe or blink. Match the exact shared neutral, blink or
+   // inhale buffer for this identity/facing rather than assuming idle is static.
+   const matches=(actor,direction)=>[characterPixels(defaults,direction),idleCharacterPixels(defaults,direction,0),idleCharacterPixels(defaults,direction,3)].some(pixels=>{const expected=scene.add.graphics().clear();for(const p of pixels){expected.fillStyle(parseInt(p.color.slice(1),16));expected.fillRect(p.x,p.y,p.w,p.h)}const actual=actor.list.find(c=>c.type==='Graphics').commandBuffer;check(Array.isArray(actual)&&expected.commandBuffer.length>100,'graphics command buffers exist');const ok=JSON.stringify(actual.slice(-expected.commandBuffer.length))===JSON.stringify(expected.commandBuffer);expected.destroy();return ok})
    for(const [point,direction] of [[{x:8,y:8},'up'],[{x:7,y:8},'left'],[{x:8,y:8},'right'],[{x:8,y:9},'down']]){game.events.emit('room:move',point);await wait(300);check(matches(own,direction),`actual Phaser ${direction} artwork`);game.events.emit('room:move',point);check(matches(own,direction),'idle retains facing')}
    game.events.emit('room:people',[{...visitors[0],x:7,y:8,sequence:9}]);await wait(300);check(matches(guest,'left'),'guest faces accepted displacement')
    game.events.emit('room:people',[{...visitors[0],x:12,y:9,sequence:10}]);check(guest.x===400&&guest.y===315,'skipped snapshot snaps to authoritative tile')

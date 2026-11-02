@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { readAppearance } from '../appearance'
-import {characterPixels,seatedCharacterPixels} from '../character'
+import {characterPixels,seatedCharacterPixels,restingCharacterPixels,idleCharacterPixels} from '../character'
 import {furniturePose,type PoseObject} from './furniture-pose'
 import {furnitureActionForeground} from './art'
 import type { Direction, Point, RoomAction } from './room'
@@ -9,9 +9,9 @@ import {initialFocus,type WorldSnapshot,type FocusState} from './activity-state'
 
 export function HallTraveler({position,direction,moving,action=null,objects=[],activity={messages:[],activity:[]},user='local',focus=initialFocus}:{position:Point;direction:Direction;moving:boolean;action?:RoomAction|null;objects?:PoseObject[];activity?:WorldSnapshot;user?:string;focus?:FocusState}){
  const [frame,setFrame]=useState(0)
- useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');let timer:ReturnType<typeof setInterval>|undefined;const start=()=>{clearInterval(timer);setFrame(0);if(moving&&!media.matches)timer=setInterval(()=>setFrame(f=>f===1?2:1),100)};start();media.addEventListener('change',start);return()=>{clearInterval(timer);media.removeEventListener('change',start)}},[moving])
+ useEffect(()=>{const media=matchMedia('(prefers-reduced-motion: reduce)');let timer:ReturnType<typeof setInterval>|undefined;const start=()=>{clearInterval(timer);setFrame(0);if(!media.matches&&!document.hidden)timer=setInterval(()=>setFrame(f=>f+1),moving?110:250)};start();media.addEventListener('change',start);document.addEventListener('visibilitychange',start);return()=>{clearInterval(timer);media.removeEventListener('change',start);document.removeEventListener('visibilitychange',start)}},[moving])
  const appearance=readAppearance(),pose=furniturePose(position,action,objects),x=pose?.x??position.x*32+16,y=pose?.y??position.y*32+27,facing=pose?.direction??direction
- const pixels=pose?.type==='sit'?seatedCharacterPixels(appearance,facing):characterPixels(appearance,facing,pose?0:frame)
+ const pixels=pose?.type==='sit'?(frame===0?seatedCharacterPixels(appearance,facing):idleCharacterPixels(appearance,facing,frame,'sit')):pose?.type==='rest'?restingCharacterPixels(appearance,facing):moving?characterPixels(appearance,facing,frame===0?0:frame%2+1):frame===0?characterPixels(appearance,facing):idleCharacterPixels(appearance,facing,frame)
  // The same contain/center viewBox as the canvas keeps actors on their tiles in letterboxed stages.
  return <svg className="hall-traveler-surface" viewBox="0 0 768 512" preserveAspectRatio="xMidYMid meet" role="img" aria-label={pose?`Your character: ${action!.label}`:'Your character'}>
   <g className={`hall-traveler is-walking-character${pose?' is-posed':''}`} data-facing={facing} data-pose={pose?.type??'standing'} data-pose-target={pose?.object.id} data-world-x={x} data-world-y={y} style={{transform:`translate(${x}px,${y}px)`,transition:pose||!moving?'none':undefined}}>

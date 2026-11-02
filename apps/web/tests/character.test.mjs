@@ -1,16 +1,39 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { defaults, accessories, hairStyles, outfits, skins, hairs } from '../src/appearance.ts'
-import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels } from '../src/character.ts'
+import { defaults, accessories, hairStyles, outfits, skins, hairs, eyeColors } from '../src/appearance.ts'
+import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, restingCharacterPixels, idleCharacterPixels } from '../src/character.ts'
 
 test('all character combinations have valid, bounded pixel art', () => {
- for (const hairStyle of hairStyles) for (const accessory of accessories) for (const outfit of Object.keys(outfits)) for (const skin of skins) for (const hair of hairs) {
-  const pixels=characterPixels({ ...defaults, hairStyle, accessory, outfit, skin, hair })
+ for (const hairStyle of hairStyles) for (const accessory of accessories) for (const outfit of Object.keys(outfits)) for (const skin of skins) for (const hair of hairs) for(const eyes of Object.keys(eyeColors)) {
+  const a={ ...defaults, hairStyle, accessory, outfit, skin, hair, eyes }
+  const pixels=['down','up','left','right'].flatMap(d=>[characterPixels(a,d),characterPixels(a,d,1),characterPixels(a,d,2),seatedCharacterPixels(a,d),restingCharacterPixels(a,d),idleCharacterPixels(a,d,0),idleCharacterPixels(a,d,3)]).flat()
   assert.ok(pixels.length > 30)
   for (const {x,y,w,h,color} of pixels) {
    assert.ok(x >= 0 && y >= 0 && x+w <= CHARACTER_WIDTH && y+h <= CHARACTER_HEIGHT)
+   assert.ok([x,y,w,h].every(Number.isInteger))
    assert.ok(w > 0 && h > 0 && /^#[0-9a-f]{6}$/i.test(color))
   }
+ }
+})
+
+test('walks keep the head and equipment fixed and retain a grounded support sole',()=>{
+ for(const hairStyle of hairStyles)for(const accessory of accessories)for(const outfit of Object.keys(outfits))for(const direction of ['down','up','left','right']){
+  const a={...defaults,hairStyle,accessory,outfit},saved=JSON.stringify(a)
+  const head=art=>art.filter(p=>p.y<29)
+  assert.deepEqual(head(characterPixels(a,direction,1)),head(characterPixels(a,direction,2)))
+  for(const frame of [0,1,2])assert.ok(characterPixels(a,direction,frame).some(p=>p.y+p.h===63),'support sole stays on the original baseline')
+  assert.notDeepEqual(restingCharacterPixels(a,direction),characterPixels(a,direction),'bed uses authored rest art')
+  assert.equal(JSON.stringify(a),saved,'art does not mutate saved selections')
+ }
+})
+
+test('idle breath keeps feet and head still; closed eyes preserve headgear',()=>{
+ for(const accessory of accessories)for(const direction of ['down','up','left','right']){
+  const a={...defaults,accessory},neutral=characterPixels(a,direction),breath=idleCharacterPixels(a,direction,3)
+  const fixed=art=>art.filter(p=>p.y<29||p.y>=54)
+  assert.deepEqual(fixed(neutral),fixed(breath))
+  assert.deepEqual(idleCharacterPixels(a,direction,16),idleCharacterPixels(a,direction,0))
+  if(direction!=='up')assert.notDeepEqual(idleCharacterPixels(a,direction,0),neutral)
  }
 })
 

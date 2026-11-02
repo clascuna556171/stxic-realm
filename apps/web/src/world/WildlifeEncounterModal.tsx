@@ -35,12 +35,15 @@ export function WildlifeEncounterModal({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
+  const alive = useRef(false)
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
+    alive.current=true
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
     const element = dialog.current
     element?.showModal()
     return () => {
+      alive.current=false
       element?.close()
       queueMicrotask(() => {
         if (previous?.isConnected && !document.querySelector('dialog[open]')) previous.focus()
@@ -62,11 +65,11 @@ export function WildlifeEncounterModal({
     setError('')
     try {
       const next = await bondWildlifePet(client, encounter.id, nickname)
-      onBonded(next)
+      if (alive.current) onBonded(next)
     } catch (err) {
-      setError(errorText(err))
+      if (alive.current) setError(errorText(err))
     } finally {
-      setBusy(false)
+      if (alive.current) setBusy(false)
     }
   }
 
@@ -124,7 +127,7 @@ export function WildlifeEncounterModal({
               marginBottom: '0.35rem',
             }}
           >
-            <span>Bonding trust</span>
+            <span role="status" aria-live="polite">{step === 3 ? 'Ready to welcome' : `Building trust · step ${step + 1} of 3`}</span>
             <span>{step} / 3</span>
           </div>
           <div className="wildlife-bonding-meter" aria-hidden="true">
@@ -148,7 +151,7 @@ export function WildlifeEncounterModal({
               className="primary"
               onClick={() => setStep(s => s + 1)}
             >
-              ✦ {prompts[step]}
+              {prompts[step]}
             </button>
           </div>
         ) : (

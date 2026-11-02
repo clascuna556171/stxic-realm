@@ -1,0 +1,148 @@
+{
+  "repository": "https://github.com/gamedev-skills/awesome-gamedev-agent-skills",
+  "revision": "19d93f97c9c1ea0f8b306e77aa81e0d3e352d3e9",
+  "installed_on": "2026-11-02",
+  "scope": "project",
+  "canonical_directory": ".agents/skills",
+  "claude_directory": ".claude/skills",
+  "skills": [
+    {
+      "name": "create-game-assets",
+      "upstream_path": "skills/disciplines/create-game-assets",
+      "files": [
+        {
+          "path": "agents/openai.yaml",
+          "sha256": "b5ff9e75ab8a845324d28745aa97af0a3cd4fccc56067a6494947e12e40f1990"
+        },
+        {
+          "path": "assets/art-direction-brief.md",
+          "sha256": "6d5dc4f9f5fcb24300bab9ce7dbd56d5c948ba41da3cca2d3b3d235fee5fb72c"
+        },
+        {
+          "path": "assets/asset-manifest.json",
+          "sha256": "6cce05638c11b80eb5c8f776cf187f479a2579f1a1729b0970b1cc8e5fab4c8e"
+        },
+        {
+          "path": "references/art-direction.md",
+          "sha256": "19b2ccb827eae0c6c4cd3648ab7febb82e44706bef8515f2e8912de23dec0a5c"
+        },
+        {
+          "path": "references/provenance.md",
+          "sha256": "098d3cf915cd66e8ff0ad3a639964167edf2280f9e23efbae3ea6242d5bea3db"
+        },
+        {
+          "path": "references/raster-pipeline.md",
+          "sha256": "d7a5714628fd8f4b66d03e060488e353b163b811112b164af218beb2b6450a02"
+        },
+        {
+          "path": "references/three-d-pipeline.md",
+          "sha256": "ee6ed7c373e15ffeb8e6b275618482f028279a8146f01b6cfe6a8411cb8a3db4"
+        },
+        {
+          "path": "scripts/asset_report.py",
+          "sha256": "99f4b38f9c4fe036f97ab1d4effd7f6931b62d24a90330a5a2f5ae71e7d1a77c"
+        },
+        {
+          "path": "scripts/build_preview_sheet.py",
+          "sha256": "002a550a7b5fac6d8815078a72afc249dd828c40d975b2323223fc770118c64b"
+        },
+        {
+          "path": "scripts/requirements.txt",
+          "sha256": "bbced595a25debee9232fbb784d35ee4f04967d3dbc528e8c3073d3e9adbe2ca"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "36cd246a434fefe1e36feff066597a6268d9f63364bee387ee65a22f03838b5d"
+        }
+      ]
+    },
+    {
+      "name": "game-ai",
+      "upstream_path": "skills/disciplines/game-ai",
+      "files": [
+        {
+          "path": "references/behavior-trees.md",
+          "sha256": "eed3fdb943801a7696f2ca03a54d60fc9111a63c5c817e567516b5e2df2c04a9"
+        },
+        {
+          "path": "references/pathfinding.md",
+          "sha256": "75d6c8397fc5ff2fb8ac3dd74e7b4f881331f2531f40b6f8db451f14adb6534d"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "5c193ac1debc8ec9ed8f44be7a05d12d817ac390e1fa82018bcae4f2ff53fbd8"
+        }
+      ]
+    },
+    {
+      "name": "level-design",
+      "upstream_path": "skills/disciplines/level-design",
+      "files": [
+        {
+          "path": "references/pacing-and-flow.md",
+          "sha256": "e8e3940f585e376f353aefea009befe8199a1871f99d34d7b2340cb35cb61872"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "9dd60fec5dc09957f7836739da96b5a2bcff2b46ecaab020f0a9ccff7463ba3a"
+        }
+      ]
+    },
+    {
+      "name": "game-feel",
+      "upstream_path": "skills/disciplines/game-feel",
+      "files": [
+        {
+          "path": "references/feedback-recipes.md",
+          "sha256": "f8cca962733b0b1f5d1db75fe966f6e13bf11015e39a04a849d6ff5c3e0e835e"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "48971c7ad1fbb39069cb165f0e45f88c13776585870d69d5de8a04bbe0988e28"
+        }
+      ]
+    },
+    {
+      "name": "game-ui-ux",
+      "upstream_path": "skills/disciplines/game-ui-ux",
+      "files": [
+        {
+          "path": "references/layout-and-flow.md",
+          "sha256": "961fc8c8e45a1ee5120e1deef9f6aef932ae3949e6f1ce26548b9d7616775d73"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "54816447c4d07f9ab65782ebb7138dd0927c9cd84a3647e8806f2a86a3a094ff"
+        }
+      ]
+    },
+    {
+      "name": "performance-optimization",
+      "upstream_path": "skills/disciplines/performance-optimization",
+      "files": [
+        {
+          "path": "references/profiling-and-budgets.md",
+          "sha256": "e68c43d5e66ec0f2fe60e0c0121c85360144ab7da5876ce6e2e3f26a2244e284"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "287161d2ed49670a051271c8fade5a7265fda5109d39c218c02598dca7983e2a"
+        }
+      ]
+    },
+    {
+      "name": "phaser-core",
+      "upstream_path": "skills/web-engines/phaser-core",
+      "files": [
+        {
+          "path": "references/scene-flow.md",
+          "sha256": "0ac4da3794ad12c90e2365b417b0983b3f2329636234dca1a231e78ffe51b01a"
+        },
+        {
+          "path": "SKILL.md",
+          "sha256": "0df9ed5e32bdb576375730c21917dc80a02f54e8bb95c17521208f92d2baad0f"
+        }
+      ]
+    }
+  ]
+}
