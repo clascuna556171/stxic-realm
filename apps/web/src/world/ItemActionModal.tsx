@@ -1,6 +1,6 @@
 import {useCallback,useEffect,useRef,useState,type ReactNode} from 'react'
 import {createPortal} from 'react-dom'
-import {HomeSocial} from './HomeSocial'
+import {HomeSocial, LocalGuestbook} from './HomeSocial'
 import {rpc,errorText} from '../account-repository'
 import {client} from '../data'
 import {safeProjectUrl,useSocialSnapshot,type HomeSocialState,type ProjectLink} from './social-repository'
@@ -19,15 +19,43 @@ import {getUserBadgeState, type UserBadgeState} from '../badges'
 
 type Items=ReturnType<typeof useWorldItems>
 type Props={items:Items;scope:string;owner?:string;own?:boolean;hall?:boolean;resources?:ReactNode;chat?:string;onRest:()=>void;onSit:()=>void}
+
+const STICKY_PALETTES = [
+ { id: 'gold', name: 'Golden Parchment', hex: '#fbbf24', bg: '#201a0e', border: '#78531a', text: '#fef08a' },
+ { id: 'rose', name: 'Rose Petal', hex: '#f472b6', bg: '#22111a', border: '#83284d', text: '#fbcfe8' },
+ { id: 'cyan', name: 'Cyan Breeze', hex: '#38bdf8', bg: '#0b1d24', border: '#16576d', text: '#bae6fd' },
+ { id: 'emerald', name: 'Sage Moss', hex: '#4ade80', bg: '#0d2217', border: '#175939', text: '#bbf7d0' },
+ { id: 'violet', name: 'Twilight Iris', hex: '#c084fc', bg: '#1c132b', border: '#532d84', text: '#e9d5ff' },
+]
+
+const STICKY_PROMPTS = [
+ '🌱 Water the plants & tend the herbs',
+ '🎵 Check out vinyl tracks on the turntable',
+ '🐾 Left a fish treat for the companion',
+ '☕ Tea & focus session in progress',
+]
+
+function getNotePalette(id: string) {
+ const last = id.slice(-1).toLowerCase()
+ const val = parseInt(last, 16)
+ return STICKY_PALETTES[isNaN(val) ? 0 : val % STICKY_PALETTES.length]
+}
+
+function createNoteId(colorIndex = 0) {
+ const base = crypto.randomUUID()
+ return base.slice(0, 35) + (colorIndex % 16).toString(16)
+}
+
 // Native dialog supplies focus containment, inert background and Escape dismissal.
 export function ItemActionModal(props:Props){
  const {items}=props
  return items.target?createPortal(<ItemDialog key={`${props.scope}:${items.target.id}`} {...props}/>,document.body):null
 }
+
 function ItemDialog({items,scope,owner,own=true,hall=false,resources,chat='/',onRest,onSit}:Props){
  const target=items.target!,kind=target.kind??target.id,dialog=useRef<HTMLDialogElement>(null)
  useEffect(()=>{const previous=items.opener.current,element=dialog.current;element?.showModal();return()=>{element?.close();queueMicrotask(()=>{if(previous?.isConnected)previous.focus()})}},[])
- const [tab,setTab]=useState('personal')
+ const [tab,setTab]=useState(target.initialTab??'personal')
  const [hallmarksOpen,setHallmarksOpen]=useState(false)
  const [badgeState,setBadgeState]=useState<UserBadgeState>(()=>getUserBadgeState(owner??'self',[],own))
  const description=!hall&&kind==='desk'?'A place for project links, notes and a focused moment.':!hall&&kind==='sofa'?'Soft cushions for a quiet pause between conversations.':target.description
@@ -37,7 +65,7 @@ function ItemDialog({items,scope,owner,own=true,hall=false,resources,chat='/',on
   {notebook?<><div className="item-tabs" role="group" aria-label="Notebook sections">{[['personal','Personal Notes'],['sticky','Room Sticky Notes'],['guestbook','Guestbook'],['passport','Passport & Stamps'],['hallmarks','Hallmarks']].map(([id,label])=><button key={id} aria-pressed={tab===id} onClick={()=>setTab(id)}>{label}</button>)}</div>
    {tab==='personal'&&<LocalNotes storageKey={`stxic-realm:notes:v1:${scope}`} label="Personal Notes"/>}
    {tab==='sticky'&&(hall?<section><h3>Community notes</h3>{resources??<p>Choose a server to read its community resources.</p>}</section>:<ContentPanel owner={owner} own={own} scope={scope} section="notes"/>)}
-   {tab==='guestbook'&&(owner?<HomeSocial owner={owner} selected="coffee-table" section="guestbook"/>:<p>Sign in and open an account home to use its shared guestbook.</p>)}
+   {tab==='guestbook'&&(owner?<HomeSocial owner={owner} selected="coffee-table" section="guestbook"/>:<LocalGuestbook scope={scope}/>)}
    {tab==='passport'&&<PassportPanel roomId={scope} roomName={target.name} ownerName={owner??'Explorer'} mood="tech"/>}
    {tab==='hallmarks'&&<div className="item-hallmarks-panel"><p>Prestige crests, honors, and milestones across the Realm.</p><button type="button" className="item-open-hallmarks-btn" onClick={()=>setHallmarksOpen(true)}>Open Trophy Case ({Object.keys(badgeState.unlocked).length}/32)</button></div>}
   </>:work?<>{kind==='desk'&&<><div className="item-actions"><button onClick={()=>{onSit();items.close()}}>Sit at PC</button></div><PetCompanion petKey="desk"/></>}{kind==='console'&&<VinylTurntable/>}{owner?<ProjectCards owner={owner}/>:hall?<section><h3>Server workspace</h3>{resources}</section>:<p>Project links appear here when the home owner shares them in Home social settings.</p>}<FocusTimer items={items} onSit={onSit}/><SoundscapeControls sound={items.sound}/><LocalNotes storageKey={`stxic-realm:snippets:v1:${scope}`} label="Snippet log"/><a className="item-link-action" href={chat}>Return to Chat</a></>
@@ -51,44 +79,90 @@ function ItemDialog({items,scope,owner,own=true,hall=false,resources,chat='/',on
    <BadgeToastContainer onOpenTrophyCase={()=>setHallmarksOpen(true)}/>
  </dialog>
 }
+
 function useLocalValue<T>(key:string,initial:T){
  const [value,setValue]=useState<T>(()=>{try{return JSON.parse(localStorage.getItem(key)??'null')??initial}catch{return initial}}),[error,setError]=useState('')
  function save(next:T){try{localStorage.setItem(key,JSON.stringify(next));setValue(next);setError('');return true}catch{setError('Device storage is unavailable or full. Your change was not saved.');return false}}
  return {value,save,error}
 }
+
 function LocalNotes({storageKey,label}:{storageKey:string;label:string}){
  const {value,save,error}=useLocalValue<Memo[]>(storageKey,[])
  return <><p>{label==='Personal Notes'?'Saved on this device for this account. Visitors cannot see these notes.':'Save a short code snippet or terminal command on this device.'}</p><MemoEditor notes={Array.isArray(value)?value:[]} label={label} save={async notes=>{if(!save(notes))throw new Error('Your note was not saved. Device storage is unavailable or full.')}}/>{error&&<p role="alert">{error}</p>}</>
 }
+
 function MemoEditor({notes,label,save,readOnly=false,busy=false}:{notes:Memo[];label:string;save:(notes:Memo[])=>Promise<void>;readOnly?:boolean;busy?:boolean}){
  const original=useRef<Memo|null>(null)
  const [body,setBody]=useState(''),[editing,setEditing]=useState<string|null>(null),[error,setError]=useState(''),[pending,setPending]=useState(false)
+ const [colorIndex,setColorIndex]=useState(0)
  async function commit(next:Memo[],reset=false){if(pending||busy)return;setPending(true);setError('');try{await save(next);if(reset){setEditing(null);setBody('')}}catch(e){setError(errorText(e))}finally{setPending(false)}}
- return <section aria-label={label}><h3>{label}</h3>{!readOnly&&<form onSubmit={e=>{e.preventDefault();if(!body.trim())return;if(editing&&JSON.stringify(notes.find(n=>n.id===editing))!==JSON.stringify(original.current)){setError('This note changed while you were editing. Cancel and reopen it to review the latest version.');return}const now=new Date().toISOString();void commit(editing?notes.map(n=>n.id===editing?{...n,body:body.trim(),updated_at:now}:n):[...notes,{id:crypto.randomUUID(),body:body.trim(),pinned:false,created_at:now,updated_at:now}],true)}}><label>{editing?'Edit note':'Write Note'}<textarea aria-label={editing?'Edit note':'Write Note'} required maxLength={1000} value={body} onChange={e=>setBody(e.target.value)}/></label><div className="item-actions"><button disabled={busy||pending||!body.trim()||(!editing&&notes.length>=30)}>{editing?'Save note':'Add note'}</button>{editing&&<button type="button" onClick={()=>{setEditing(null);setBody('')}}>Cancel edit</button>}</div><small>{notes.length}/30 notes · Up to 1,000 characters each</small></form>}
-  {!notes.length&&<p>No notes yet.</p>}<ol className="item-memos">{sortMemos(notes).map(n=><li key={n.id}><span>{n.pinned?'Pinned · ':''}<time dateTime={n.updated_at}>{new Date(n.updated_at).toLocaleString()}</time></span><p>{n.body}</p>{!readOnly&&<div className="item-actions"><button disabled={pending||busy} onClick={()=>{original.current=n;setEditing(n.id);setBody(n.body)}}>Edit note</button><button disabled={pending||busy} aria-pressed={n.pinned} onClick={()=>void commit(notes.map(m=>m.id===n.id?{...m,pinned:!m.pinned}:m))}>{n.pinned?'Unpin':'Pin'} note</button><button disabled={pending||busy} onClick={()=>void commit(notes.filter(m=>m.id!==n.id),editing===n.id)}>Delete note</button></div>}</li>)}</ol>{error&&<p role="alert">{error}</p>}
+ return <section aria-label={label} className="sticky-notes-section">
+  <div className="sticky-section-header">
+   <h3>{label}</h3>
+   <span className="sticky-count-pill">{notes.length}/30 Notes</span>
+  </div>
+  {!readOnly&&<form onSubmit={e=>{e.preventDefault();if(!body.trim())return;if(editing&&JSON.stringify(notes.find(n=>n.id===editing))!==JSON.stringify(original.current)){setError('This note changed while you were editing. Cancel and reopen it to review the latest version.');return}const now=new Date().toISOString();void commit(editing?notes.map(n=>n.id===editing?{...n,body:body.trim(),updated_at:now}:n):[...notes,{id:createNoteId(colorIndex),body:body.trim(),pinned:false,created_at:now,updated_at:now}],true)}} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&body.trim()){e.preventDefault();(e.currentTarget as HTMLFormElement).requestSubmit()}}}>
+   {!editing&&<div className="sticky-prompts-row" role="group" aria-label="Quick note ideas">
+    {STICKY_PROMPTS.map(p=><button key={p} type="button" className="sticky-prompt-chip" onClick={()=>setBody(p)}>{p}</button>)}
+   </div>}
+   {!editing&&<div className="sticky-color-picker" role="group" aria-label="Note paper color">
+    {STICKY_PALETTES.map((pal,i)=><button key={pal.id} type="button" title={pal.name} aria-pressed={colorIndex===i} className={`sticky-color-swatch ${colorIndex===i?'is-selected':''}`} style={{backgroundColor:pal.hex}} onClick={()=>setColorIndex(i)}/>)}
+   </div>}
+   <label>{editing?'Edit note':'Write Note'}
+    <textarea aria-label={editing?'Edit note':'Write Note'} required maxLength={1000} placeholder={label==='Room Sticky Notes'?'Post a friendly memo, tip, or thought on the room corkboard...':'Write a private note or snippet for this room...'} value={body} onChange={e=>setBody(e.target.value)}/>
+   </label>
+   <div className="item-actions">
+    <button disabled={busy||pending||!body.trim()||(!editing&&notes.length>=30)}>{editing?'Save note':'Add note'}</button>
+    {editing&&<button type="button" onClick={()=>{setEditing(null);setBody('')}}>Cancel edit</button>}
+   </div>
+   <small className="sticky-form-help">{notes.length}/30 notes · Up to 1,000 characters each (Ctrl+Enter to post)</small>
+  </form>}
+  {!notes.length&&<p>No notes yet.</p>}
+  <ol className="item-memos sticky-notes-board">{sortMemos(notes).map(n=>{
+   const pal=getNotePalette(n.id)
+   return <li key={n.id} className={`sticky-card ${n.pinned?'is-pinned':''}`} style={{borderColor:pal.border,background:pal.bg,color:pal.text}}>
+    <div className="sticky-card-topline">
+     {n.pinned&&<span className="sticky-pin-icon" aria-hidden="true">📌</span>}
+     <span>{n.pinned?'Pinned · ':''}<time dateTime={n.updated_at}>{new Date(n.updated_at).toLocaleString()}</time></span>
+    </div>
+    <p className="sticky-card-body">{n.body}</p>
+    {!readOnly&&<div className="item-actions sticky-card-actions">
+     <button disabled={pending||busy} onClick={()=>{original.current=n;setEditing(n.id);setBody(n.body)}}>Edit note</button>
+     <button disabled={pending||busy} aria-pressed={n.pinned} onClick={()=>void commit(notes.map(m=>m.id===n.id?{...m,pinned:!m.pinned}:m))}>{n.pinned?'Unpin':'Pin'} note</button>
+     <button disabled={pending||busy} onClick={()=>void commit(notes.filter(m=>m.id!==n.id),editing===n.id)}>Delete note</button>
+    </div>}
+   </li>
+  })}</ol>
+  {error&&<p role="alert">{error}</p>}
  </section>
 }
+
 function ContentPanel({owner,own,scope,section}:{owner?:string;own:boolean;scope:string;section:'notes'|'reading'}){
  return owner?<RemoteContent owner={owner} own={own} section={section}/>:<LocalContent scope={scope} section={section}/>
 }
+
 function LocalContent({scope,section}:{scope:string;section:'notes'|'reading'}){
  const {value,save,error}=useLocalValue<ItemContent>(`stxic-realm:item-content:v1:${scope}`,emptyContent)
  return <><p>Preview content stays on this device. In account homes, the owner’s stickies and reading list are visible to permitted visitors.</p>{section==='notes'?<MemoEditor notes={value.notes} label="Room Sticky Notes" save={async notes=>{if(!save({...value,notes}))throw new Error('Your note was not saved. Device storage is unavailable or full.')}}/>:<ReadingList links={value.reading} save={async reading=>{if(!save({...value,reading}))throw new Error('Your bookmark was not saved. Device storage is unavailable or full.')}}/>} {error&&<p role="alert">{error}</p>}</>
 }
+
 function RemoteContent({owner,own,section}:{owner:string;own:boolean;section:'notes'|'reading'}){
  const load=useCallback(()=>rpc<ItemContent>(client!,'home_item_content',{p_owner:owner}),[owner]),{data,error,refresh,apply}=useSocialSnapshot(load)
  async function save(change:Partial<ItemContent>){if(!data)throw new Error('Reload content before saving.');const next=await rpc<ItemContent>(client!,'save_home_item_content',{p_revision:data.revision,p_notes:data.notes,p_reading:data.reading,...(change.notes?{p_notes:change.notes}:{}),...(change.reading?{p_reading:change.reading}:{})});apply(next)}
  return <><p>Shared with people who can currently visit this home. {own?'Only you can edit.':'Curated by the home owner.'}</p>{error&&<p role="alert">{error}</p>}<button onClick={()=>void refresh().catch(()=>{})}>Reload shared content</button>{data?(section==='notes'?<MemoEditor notes={data.notes} label="Room Sticky Notes" readOnly={!own} save={notes=>save({notes})}/>:<ReadingList links={data.reading} readOnly={!own} save={reading=>save({reading})}/>):!error&&<p role="status">Opening shared content…</p>}</>
 }
+
 function ReadingList({links,save,readOnly=false}:{links:ProjectLink[];save:(links:ProjectLink[])=>Promise<void>;readOnly?:boolean}){
  const [title,setTitle]=useState(''),[url,setUrl]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false)
  async function change(next:ProjectLink[]){setBusy(true);setError('');try{await save(next);setTitle('');setUrl('')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  return <section><h3>Reading list & bookmarks</h3><LinkCards links={links}/>{!readOnly&&<>{links.map((l,i)=><button key={i} disabled={busy} onClick={()=>void change(links.filter((_,n)=>i!==n))}>Remove {l.title}</button>)}<form onSubmit={e=>{e.preventDefault();if(!safeProjectUrl(url)){setError('Use a public HTTPS address without credentials.');return}void change([...links,{title:title.trim(),url:safeProjectUrl(url)!}])}}><label>Book or resource title<input required maxLength={80} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Resource HTTPS address<input type="url" required maxLength={2048} value={url} onChange={e=>setUrl(e.target.value)}/></label><button disabled={busy||links.length>=5||!title.trim()}>Add bookmark</button></form></>}{error&&<p role="alert">{error}</p>}</section>
 }
+
 function LinkCards({links}:{links:ProjectLink[]}){return links.length?<ul className="item-links">{links.map((l,i)=>{const url=safeProjectUrl(l.url);return url?<li key={i}><a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"><strong>{l.title}</strong><span>{new URL(url).hostname} · Opens in new tab</span></a></li>:null})}</ul>:<p>No links shared yet.</p>}
 function ProjectCards({owner}:{owner:string}){const load=useCallback(()=>rpc<HomeSocialState>(client!,'home_social',{p_owner:owner}),[owner]),{data,error}=useSocialSnapshot(load);return <section><h3>Owner’s projects</h3>{error?<p role="alert">{error}</p>:data?<LinkCards links={data.links}/>:<p role="status">Loading projects…</p>}</section>}
 function FocusTimer({items,onSit}:{items:Items;onSit:()=>void}){
  const seconds=focusSeconds(items.focus,items.now),running=items.focus.status==='running'
  return <section><h3>Focus timer</h3><output className="item-timer" aria-label="Focus time remaining">{String(Math.floor(seconds/60)).padStart(2,'0')}:{String(seconds%60).padStart(2,'0')}</output><p role="status">{items.focus.status==='complete'?'Focus session complete. Take a break.':running?'Deep Work · Standing up pauses your session.':items.focus.status==='paused'?'Session paused. Start to settle back in.':'25 minutes to focus. Start when you’re ready.'}</p><div className="item-actions"><button disabled={seconds===0} onClick={()=>{if(running)items.pauseFocus();else{onSit();items.startFocus(items.target!.id)}}}>{running?'Pause timer':'Start timer'}</button><button onClick={items.resetFocus}>Reset timer</button></div></section>
 }
+
 export {itemActionLabel}

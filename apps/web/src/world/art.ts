@@ -132,17 +132,20 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
  }
 
  if (id === 'sofa') {
-  // Deep plush 3-seat charcoal/indigo sofa with throw pillows & kitten
+  // Three-seat upholstered sofa with a clear sitting cushion and folded throw.
   r(2, 49, 92, 10, '#221c26')
   r(8, 54, 7, 6, ink)
   r(81, 54, 7, 6, ink)
   r(9, 55, 5, 4, wood)
   r(82, 55, 5, 4, wood)
-  // Main frame & tufted backrest
+  // Stepped shoulders, inset upholstered back and a load-bearing timber frame.
   r(4, 2, 88, 48, ink)
   r(6, 4, 84, 26, '#303446')
   r(8, 5, 80, 22, '#3f455c')
   r(10, 6, 76, 3, '#59617d')
+  r(4, 2, 4, 3, woodDark)
+  r(88, 2, 4, 3, woodDark)
+  r(6, 48, 84, 5, woodDark)
   // Backrest cushion seams & tuft buttons
   r(34, 5, 2, 22, '#292d3d')
   r(60, 5, 2, 22, '#292d3d')
@@ -178,17 +181,16 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
     if ((px + py) % 2 === 0) r(69 + px * 4, 13 + py * 4, 4, 3, '#b8b0d4')
    }
   }
-  // Small White Pixel Kitten sitting on middle cushion
-  r(43, 17, 12, 11, ink)
-  r(44, 15, 3, 3, ink)
-  r(51, 15, 3, 3, ink)
-  r(45, 16, 2, 2, '#f5d0da')
-  r(51, 16, 2, 2, '#f5d0da')
-  r(44, 18, 10, 9, '#f5efe6')
-  r(45, 19, 8, 7, '#ffffff')
-  r(46, 21, 2, 2, ink)
-  r(50, 21, 2, 2, ink)
-  r(48, 23, 2, 1, '#f687b3')
+  // Folded linen throw leaves the resident's seat clear; pets are real actors.
+  r(67, 26, 15, 20, '#ded0b4')
+  r(69, 27, 11, 17, '#efe2c5')
+  r(71, 28, 2, 14, '#b8aa8e')
+  r(67, 44, 15, 2, '#b8aa8e')
+  for (let x=68;x<82;x+=3) r(x,46,1,3,'#ded0b4')
+  // Visible timber lower rail and recessed feet, below the upholstered seat.
+  r(11, 50, 74, 3, woodDark)
+  r(13, 50, 70, 1, woodLight)
+
  }
 
  if (id === 'lantern') {
@@ -302,7 +304,7 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
  }
 
  if (id === 'bed') {
-  // Cozy Carved Timber Bed with Quilted Blanket & Sleeping Pixel Cat
+  // Carved bed, inset headboard, linen pillows and a folded foot blanket.
   r(1, 0, 62, 92, ink)
   // Carved wooden headboard
   r(3, -4, 58, 18, ink)
@@ -331,37 +333,35 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
   r(5, 39, 54, 44, '#35384f')
   r(7, 40, 50, 40, '#484c6b')
   r(8, 40, 48, 3, '#666b91')
-  for (let row = 0; row < 4; row++) {
-   for (let col = 0; col < 5; col++) {
-    r(11 + col * 9, 46 + row * 8, 5, 1, '#63688f')
-    r(13 + col * 9, 44 + row * 8, 1, 5, '#63688f')
-   }
-  }
+  for (const x of [23, 41]) r(x,44,1,20,'#35384f')
+  r(9, 57, 46, 1, '#35384f')
   // Wooden footboard & posts
   r(4, 83, 56, 7, wood)
   r(5, 83, 54, 2, woodLight)
   r(4, 89, 7, 5, ink)
   r(53, 89, 7, 5, ink)
-  // Sleeping Black-and-White Tuxedo Pixel Cat curled up on the bed!
-  r(12, 42, 22, 16, ink)
-  r(14, 40, 4, 4, ink) // Left ear
-  r(22, 40, 4, 4, ink) // Right ear
-  r(15, 41, 2, 2, '#f687b3')
-  r(23, 41, 2, 2, '#f687b3')
-  r(13, 43, 20, 13, '#22212b') // Cat body
-  r(15, 44, 14, 10, '#2f2e3b')
-  r(15, 49, 10, 6, '#f7f1e6') // White muzzle & paws
-  r(16, 47, 3, 1, ink) // Closed sleeping eye
-  r(21, 47, 3, 1, ink) // Closed sleeping eye
-  r(19, 49, 2, 1, '#f687b3') // Pink nose
-  r(30, 48, 5, 7, ink) // Curled tail
-  r(31, 49, 3, 5, '#22212b')
-  r(31, 48, 3, 2, '#f7f1e6') // White tail tip
+  // Folded blanket at the foot; the pillow and quilt remain usable by a resident.
+  r(8, 66, 48, 12, '#ded0b4')
+  r(9, 67, 46, 8, '#efe2c5')
+  r(10, 68, 44, 1, '#f7efe2')
+  r(9, 75, 46, 2, '#b8aa8e')
+  r(13, 67, 2, 8, '#b8aa8e')
+  r(49, 67, 2, 8, '#b8aa8e')
+  // Raised panel joinery, bed rails and planted square posts.
+  r(9, 2, 46, 8, woodDark)
+  r(11, 3, 42, 6, woodMid)
+  r(3, 14, 2, 68, woodLight)
+  r(59, 14, 2, 68, woodDark)
+
  }
 
  if (id === 'coffee-table') {
-  // Warm Oak Coffee Table with Open Guestbook, Quill, Plant & Mug
+  // Mortised low table, recessed shelf, journal and a ceramic mug.
   r(2, 24, 60, 6, '#2b2122')
+  r(10, 23, 44, 4, woodDark)
+  r(12, 23, 40, 1, woodLight)
+  r(18, 21, 16, 2, '#ded0b4')
+  r(20, 19, 14, 2, '#854454')
   r(6, 19, 6, 11, ink)
   r(52, 19, 6, 11, ink)
   r(1, 3, 62, 19, ink)
@@ -369,6 +369,9 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
   r(4, 4, 56, 13, woodMid)
   r(5, 4, 54, 2, woodLight)
   r(7, 4, 50, 1, woodHighlight)
+  r(4, 20, 56, 2, woodDark)
+  r(6, 21, 4, 8, woodMid)
+  r(54, 21, 4, 8, woodDark)
   // Open Guestbook Journal & Feather Quill (left)
   r(7, 6, 22, 12, ink)
   r(8, 7, 20, 10, '#593a28')
@@ -417,6 +420,42 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
   r(14, -20, 4, 3, gold)
  }
 
+ // Construction changes across moods, not just a recolor of identical surfaces.
+ const finish = worldPalettes[mood]
+ if (id === 'desk') {
+  // Framed drawer fronts, recessed pulls, a sturdy apron and purposeful chair upholstery.
+  for (const y of [31,39,47]) {
+   r(9,y,18,5,finish.timber[0]); r(10,y,16,1,finish.timber[2])
+   r(17,y+2,4,1,mood==='tech'?finish.trim:goldDark)
+  }
+  r(36,27,24,22,finish.cloth[0]); r(38,28,20,18,finish.cloth[1])
+  r(39,29,18,1,finish.cloth[2]); r(38,47,20,2,finish.cloth[0])
+  r(46,52,4,5,finish.timber[2])
+  if(mood==='medieval') {
+   r(70,29,16,23,finish.timber[0]); r(72,31,12,19,finish.timber[1])
+   r(72,32,12,2,goldDark); r(72,46,12,2,goldDark); r(77,38,3,3,gold)
+  } else if(mood==='tech') {
+   r(3,24,90,3,finish.stone[0]); r(4,24,88,1,finish.trim)
+   r(8,29,20,23,finish.stone[0])
+   for(const y of [31,39,47]) {r(10,y,16,5,finish.stone[1]);r(20,y+2,4,1,finish.trim)}
+  }
+ }
+ if(id==='sofa' && mood==='medieval') {
+  // Leather panels with hand-set brass corner studs and a timber base.
+  for(const x of [12,38,64]) {r(x,28,20,1,'#bf9670');r(x+1,42,18,1,'#512e3e')}
+  for(const x of [3,88]) for(const y of [22,42]) r(x,y,2,2,goldDark)
+ } else if(id==='sofa' && mood==='tech') {
+  r(2,48,8,4,finish.stone[1]);r(86,48,8,4,finish.stone[1])
+  r(12,51,72,2,finish.trim);r(14,51,68,1,finish.stone[0])
+ }
+ if(id==='bed' && mood==='tech') {
+  r(4,-3,56,15,finish.stone[0]);r(7,0,50,9,finish.stone[1])
+  r(9,1,46,1,finish.trim);r(30,1,2,8,finish.stone[0])
+  r(4,83,56,7,finish.stone[0]);r(6,84,52,2,finish.trim)
+ } else if(id==='bed' && mood==='medieval') {
+  for(const x of [5,55]) {r(x,-3,4,14,finish.timber[0]);r(x,1,4,2,goldDark)}
+ }
+
  // Material details use the selected mood without changing object footprints.
  const material = worldPalettes[mood]
  if (id === 'desk') {
@@ -448,363 +487,115 @@ export function furniturePixels(id: string, mood: Appearance['mood'] = 'cozy'): 
  return p.map(pixel=>({...pixel,color:colors[pixel.color]??pixel.color}))
 }
 
+/** Original cutaway architecture. The 16×12 movement grid is unchanged. */
 export function roomPixels(mood: Appearance['mood']): Pixel[] {
- const p: Pixel[] = []
- const r = (x: number, y: number, w: number, h: number, color: string) => {
-  const x0 = Math.max(0, Math.floor(x))
-  const y0 = Math.max(0, Math.floor(y))
-  const x1 = Math.min(512, Math.floor(x + w))
-  const y1 = Math.min(384, Math.floor(y + h))
-  if (x1 > x0 && y1 > y0) p.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, color })
- }
-
- const palettes = {
-  cozy: {
-   outer: '#11121c',
-   foliage: ['#19282c', '#243b3e', '#345452', '#4c756c'],
-   wallOuter: '#252330',
-   wallTop: '#4c465c',
-   wall: '#cbb99a',
-   wallPanel: '#b19a7e',
-   trim: '#ead8b8',
-   baseboard: '#4f3d32',
-   floor: ['#ad7850', '#bb865a', '#c99668', '#d2a475', '#a36d49'],
-   seam: '#523727',
-   ray: '#b38962',
-   sky: '#1e2640',
-   rugMain: '#425c4a',
-   rugInner: '#708b6d',
-   rugBorder: '#d9c9a9',
-  },
-  medieval: {
-   outer: '#121018',
-   foliage: ['#1b2422', '#283631', '#3b4f44', '#546b58'],
-   wallOuter: '#242029',
-   wallTop: '#524954',
-   wall: '#6e645b',
-   wallPanel: '#574e47',
-   trim: '#b8a282',
-   baseboard: '#3d332d',
-   floor: ['#5e4535', '#694d3b', '#735541', '#7d5d47', '#523b2d'],
-   seam: '#3d2b20',
-   ray: '#96714e',
-   sky: '#1b2036',
-   rugMain: '#753b42',
-   rugInner: '#965056',
-   rugBorder: '#dbb98f',
-  },
-  tech: {
-   outer: '#0d121c',
-   foliage: ['#13242e', '#1c3745', '#285061', '#3b7082'],
-   wallOuter: '#1c2433',
-   wallTop: '#3e4f69',
-   wall: '#4a576b',
-   wallPanel: '#394454',
-   trim: '#94a8c2',
-   baseboard: '#26303d',
-   floor: ['#3e4352', '#454b5c', '#4c5366', '#545c70', '#353a47'],
-   seam: '#262a36',
-   ray: '#5c6b85',
-   sky: '#131d33',
-   rugMain: '#384661',
-   rugInner: '#4c5f80',
-   rugBorder: '#82c4cc',
-  },
- }
- const material = worldPalettes[mood]
- const c = { ...palettes[mood], wall: material.wall[0], wallPanel: material.wall[1], trim: material.trim,
-  wallOuter: material.stone[0], wallTop: material.stone[2], baseboard: material.timber[0],
-  floor: [...material.floor, material.floor[0]], seam: material.seam, sky: material.sky[0],
-  rugMain: material.cloth[0], rugInner: material.cloth[1] }
-
- // 1. EXTERIOR TWILIGHT SKY, DISTANT BAY & LUSH PERIMETER FOLIAGE
- r(0, 0, 512, 384, c.outer)
- // Distant city skyline & water shimmer on the far right (x: 488..512)
- r(488, 90, 24, 190, '#161829')
- for (let i = 0; i < 4; i++) {
-  const bx = 490 + i * 5
-  const bh = 22 + ((i * 7) % 18)
-  r(bx, 128 - bh, 4, bh, '#232740')
-  r(bx + 1, 130 - bh, 1, 2, '#f6cd7b')
- }
- r(488, 130, 24, 140, '#1b1d33')
- for (let wy = 0; wy < 14; wy++) {
-  r(490 + (wy % 3) * 2, 136 + wy * 9, 16 - (wy % 4) * 2, 2, wy % 2 === 0 ? '#5c4d8a' : '#8066b8')
- }
- // Exterior bushes & leaf clusters framing bottom and sides
- const bushSpots = [
-  [4, 240, 22, 130],
-  [12, 342, 188, 38],
-  [312, 342, 188, 38],
-  [486, 260, 22, 110],
- ]
- for (const [bx, by, bw, bh] of bushSpots) {
-  r(bx, by, bw, bh, c.foliage[0])
-  for (let lx = bx + 4; lx < bx + bw - 8; lx += 14) {
-   for (let ly = by + 4; ly < by + bh - 6; ly += 12) {
-    r(lx, ly, 10, 8, c.foliage[1])
-    r(lx + 2, ly + 1, 6, 5, c.foliage[2])
-    if ((lx + ly) % 3 === 0) r(lx + 3, ly + 2, 3, 2, c.foliage[3])
-   }
+ const p: Pixel[]=[]
+ const c=worldPalettes[mood]
+ const r=(x:number,y:number,w:number,h:number,color:string)=>{p.push({x,y,w,h,color})}
+ // Quiet planted exterior and a continuous stone foundation.
+ r(0,0,512,384,'#111820')
+ r(18,12,476,352,c.stone[0]);r(22,10,468,4,c.stone[2])
+ r(28,48,456,302,c.seam)
+ // Long oak boards, hewn pavers, or inset slate panels. Sparse material marks
+ // leave the central circulation lane calmer than the furniture silhouettes.
+ const rowHeight=mood==='cozy'?20:28
+ for(let y=50,row=0;y<348;y+=rowHeight,row++) {
+  const width=mood==='cozy'?112:56
+  for(let x=32-(row%2)*width/2,col=0;x<480;x+=width,col++) {
+   const left=Math.max(32,x),right=Math.min(480,x+width),bottom=Math.min(348,y+rowHeight)
+   r(left,y,right-left-1,bottom-y-1,c.floor[(row+col)%4])
+   if(mood==='cozy'&&(row+col)%3===0&&right-left>50) r(left+12,y+6,28,1,c.floor[(row+col+1)%4])
+   if(mood==='medieval'&&right-left>20) {r(left+2,y+1,right-left-5,1,c.stone[1]);if((row+col)%5===0)r(left+3,bottom-3,8,1,c.seam)}
+   if(mood==='tech'&&right-left>20) {r(left+2,y+1,right-left-5,1,c.stone[1]);if((row+col)%4===0)r(right-4,bottom-5,1,2,c.trim)}
   }
  }
- // Twinkling exterior fireflies & blossoms
- for (const [fx, fy, col] of [
-  [14, 290, '#b794f4'],
-  [36, 368, '#ffe699'],
-  [94, 374, '#b794f4'],
-  [168, 364, cyan],
-  [348, 366, '#b794f4'],
-  [422, 372, '#ffe699'],
-  [496, 310, cyan],
- ] as const) {
-  r(fx, fy, 3, 3, col)
-  r(fx + 1, fy + 1, 1, 1, '#ffffff')
- }
-
- // 2. OUTER CUTAWAY ARCHITECTURAL SHELL
- r(18, 8, 476, 354, ink)
- r(20, 10, 472, 350, c.wallOuter)
- r(22, 10, 468, 4, c.wallTop)
- r(28, 34, 456, 320, '#2a242b')
-
- // 3. STAGGERED FLOORBOARDS WITH GRAIN, SEAMS & NAIL HEADS
- for (let row = 0; row < 22; row++) {
-  const y = 40 + row * 14
-  for (let col = -1; col < 7; col++) {
-   const x = 32 + col * 80 + (row % 2) * 40
-   const left = Math.max(32, x)
-   const right = Math.min(480, x + 80)
-   if (right <= left) continue
-   const shade = c.floor[(row + col + 10) % c.floor.length]
-   r(left, y, right - left, 13, shade)
-   r(left, y + 13, right - left, 1, c.seam)
-   if (mood !== 'tech' && x >= 32 && x < 480) {
-    r(x, y, 1, 14, c.seam)
-    r(x + 3, y + 3, 1, 1, woodLight)
-    r(x + 3, y + 10, 1, 1, woodLight)
-   }
-   if (mood !== 'tech' && right - left > 24) {
-    r(left + 8, y + 4, Math.min(36, right - left - 12), 1, c.floor[(row + col + 7) % c.floor.length])
-    r(left + 16, y + 9, Math.min(22, right - left - 18), 1, c.floor[(row + col + 9) % c.floor.length])
-   }
+ // Back plaster / hewn stone / metal wall, with real thickness and a lower dado.
+ r(24,12,464,40,c.timber[0]);r(30,16,452,28,c.wall[0])
+ if(mood==='cozy') {
+  r(30,16,452,3,c.wall[2])
+  for(const x of [34,108,314,392,468]) {r(x,17,4,27,c.timber[1]);r(x,17,1,27,c.timber[2])}
+ } else if(mood==='medieval') {
+  for(let row=0;row<3;row++) for(let x=30-(row%2)*14;x<480;x+=28) {
+   const left=Math.max(30,x),right=Math.min(482,x+27)
+   r(left,16+row*9,right-left,8,c.wall[(row+x/14)%3===0?1:0])
+   r(left+1,16+row*9,Math.max(1,right-left-2),1,c.stone[2])
   }
- }
- // Slate panels replace plank grain in the observatory. Muted joints leave
- // the movement lane quieter than the instruments and characters.
- if(mood==='tech') for(let y=56;y<348;y+=28) for(let x=32;x<480;x+=56) {
-  r(x,y,55,27,material.floor[((x/56+y/28)|0)%2+1])
-  r(x+2,y+1,51,1,material.stone[1]); r(x+53,y+23,1,2,material.trim)
- }
- // Top & side floor cast shadows for 3D depth
- r(32, 48, 448, 8, '#382a26')
- r(32, 56, 8, 292, '#3d2e29')
-
- // 4. INTERIOR BACK WALL, TRIM & BASEBOARD
- r(24, 12, 464, 40, ink)
- r(26, 13, 460, 36, c.wall)
- // Wainscot panels along back wall
- for (let px = 34; px < 470; px += 28) {
-  r(px, 18, 22, 24, c.wallPanel)
-  r(px + 2, 20, 18, 20, c.wall)
- }
- // Castle masonry, carved timber uprights and staggered mortar. The structural
- // shell changes with the mood; furniture coordinates and collision stay intact.
- if (mood === 'medieval') {
-  for (let row = 0; row < 4; row++) {
-   const y = 15 + row * 8
-   for (let col = 0; col < 17; col++) {
-    const x = 28 + col * 28 - (row % 2) * 14
-    r(x, y, 27, 7, ['#6c685c', '#777164', '#625f54'][(row + col) % 3])
-    r(x + 2, y, 23, 1, '#938671')
-    if ((row + col) % 4 === 0) r(x + 5, y + 4, 7, 1, '#58554c')
-   }
-  }
-  for (const x of [32, 174, 306, 468]) {
-   r(x, 14, 6, 35, '#352d25')
-   r(x + 1, 14, 2, 34, '#8a6b47')
-   r(x - 2, 41, 10, 5, '#3e352a')
-   r(x, 42, 6, 1, goldDark)
-  }
- }
- r(24, 11, 464, 4, c.trim)
- r(26, 46, 460, 4, c.baseboard)
- if (mood === 'tech') r(28, 45, 456, 1, cyan)
- // Left & right interior cutaway walls
- r(22, 12, 10, 344, c.wallOuter)
- r(23, 12, 4, 344, c.wallTop)
- r(480, 12, 10, 344, c.wallOuter)
- r(485, 12, 4, 344, c.wallTop)
- // Bottom cutaway wall & grand entrance threshold
- r(22, 348, 192, 10, c.wallTop)
- r(298, 348, 192, 10, c.wallTop)
- r(22, 356, 192, 6, c.wallOuter)
- r(298, 356, 192, 6, c.wallOuter)
-
- // 5. PANORAMA NIGHT WINDOW (x: 184..304, y: 12..54) & MOONBEAM RAYS
- r(184, 12, 120, 43, ink)
- r(186, 13, 116, 40, c.trim)
- r(190, 16, 108, 33, ink)
- r(192, 18, 104, 29, c.sky)
- // Daylight in the conservatory; quiet moonlight in the evening settings.
- r(274, 21, 9, 9, '#fff0b8')
- if (mood !== 'cozy') {
-  r(272, 20, 6, 6, c.sky)
-  r(202, 22, 2, 2, '#ffffff')
-  r(226, 20, 1, 1, '#fff0b8')
-  r(252, 24, 2, 2, '#ffffff')
  } else {
-  r(201, 24, 15, 3, '#dce8d8'); r(205, 22, 8, 3, '#dce8d8')
-  r(249, 29, 16, 3, '#dce8d8')
+  for(const x of [34,110,314,394]) {r(x,18,68,23,c.stone[0]);r(x+2,19,64,20,c.wall[0]);r(x+4,20,60,1,c.stone[1])}
  }
- // Skyline / Castle spires inside window
- for (let i = 0; i < 13; i++) {
-  const bh = 6 + ((i * 9 + (mood === 'medieval' ? 5 : 2)) % 18)
-  const bx = 193 + i * 8
-  r(bx, 47 - bh, 7, bh, i % 2 === 0 ? '#27314a' : '#323f5e')
-  if (mood === 'medieval' && i % 3 === 0) r(bx + 2, 44 - bh, 3, 3, '#27314a') // Spire tip
-  if (i % 2 === 0) r(bx + 2, 49 - bh, 2, 2, '#f6cd7b')
-  if (i % 3 === 1) r(bx + 4, 53 - bh, 1, 2, mood === 'tech' ? cyan : '#f6cd7b')
+ r(26,44,460,3,c.timber[2]);r(26,47,460,5,c.timber[0])
+ r(32,52,448,3,c.seam)
+ // Cutaway side walls: an inner face, top cap and low skirting (no new blockers).
+ for(const x of [22,480]) {
+  r(x,12,10,344,c.wall[1]);r(x,12,4,344,c.wall[2]);r(x+4,12,2,344,c.trim)
+  r(x+7,52,3,296,c.timber[0])
+  if(mood==='medieval') for(let y=64;y<344;y+=28) r(x+6,y,4,2,c.stone[0])
+  if(mood==='tech') for(let y=68;y<340;y+=56) {r(x+7,y,2,20,c.stone[0]);r(x+7,y,1,6,c.trim)}
  }
- // Window mullions & sill
- r(243, 16, 3, 33, c.trim)
- r(190, 32, 108, 2, c.trim)
- r(184, 49, 120, 4, woodLight)
- r(186, 53, 116, 3, woodDark)
- // Crisp under-sill shadow; translucent window light shafts are rendered by the lighting layer
- r(186, 56, 116, 2, c.seam)
+ // Deep window reveal and broad sill; view is shared with the existing ambient layer.
+ r(180,12,128,44,c.timber[0]);r(183,14,122,38,c.trim)
+ r(188,17,112,32,c.stone[0]);r(192,18,104,29,c.sky[0])
+ r(274,21,9,9,'#fff0b8')
+ if(mood!=='cozy') {r(272,20,6,6,c.sky[0]);r(202,22,2,2,c.trim);r(226,20,1,1,c.trim);r(252,24,2,2,c.trim)}
+ else {r(201,24,15,3,'#dce8d8');r(205,22,8,3,'#dce8d8');r(249,29,16,3,'#dce8d8')}
+ for(let i=0;i<13;i++) {
+  const bh=6+((i*9+(mood==='medieval'?5:2))%18),x=193+i*8
+  r(x,47-bh,7,bh,c.sky[1]);if(i%2===0)r(x+2,49-bh,2,2,c.sky[2])
+ }
+ r(243,16,3,33,c.trim);r(190,32,108,2,c.trim)
+ r(180,49,128,4,c.timber[2]);r(182,53,124,3,c.timber[0]);r(186,56,116,2,c.seam)
+ // Linen curtains, heavy hanging leather, or a rigid observatory shutter.
+ for(const x of [174,306]) {
+  r(x,14,7,33,c.cloth[0]);r(x+1,15,3,27,c.cloth[1]);r(x+4,16,1,29,c.cloth[2])
+  r(x,35,7,2,mood==='tech'?c.trim:goldDark)
+ }
+ // A restrained gallery and useful shelf above the work/rest zones.
+ r(42,19,36,25,c.timber[0]);r(44,21,32,21,c.trim);r(46,23,28,17,c.sky[0])
+ r(48,34,24,6,c.cloth[0]);r(52,29,12,9,c.cloth[1]);r(64,25,4,4,c.sky[2])
+ for(const x of [106,134]) {r(x,21,20,21,c.timber[0]);r(x+2,23,16,17,c.trim);r(x+5,26,10,11,c.cloth[1]);r(x+7,28,6,7,c.cloth[2])}
+ r(320,32,64,4,c.timber[2]);r(320,36,64,2,c.timber[0])
+ r(324,38,3,5,c.timber[0]);r(377,38,3,5,c.timber[0])
+ r(328,18,10,14,c.timber[0]);r(329,19,8,8,goldDark);r(331,20,3,5,gold);r(331,27,4,5,goldDark)
+ r(344,21,10,11,c.timber[0]);r(345,22,8,9,'#f7f1e6');r(346,25,2,1,ink);r(350,25,2,1,ink);r(347,28,4,2,'#82464a')
+ for(let i=0;i<4;i++) {r(358+i*5,20+i%2*2,4,12-i%2*2,[c.cloth[0],c.cloth[1],c.timber[1],c.trim][i]);r(359+i*5,23+i%2*2,2,1,c.trim)}
+ r(398,19,62,25,c.timber[0]);r(400,21,58,21,c.trim);r(402,23,54,17,c.sky[0]);r(404,32,22,8,c.stone[1]);r(412,28,12,4,c.stone[2]);r(426,31,28,9,c.cloth[0]);r(436,25,5,5,c.sky[2])
+ // A continuous entrance frame and inset woven mat, grounded in stone steps.
+ for(const [x,w] of [[22,192],[298,192]]) {r(x,348,w,8,c.trim);r(x,356,w,6,c.stone[0]);r(x+2,349,w-4,2,c.wall[2])}
+ r(222,314,68,30,c.timber[0]);r(224,316,64,26,c.trim);r(226,318,60,22,c.cloth[0])
+ for(let y=320;y<338;y+=4)r(230,y,52,1,c.cloth[1])
+ r(214,348,84,10,c.stone[1]);r(218,349,76,3,c.stone[2]);r(210,358,92,10,c.stone[0]);r(214,359,84,3,c.stone[1]);r(206,368,100,8,c.stone[0])
+ for(const x of [196,304]) {r(x,332,12,24,c.timber[0]);r(x+2,334,8,12,goldDark);r(x+3,336,6,8,'#ffe6ad');r(x+1,346,10,8,c.timber[1])}
+ // Sparse planting is outside the navigable room, rather than repeated sparkle noise.
+ for(const x of [28,66,104,350,390,434,474]) {r(x,366,12,9,'#243b38');r(x+2,364,7,7,'#34564a')}
+ return p
+}
 
- // 6. BACK-WALL GALLERY, HANGING IVY & DISPLAY SHELVES
- // Left Framed Cosmic Ringed-Planet Poster (x: 42..78, y: 15..45)
- r(42, 15, 36, 30, ink)
- r(44, 17, 32, 26, '#39324a')
- r(46, 19, 28, 22, '#1b182c')
- r(55, 25, 10, 10, '#9f7aea')
- r(57, 26, 6, 6, '#d6bcfa')
- r(49, 30, 22, 2, '#f6e05e') // Planet ring
- r(51, 22, 2, 2, '#ffffff')
- r(68, 35, 2, 2, cyan)
- // Cascading green wall ivy vine (x: 82..98, y: 10..48)
- r(84, 10, 12, 36, '#274534')
- r(86, 12, 8, 30, '#3d6b50')
- r(88, 15, 4, 22, '#68a37c')
- // Two small gallery frames & sticky notes (x: 102..172)
- for (let i = 0; i < 2; i++) {
-  const fx = 104 + i * 26
-  r(fx, 17, 22, 24, ink)
-  r(fx + 2, 19, 18, 20, woodLight)
-  r(fx + 4, 21, 14, 16, i === 0 ? '#384d5e' : '#5e4247')
-  r(fx + 6, 25, 10, 8, '#f0e6d2')
+/** Furniture-attached floor textiles. No catalog, collision or saved-layout data. */
+export function roomTextilePixels(mood: Appearance['mood'], objects: RoomObject[]): Pixel[] {
+ const c=worldPalettes[mood],p:Pixel[]=[]
+ const r=(x:number,y:number,w:number,h:number,color:string)=>{
+  const left=Math.max(32,x),top=Math.max(56,y),right=Math.min(480,x+w),bottom=Math.min(348,y+h)
+  if(right>left&&bottom>top)p.push({x:left,y:top,w:right-left,h:bottom-top,color})
  }
- r(158, 20, 8, 8, '#f6e05e')
- r(168, 24, 8, 8, '#fbd38d')
- r(160, 31, 8, 8, '#b794f4')
-
- // Right Wall Trophy Shelf & Mountain Painting (x: 318..472)
- r(320, 32, 64, 4, woodLight)
- r(320, 36, 64, 2, woodDark)
- // Golden Trophy on shelf
- r(328, 18, 10, 14, ink)
- r(329, 19, 8, 8, gold)
- r(331, 20, 3, 5, goldLight)
- r(331, 27, 4, 5, goldDark)
- // Lucky Cat figure on shelf
- r(344, 21, 10, 11, ink)
- r(345, 22, 8, 9, '#f7f1e6')
- r(346, 25, 2, 1, ink)
- r(350, 25, 2, 1, ink)
- r(347, 28, 4, 2, '#e53e3e')
- // Shelf books
- for (let i = 0; i < 4; i++) {
-  r(358 + i * 5, 20 + (i % 2) * 2, 4, 12 - (i % 2) * 2, ['#9f7aea', '#4fd1c5', '#f6ad55', '#fc8181'][i])
+ const sofa=objects.find(o=>o.id==='sofa')
+ if(sofa) {
+  const x=sofa.x*32-12,y=sofa.y*32-4,w=120,h=100
+  r(x,y,w,h,c.timber[0]);r(x+2,y+2,w-4,h-4,c.trim);r(x+5,y+5,w-10,h-10,c.cloth[0]);r(x+9,y+9,w-18,h-18,c.cloth[1])
+  for(const yy of [y+7,y+h-8])r(x+7,yy,w-14,1,c.cloth[2])
+  for(let xx=x+4;xx<x+w-4;xx+=4){r(xx,y-2,2,2,c.trim);r(xx,y+h,2,2,c.trim)}
  }
- // Large Framed Twilight Mountain Landscape Painting (x: 390..452, y: 15..45)
- r(390, 15, 62, 30, ink)
- r(392, 17, 58, 26, woodLight)
- r(394, 19, 54, 22, '#2d2447')
- r(394, 19, 54, 7, '#46386b')
- r(434, 21, 5, 5, '#fff0b8')
- r(396, 30, 24, 11, '#554380')
- r(402, 26, 12, 4, '#7f67b5')
- r(416, 28, 30, 13, '#3b2e5e')
- r(424, 24, 14, 4, '#9f7aea')
- // Trailing right-wall pothos vine
- r(456, 12, 14, 34, '#274534')
- r(458, 14, 10, 28, '#3d6b50')
- r(460, 16, 6, 20, '#68a37c')
-
- // 7. RUGS, GLOWING ORBITAL PORTAL PAD & ENTRANCE STEP
- // Checkered accent runner rug (x: 336..382, y: 134..224)
- r(336, 134, 46, 90, ink)
- r(338, 136, 42, 86, '#343246')
- for (let ry = 0; ry < 7; ry++) {
-  for (let rx = 0; rx < 3; rx++) {
-   if ((rx + ry) % 2 === 0) r(340 + rx * 13, 138 + ry * 12, 12, 11, '#47445e')
-  }
+ const bed=objects.find(o=>o.id==='bed')
+ if(bed) {
+  const x=bed.x*32-22,y=bed.y*32+12
+  r(x,y,18,76,c.timber[0]);r(x+1,y+1,16,74,c.trim);r(x+3,y+3,12,70,c.cloth[0]);r(x+5,y+7,8,62,c.cloth[1])
  }
- // Plush Woven Living-Room Rug under Sofa & Coffee Table (x: 74..226, y: 182..294)
- r(74, 182, 152, 112, '#3d3138')
- r(76, 184, 148, 108, c.rugBorder)
- r(80, 188, 140, 100, c.rugMain)
- r(86, 194, 128, 88, c.rugBorder)
- r(89, 197, 122, 82, c.rugInner)
- // Ornamental rug fringe tassels (top & bottom)
- for (let i = 0; i < 36; i++) {
-  r(78 + i * 4, 179, 2, 3, c.rugBorder)
-  r(78 + i * 4, 294, 2, 3, c.rugBorder)
- }
- // Rug border diamond motifs
- for (let i = 0; i < 14; i++) {
-  r(92 + i * 8, 190, 4, 2, gold)
-  r(92 + i * 8, 282, 4, 2, gold)
- }
-
- // A little woven floor medallion, with colors from the selected room materials.
- r(272, 244, 48, 32, material.timber[0])
- r(269, 249, 54, 22, c.rugBorder)
- r(274, 246, 44, 28, c.rugBorder)
- r(275, 250, 42, 20, material.cloth[0])
- r(281, 253, 30, 14, material.cloth[1])
- r(290, 256, 12, 8, c.rugBorder)
- r(294, 253, 4, 14, c.rugBorder)
-
- // Grand Entrance Welcome Mat, Twin Lantern Pillars & Stone Steps (x: 194..318, y: 310..382)
- r(222, 310, 68, 36, ink)
- r(224, 312, 64, 32, material.timber[0])
- r(226, 314, 60, 28, material.timber[1])
- r(228, 314, 56, 2, material.timber[2])
- // Home rune icon on entrance mat
- r(252, 322, 8, 4, material.trim)
- r(250, 326, 12, 8, material.trim)
- r(254, 329, 4, 5, material.timber[1])
- // Stone entrance stairs
- r(214, 348, 84, 10, '#454154')
- r(218, 350, 76, 4, '#635e78')
- r(210, 358, 92, 10, '#363342')
- r(214, 360, 84, 4, '#524d63')
- r(206, 368, 100, 12, '#282533')
- // Twin glowing entrance post lanterns
- for (const lx of [196, 304]) {
-  r(lx, 332, 12, 24, ink)
-  r(lx + 2, 334, 8, 12, '#f6bc56')
-  r(lx + 3, 336, 6, 8, '#fff3c4')
-  r(lx + 1, 346, 10, 8, woodDark)
- }
-
- const details: Record<string,string> = {
-  '#b794f4':material.cloth[2], '#9f7aea':material.cloth[1], '#d6bcfa':material.trim,
-  '#343246':material.cloth[0], '#47445e':material.cloth[1], '#39324a':material.timber[0],
-  '#1b182c':material.sky[0], '#2d2447':material.sky[0], '#46386b':material.sky[1],
-  '#554380':material.cloth[1], '#7f67b5':material.stone[2], '#3b2e5e':material.cloth[0],
-  '#5c4d8a':material.sky[1], '#8066b8':material.sky[2], '#635e78':material.stone[2],
-  '#454154':material.stone[1], '#363342':material.stone[0], '#524d63':material.stone[1], '#282533':'#19202b',
- }
- return p.map(pixel=>({...pixel,color:details[pixel.color]??pixel.color}))
+ return p
 }
 
 export function composedRoomPixels(mood: Appearance['mood'], objects: RoomObject[]): Pixel[] {
  return [
   ...roomPixels(mood),
+  ...roomTextilePixels(mood, objects),
   ...petCornerPixels(objects, mood),
   ...[...objects]
    .sort((a, b) => a.y - b.y)

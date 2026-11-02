@@ -9,8 +9,9 @@
 .world-social summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
 .world-social a, .world-entry-list p { overflow-wrap: anywhere; }
 .world-entry-list { list-style: none; padding: 0; margin: 20px 0; }
-.world-entry-list li { padding: 18px 0; border-top: 1px solid var(--border, #30323d); }
-.world-entry-list p { white-space: pre-wrap; margin: 12px 0; }
+.world-entry-list li { padding: 14px 16px; background: var(--realm-raised, #22242d); border: 1px solid var(--realm-line, #30323d); border-radius: 8px; margin-bottom: 12px; }
+.world-entry-list li strong { display: block; font-size: 14px; color: var(--realm-text, #e5e7eb); margin-bottom: 2px; }
+.world-entry-list p { white-space: pre-wrap; margin: 8px 0; font-size: 13px; line-height: 1.5; color: var(--realm-text, #e5e7eb); }
 .world-entry-list time { display: block; color: var(--muted, #a6a8b7); font-size: .8rem; margin-top: 4px; }
 .shared-hall-content { max-width: 1360px; padding: 32px; margin: 0 auto; }
 .shared-hall-content h1 { margin: 12px 0; }
@@ -46,4 +47,12 @@
 .home-social-settings[open] summary::after { content:'−'; }
 .home-social-settings form { padding:18px; background:var(--realm-surface); border-radius:6px; }
 .workspace-more summary:focus-visible, .home-social-settings summary:focus-visible { outline:2px solid var(--realm-accent); outline-offset:3px; }
+
+/* Quick guestbook chips */
+.guestbook-quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.quick-chip-btn { background: var(--realm-surface, #18191f) !important; border: 1px solid var(--realm-line, #30323d) !important; color: var(--realm-muted, #a6a8b7) !important; font-size: 11px !important; padding: 4px 10px !important; border-radius: 4px !important; cursor: pointer; transition: all 0.15s ease; min-height: 32px !important; }
+.quick-chip-btn:hover { color: var(--realm-text, #e5e7eb) !important; background: var(--realm-raised, #22242d) !important; border-color: var(--realm-accent, #b1c8bd) !important; }
+.guestbook-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.guestbook-char-count { font-size: 11px; color: var(--realm-muted, #a6a8b7); }
+
 @media (max-width: 600px) { .shared-hall-content { padding: 20px 14px; } .world-social { padding-top: 18px; } .shared-hall-portals button { flex: 1 1 140px; } }

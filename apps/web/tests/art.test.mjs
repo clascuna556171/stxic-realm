@@ -1,10 +1,26 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { composedRoomPixels, furniturePixels } from '../src/world/art.ts'
+import { composedRoomPixels, furniturePixels, roomTextilePixels } from '../src/world/art.ts'
 import { OBJECTS, ROOM, canOccupy } from '../src/world/room.ts'
 import { parseLayout } from '../src/world/layout.ts'
 import { defaults, parseAppearance } from '../src/appearance.ts'
 import { roomLighting } from '../src/world/lighting.ts'
+
+test('floor textiles follow saved furniture, disappear with it and clip to the interior',()=>{
+ const sofa=OBJECTS.find(o=>o.id==='sofa')
+ for(const mood of ['cozy','medieval','tech']) {
+  const initial=roomTextilePixels(mood,[sofa])
+  assert.ok(initial.length)
+  const moved=roomTextilePixels(mood,[{...sofa,x:sofa.x+1,y:sofa.y-1}])
+  assert.deepEqual(moved,initial.map(p=>({...p,x:p.x+32,y:p.y-32})))
+  assert.deepEqual(roomTextilePixels(mood,[]),[])
+  for(const id of ['sofa','bed'])for(const [x,y] of [[1,1],[12,8]]) {
+   for(const p of roomTextilePixels(mood,[{...OBJECTS.find(o=>o.id===id),x,y}])) {
+    assert.ok(p.x>=32&&p.y>=56&&p.x+p.w<=480&&p.y+p.h<=348)
+   }
+  }
+ }
+})
 
 test('room lighting follows moved furniture and removes its light when the source is removed', () => {
  const lantern = OBJECTS.find(o => o.id === 'lantern')

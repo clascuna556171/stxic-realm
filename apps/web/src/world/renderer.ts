@@ -5,7 +5,7 @@ import type { Visitor } from '../account-repository'
 import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, restingCharacterPixels, idleCharacterPixels, type Pixel } from '../character'
 import { ROOM, type Direction, type Point, type RoomObject, type RoomAction } from './room'
 import { facingFrom, samePoint } from './navigation'
-import { furniturePixels, roomPixels, furnitureActionForeground } from './art'
+import { furniturePixels, roomPixels, roomTextilePixels, furnitureActionForeground } from './art'
 import { roomLighting } from './lighting'
 import { roomAmbientPixels } from './room-life'
 import { furniturePose } from './furniture-pose'
@@ -156,7 +156,10 @@ export function createRoom(
    this.game.events.on('room:lights', onLights)
 
    const petCorner = this.add.graphics().setDepth(0.5).setName('pet-corner')
+   const textiles = this.add.graphics().setDepth(0.25).setName('room-textiles')
    const drawObjects = (objects: RoomObject[]) => {
+    textiles.clear()
+    draw(textiles, roomTextilePixels(appearance.mood, objects))
     petCorner.clear()
     draw(petCorner, petCornerPixels(objects, appearance.mood))
     drawLighting(objects)

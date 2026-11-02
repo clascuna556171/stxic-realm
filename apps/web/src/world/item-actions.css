@@ -1,7 +1,7 @@
-.item-dialog{color:var(--realm-text);background:var(--realm-surface);border:1px solid var(--realm-line);border-radius:12px;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;overflow:auto;overscroll-behavior:contain;scrollbar-color:var(--realm-muted) var(--realm-surface);font-family:inherit;font-size:14px;line-height:1.6}
+.item-dialog{color:var(--realm-text);background:var(--realm-surface);border:1px solid var(--realm-line);border-radius:12px;width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:24px;overflow:auto;overscroll-behavior:contain;scrollbar-color:var(--realm-muted) var(--realm-surface);font-family:inherit;font-size:14px;line-height:1.6}
 .item-dialog::backdrop{background:#080a10b8}
 .item-dialog>header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px}
-.item-dialog h2{margin:0;font-size:24px}.item-dialog h3{margin:24px 0 12px;font-size:18px}
+.item-dialog h2{margin:0;font-size:24px}.item-dialog h3{margin:18px 0 10px;font-size:18px}
 .item-dialog p{overflow-wrap:anywhere}.item-dialog header p,.item-dialog small,.item-memos time{color:var(--realm-muted)}
 .item-dialog header p{margin:6px 0 0}.item-dialog a{color:var(--realm-text);text-underline-offset:4px}
 .item-dialog button,.item-dialog input,.item-dialog textarea{font:inherit;color:var(--realm-text);background:var(--realm-raised);border:1px solid var(--realm-line);border-radius:6px;padding:8px 12px;min-height:44px;max-width:100%}
@@ -9,7 +9,7 @@
 .item-dialog :is(button,a,input,textarea):focus-visible{outline:2px solid var(--realm-accent);outline-offset:3px}
 .item-dialog label{display:grid;gap:6px;margin:12px 0}.item-dialog textarea{min-height:100px;resize:vertical}.item-dialog input,.item-dialog textarea{width:100%;box-sizing:border-box;font-size:16px}
 .item-actions,.item-tabs{display:flex;gap:8px;flex-wrap:wrap}.item-tabs{padding-bottom:16px;border-bottom:1px solid var(--realm-line)}
-.item-memos,.item-links{list-style:none;padding:0;margin:20px 0}.item-memos li{padding:16px 0;border-top:1px solid var(--realm-line)}.item-memos li>p{white-space:pre-wrap}.item-memos li>span{font-size:12px;color:var(--realm-muted)}
+.item-memos,.item-links{list-style:none;padding:0;margin:20px 0}.item-memos li{padding:14px;border:1px solid var(--realm-line);border-radius:8px}.item-memos li>p{white-space:pre-wrap}.item-memos li>span{font-size:12px;color:var(--realm-muted)}
 .item-links a{display:grid;gap:4px;padding:16px 0;border-bottom:1px solid var(--realm-line);overflow-wrap:anywhere}.item-links span{font-size:12px;color:var(--realm-muted)}
 .item-timer{font-size:36px;font-variant-numeric:tabular-nums}.item-water-drop{display:inline-block;margin:12px;animation:water-plant .8s ease-out both}
 .rest-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,#15102225,#100c22b8);z-index:3;display:grid;place-items:center;color:#f4ecdb;transition:opacity .3s}.rest-vignette span{font-size:24px;animation:rest-breathe 3s ease-in-out infinite}
@@ -33,3 +33,90 @@
 .item-hallmarks-panel p{color:var(--realm-muted);margin:0}
 .item-open-hallmarks-btn{background:var(--realm-raised);border:1px solid var(--realm-accent);color:var(--realm-accent);font-weight:600;padding:10px 16px;border-radius:6px;cursor:pointer;align-self:flex-start;transition:all .15s ease}
 .item-open-hallmarks-btn:hover{background:var(--realm-surface);box-shadow:0 0 12px rgba(56,189,248,.25)}
+
+/* Sticky Notes Enhancements */
+.sticky-section-header { display: flex; align-items: center; justify-content: space-between; margin: 16px 0 10px; }
+.sticky-count-pill { font-size: 11px; font-weight: 600; color: var(--realm-accent); background: var(--realm-raised); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--realm-line); }
+.sticky-prompts-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.sticky-prompt-chip { background: var(--realm-surface) !important; border: 1px solid var(--realm-line) !important; color: var(--realm-muted) !important; font-size: 11px !important; padding: 4px 8px !important; border-radius: 4px !important; cursor: pointer; transition: all 0.15s ease; min-height: 28px !important; }
+.sticky-prompt-chip:hover { color: var(--realm-text) !important; background: var(--realm-raised) !important; border-color: var(--realm-accent) !important; }
+.sticky-color-picker { display: flex; gap: 8px; margin: 8px 0 12px; align-items: center; }
+.sticky-color-swatch { width: 22px !important; height: 22px !important; border-radius: 50% !important; border: 2px solid transparent !important; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease; padding: 0 !important; min-height: 22px !important; }
+.sticky-color-swatch:hover { transform: scale(1.15); }
+.sticky-color-swatch.is-selected { border-color: #ffffff !important; transform: scale(1.15); }
+.sticky-form-help { display: block; margin-top: 6px; color: var(--realm-muted); font-size: 11px; }
+
+.item-memos.sticky-notes-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+
+.sticky-card {
+  display: flex;
+  flex-direction: column;
+  padding: 14px !important;
+  border-radius: 8px !important;
+  border: 1px solid !important;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sticky-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.sticky-card.is-pinned {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.sticky-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.85;
+  margin-bottom: 8px;
+}
+
+.sticky-pin-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.sticky-card-body {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  flex: 1;
+  word-break: break-word;
+}
+
+.sticky-card-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.sticky-card-actions button {
+  font-size: 11px !important;
+  min-height: 32px !important;
+  padding: 4px 8px !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 4px !important;
+  color: inherit !important;
+}
+
+.sticky-card-actions button:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.55) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}

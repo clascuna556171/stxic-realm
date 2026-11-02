@@ -7,13 +7,13 @@ export type RoomLight = { x: number; y: number; rx: number; ry: number; color: s
 export function roomLighting(mood: Appearance['mood'], objects: RoomObject[], enabled: Record<string,boolean> = {}): RoomLight[] {
  const warm = mood === 'tech' ? '#96cbd9' : '#ffd18b'
  const lights: RoomLight[] = [
-  { x: 244, y: 62, rx: 74, ry: 42, color: warm, strength: .2 },
+  { x: 244, y: 62, rx: 68, ry: 36, color: warm, strength: .12 },
   { x: 202, y: 340, rx: 28, ry: 24, color: '#ffd18b', strength: .24 },
   { x: 310, y: 340, rx: 28, ry: 24, color: '#ffd18b', strength: .24 },
  ]
  for (const item of objects) {
   if(enabled[item.id]===false)continue
-  if (item.id === 'lantern' || item.id === 'floor-lamp') lights.push({ x: item.x * 32 + 16, y: item.y * 32 + 18, rx: 46, ry: 34, color: item.id === 'lantern' && mood === 'tech' ? '#96cbd9' : '#ffd18b', strength: item.id === 'floor-lamp' ? .18 : .22 })
+  if (item.id === 'lantern' || item.id === 'floor-lamp') lights.push({ x: item.x * 32 + 16, y: item.y * 32 + (item.id === 'floor-lamp' ? -8 : 18), rx: 36, ry: 28, color: item.id === 'lantern' && mood === 'tech' ? '#96cbd9' : '#ffd18b', strength: item.id === 'floor-lamp' ? .14 : .18 })
   if (item.id === 'desk' || item.id === 'console') lights.push({ x: (item.x + item.width / 2) * 32, y: item.y * 32 + 12, rx: item.width * 18, ry: 28, color: mood === 'tech' ? '#8fcac1' : '#c0c9b6', strength: mood === 'tech' ? .12 : .07 })
   if (item.id === 'bookshelf') lights.push({ x: item.x * 32 + 14, y: item.y * 32 - 10, rx: 30, ry: 28, color: '#ffd18b', strength: .14 })
  }

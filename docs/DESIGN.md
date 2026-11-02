@@ -1,5 +1,9 @@
 # Design and experience
 
+## Authored home architecture — 2 November 2026
+
+Homes now share deeper window reveals, framed cutaway walls, quieter floors, constructed furniture and usable linen bedding. Cozy oak/plaster, medieval stone/leather/brass and tech slate/metal remain distinct. Sofa rugs and bedside runners follow the supplied layout rather than fixed room coordinates; saved homes, starter positions, collision and pose anchors stay unchanged. See [home artwork and compatibility](HOME_ART.md) for shared consumers, provenance and local rendering verification.
+
 ## World resident artwork — 2 November 2026
 
 The shared 48×64 character family now uses smaller stepped heads, visible necks, tapered shoulders, connected sleeves/hands and separated legs with grounded shoes. Short, long, curly and swept hair retain distinct silhouettes through four views. Everyday jacket/denim, medieval cloak/leather/brass and paneled tech clothing share anatomy while retaining their construction and selected colors. Complete limb groups drive opposing walk phases; idle breathing/blinking, bent-knee seating and closed-eye bed rest preserve identity and existing furniture anchors/occlusion. Character Studio adds facing and pose inspection only. Source, provenance, coverage and local verification limits: [world character artwork](CHARACTER_ART.md).

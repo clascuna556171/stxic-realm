@@ -8,6 +8,13 @@
 @media(max-width:650px){.room-object-list{max-height:none}.room-inspector:has(.studio-form) .room-object-list{max-height:260px}}
 
 .room-scene-head-actions{display:flex;align-items:center;gap:10px}
+.room-head-btn{background:#242630;border:1px solid #424451;border-radius:6px;padding:6px 12px;color:#d1d2de;font-size:11px;cursor:pointer;transition:all .15s ease}
+.room-head-btn:hover{background:#32343f;color:#fff;border-color:var(--realm-accent)}
+.room-table-shortcuts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.room-shortcut-chip{background:var(--realm-raised);border:1px solid var(--realm-line);color:var(--realm-muted);font-size:10px;padding:5px 9px;border-radius:4px;cursor:pointer;transition:all .15s ease}
+.room-shortcut-chip:hover:not(:disabled){color:var(--realm-text);border-color:var(--realm-accent)}
+.room-shortcut-chip:disabled{opacity:.5;cursor:default}
+
 .room-action-indicator{display:inline-flex;align-items:center;gap:8px}
 .room-action-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;background:rgba(92,230,220,.12);border:1px solid rgba(92,230,220,.35);color:#7afbf2;font-size:11px;font-weight:500}
 .action-pill-dot{width:6px;height:6px;border-radius:50%;background:#5ce6dc;box-shadow:0 0 6px #5ce6dc}

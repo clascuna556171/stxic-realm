@@ -8,7 +8,7 @@ export type AmbientMote = { x: number; y: number; size: number; color: string; a
 
 /**
  * Deterministic frame-stepped pixel animations that bring the 2D Home room to life:
- * steaming mugs, breathing/blinking pets, active monitors, bouncing equalizer bars,
+ * steaming mugs, active monitors, bouncing equalizer bars,
  * flickering lantern flames, swaying foliage, and twinkling window skylines.
  */
 export function roomAmbientPixels(
@@ -65,26 +65,11 @@ export function roomAmbientPixels(
    r(bx + 2, 49 - bh, 2, 2, (step + i) % 2 === 0 ? goldBright : gold)
   }
  }
- // Exterior bay water shimmer on far right (x: 490..508)
- for (let wy = 0; wy < 7; wy++) {
-  const row = wy * 2 + (step % 2)
-  const shift = (step + wy) % 3
-  r(491 + shift, 136 + row * 9, 10, 1, wy % 2 === 0 ? mat.sky[2] : gold)
- }
-
- // 2. Back-wall shelf Lucky Cat paw wave, trophy glint & hanging vine breeze
+ // Restrained animation stays attached to the shelf's lantern and porcelain figure.
  const pawUp = step % 4 < 2
  r(343, pawUp ? 22 : 25, 2, 3, '#f7f1e6')
- r(343, pawUp ? 21 : 24, 2, 1, '#e53e3e')
- if (step % 6 === 0) {
-  r(331, 19, 2, 2, '#ffffff')
-  r(51, 22, 2, 2, goldBright)
- } else if (step % 6 === 3) {
-  r(68, 35, 2, 2, '#ffffff')
- }
- const vineSway = step % 4 === 1 ? 1 : step % 4 === 3 ? -1 : 0
- r(87 + vineSway, 38, 4, 8, '#68a37c')
- r(459 - vineSway, 36, 5, 8, '#68a37c')
+ r(343, pawUp ? 21 : 24, 2, 1, '#82464a')
+ if(step%6===0)r(331,19,2,2,goldBright)
 
  // 3. Twin entrance post lanterns warm flame flicker
  const postFlicker = step % 3
@@ -143,41 +128,6 @@ export function roomAmbientPixels(
    }
   }
 
-  if (item.id === 'sofa') {
-   // White pixel kitten on center cushion: blink, ear twitch & tail sway
-   const catBlink = step % 8 === 0
-   const tailPos = step % 4
-   if (catBlink) {
-    r(ox + 46, oy + 21, 2, 2, '#ffffff')
-    r(ox + 50, oy + 21, 2, 2, '#ffffff')
-    r(ox + 46, oy + 22, 2, 1, ink)
-    r(ox + 50, oy + 22, 2, 1, ink)
-   }
-   // Animated little white tail curling beside the kitten
-   const tx = ox + 55
-   const ty = oy + (tailPos === 0 ? 22 : tailPos === 1 ? 21 : tailPos === 2 ? 22 : 23)
-   r(tx, ty, 3, 3, ink)
-   r(tx, ty + 1, 2, 1, '#ffffff')
-  }
-
-  if (item.id === 'bed') {
-   // Sleeping tuxedo cat on quilt: chest breathing, tail-tip curl & floating 'z' motes
-   const breath = step % 4 < 2 ? 0 : 1
-   if (breath === 1) {
-    r(ox + 15, oy + 43, 14, 1, '#2f2e3b')
-   }
-   // White tail tip gentle curl
-   const tailLift = step % 3 === 0 ? -1 : 0
-   r(ox + 31, oy + 48 + tailLift, 3, 2, '#f7f1e6')
-   // Rising sleep 'z' pixels above the cat
-   const zPhase = step % 4
-   const zx = ox + 26 + zPhase * 2
-   const zy = oy + 36 - zPhase * 3
-   r(zx, zy, 3, 1, trim)
-   r(zx + 1, zy + 1, 1, 1, trim)
-   r(zx, zy + 2, 3, 1, trim)
-  }
-
   if (item.id === 'coffee-table') {
    // Steaming ceramic mug on coffee table
    const steam = (step + 2) % 4
@@ -203,9 +153,7 @@ export function roomAmbientPixels(
    const f = step % 4
    r(ox + 13, oy + 11 + (f === 1 ? 1 : 0), 6, 10, '#ffe699')
    r(ox + 14 + (f === 2 ? 1 : 0), oy + 12, 3, 7, '#ffffff')
-   const sparkY = oy + 2 - (step % 3) * 2
-   const sparkX = ox + 14 + ((step % 2) * 3 - 1)
-   r(sparkX, sparkY, 2, 2, step % 2 === 0 ? goldBright : '#f6bc56')
+
   }
 
   if (item.id === 'floor-lamp' && lightOn) {
@@ -213,9 +161,7 @@ export function roomAmbientPixels(
    const f = step % 3
    r(ox + 12, oy - 13 + (f === 1 ? 1 : 0), 8, 8, '#fff3c4')
    r(ox + 13, oy - 12, 6, f === 2 ? 8 : 6, '#ffffff')
-   const moteY = oy - 18 - (step % 4)
-   const moteX = ox + (step % 2 === 0 ? 7 : 22)
-   r(moteX, moteY, 2, 2, goldBright)
+
   }
 
   if (item.id === 'console' && lightOn) {

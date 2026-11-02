@@ -6,8 +6,16 @@ import { safeProjectUrl, useSocialSnapshot, type HomeSocialState, type ProjectLi
 import './social-world.css'
 import {Icon} from '../Icon'
 
+const GUESTBOOK_PROMPTS = [
+  '👋 Stopped by to say hello!',
+  '✨ Loved the cozy room vibe & music!',
+  '🐾 Came to pet your companion!',
+  '☕ Leaving warm wishes from a fellow traveler!',
+]
+
 export function HomeSocial({ owner, selected, section }: { owner: string; selected: string; section?: 'guestbook' }) {
- const user = useAccount().session!.user.id, own = owner === user
+ const account = useAccount()
+ const user = account.session?.user.id, own = owner === user
  const load = useCallback(() => rpc<HomeSocialState>(client!, 'home_social', { p_owner: owner }), [owner])
  const { data, error, refresh, apply } = useSocialSnapshot(load)
  const settings = useRef<HomeSocialState | null>(null)
@@ -28,7 +36,7 @@ export function HomeSocial({ owner, selected, section }: { owner: string; select
   try { await rpc(client!, 'remove_guestbook', { p_entry: id }); await refresh(); setNotice('Entry removed.') } catch (e) { setNotice(errorText(e)) } finally { setBusy(false) }
  }
  return <section ref={root} id={section?'item-home-social':'home-social'} className="world-social home-social-panel" aria-label="Home social features">
-  <div className="home-social-toolbar"><a href="/"><Icon name="back"/>Return to chat</a><button disabled={busy} onClick={() => void refresh().catch(() => {})}><Icon name="refresh"/>Refresh home social</button></div>
+  {!section && <div className="home-social-toolbar"><a href="/"><Icon name="back"/>Return to chat</a><button disabled={busy} onClick={() => void refresh().catch(() => {})}><Icon name="refresh"/>Refresh home social</button></div>}
   <div hidden={section==='guestbook'} className="home-social-navigation" role="group" aria-label="Home sections"><button onClick={() => book.current?.focus()}><Icon name="book"/>Open guestbook</button><button onClick={() => desk.current?.focus()}><Icon name="link"/>Open project links</button>{own&&data&&<button onClick={openSettings}><Icon name="settings"/>Home social settings</button>}</div>
   {error && <p className="error" role="alert">{error}</p>}
   {data ? <>
@@ -36,7 +44,30 @@ export function HomeSocial({ owner, selected, section }: { owner: string; select
     {data.links.length ? <ul>{data.links.map((link, i) => { const url = safeProjectUrl(link.url); return url ? <li key={i}><a href={url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">{link.title} <small>({new URL(url).hostname})</small></a></li> : null })}</ul> : <p className="muted">No project links shared yet.</p>}
    </section>
    <section ref={book} tabIndex={-1} aria-labelledby={section?'item-guestbook-heading':'guestbook-heading'}><h2 id={section?'item-guestbook-heading':'guestbook-heading'}><Icon name="book"/>Guestbook</h2><p className="muted">Visible to people who can currently visit this home. Up to 100 entries; 5 new posts per hour per account.</p>
-    {data.can_post ? <form onSubmit={post}><label>Leave a guestbook entry<textarea aria-label="Leave a guestbook entry" required maxLength={1000} value={body} disabled={busy} onChange={e => setBody(e.target.value)}/></label><button className="guestbook-post" disabled={busy || !body.trim()}>Post entry<Icon name="arrow"/></button></form> : <p>The owner has closed guestbook posting.</p>}
+    {data.can_post ? <form onSubmit={post} onKeyDown={e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')void post(e)}}>
+     <div className="guestbook-quick-chips" role="group" aria-label="Quick guestbook greetings">
+      {GUESTBOOK_PROMPTS.map(p => (
+       <button key={p} type="button" className="quick-chip-btn" onClick={() => setBody(p)}>
+        {p}
+       </button>
+      ))}
+     </div>
+     <label>Leave a guestbook entry
+      <textarea
+       aria-label="Leave a guestbook entry"
+       required
+       maxLength={1000}
+       value={body}
+       disabled={busy}
+       placeholder="Leave a friendly message, greeting, or thought for the room owner..."
+       onChange={e => setBody(e.target.value)}
+      />
+     </label>
+     <div className="guestbook-form-footer">
+      <small className="guestbook-char-count">{body.length}/1000 characters (Ctrl+Enter to post)</small>
+      <button className="guestbook-post" disabled={busy || !body.trim()}>Post entry<Icon name="arrow"/></button>
+     </div>
+    </form> : <p>The owner has closed guestbook posting.</p>}
     <ol className="world-entry-list">{data.entries.map(entry => <li key={entry.id}><strong>{entry.display_name}</strong><time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString()}</time><p>{entry.body}</p>{(data.can_moderate || entry.author_id === user) && <button disabled={busy} onClick={() => void remove(entry.id)}>Remove entry by {entry.display_name}</button>}</li>)}</ol>{!data.entries.length && <p className="muted">No entries yet.</p>}
    </section>
   </> : !error && <p role="status">Opening the guestbook…</p>}
@@ -44,6 +75,113 @@ export function HomeSocial({ owner, selected, section }: { owner: string; select
   {notice && <p role="status">{notice}</p>}
  </section>
 }
+
+export function LocalGuestbook({ scope = 'preview' }: { scope?: string }) {
+ const storageKey = `stxic-realm:guestbook:v1:${scope}`
+ const initialEntries = [
+  {
+   id: 'local-1',
+   author_id: 'triarch',
+   display_name: 'Triarch the Ancient',
+   body: 'May starlight watch over your threshold. Left a pouch of warm hearth embers.',
+   created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+  },
+  {
+   id: 'local-2',
+   author_id: 'village-cat',
+   display_name: 'Village Cat',
+   body: 'Found a warm sunny patch right next to your sofa. *purrs softly*',
+   created_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+ ]
+ const [entries, setEntries] = useState<Array<{ id: string; author_id: string; display_name: string; body: string; created_at: string }>>(() => {
+  try {
+   const raw = localStorage.getItem(storageKey)
+   return raw ? JSON.parse(raw) : initialEntries
+  } catch {
+   return initialEntries
+  }
+ })
+ const [body, setBody] = useState('')
+ const [notice, setNotice] = useState('')
+
+ function saveEntries(next: typeof entries) {
+  setEntries(next)
+  try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch {}
+ }
+
+ function post(e: FormEvent) {
+  e.preventDefault()
+  if (!body.trim()) return
+  const newEntry = {
+   id: crypto.randomUUID(),
+   author_id: 'local-user',
+   display_name: 'You (Traveler)',
+   body: body.trim(),
+   created_at: new Date().toISOString(),
+  }
+  const next = [newEntry, ...entries].slice(0, 50)
+  saveEntries(next)
+  setBody('')
+  setNotice('Guestbook entry saved.')
+ }
+
+ function remove(id: string) {
+  const next = entries.filter(e => e.id !== id)
+  saveEntries(next)
+  setNotice('Entry removed.')
+ }
+
+ return (
+  <section id="item-home-social" className="world-social home-social-panel" aria-label="Home social features">
+   <section tabIndex={-1} aria-labelledby="item-guestbook-heading">
+    <h2 id="guestbook-heading"><Icon name="book" />Guestbook</h2>
+    <p className="muted">Visible to people who can currently visit this home. Up to 100 entries; 5 new posts per hour per account.</p>
+
+    <div className="guestbook-quick-chips" role="group" aria-label="Quick guestbook greetings">
+     {GUESTBOOK_PROMPTS.map(p => (
+      <button key={p} type="button" className="quick-chip-btn" onClick={() => setBody(p)}>
+       {p}
+      </button>
+     ))}
+    </div>
+
+    <form onSubmit={post} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { void post(e) } }}>
+     <label>Leave a guestbook entry
+      <textarea
+       aria-label="Leave a guestbook entry"
+       required
+       maxLength={1000}
+       value={body}
+       placeholder="Leave a friendly message, greeting, or thought for the room owner..."
+       onChange={e => setBody(e.target.value)}
+      />
+     </label>
+     <div className="guestbook-form-footer">
+      <small className="guestbook-char-count">{body.length}/1000 characters (Ctrl+Enter to post)</small>
+      <button className="guestbook-post" disabled={!body.trim()}>
+       Post entry<Icon name="arrow" />
+      </button>
+     </div>
+    </form>
+
+    <ol className="world-entry-list">
+     {entries.map(entry => (
+      <li key={entry.id}>
+       <strong>{entry.display_name}</strong>
+       <time dateTime={entry.created_at}>{new Date(entry.created_at).toLocaleString()}</time>
+       <p>{entry.body}</p>
+       <button onClick={() => remove(entry.id)}>Remove entry by {entry.display_name}</button>
+      </li>
+     ))}
+    </ol>
+    {!entries.length && <p className="muted">No entries yet.</p>}
+    {notice && <p role="status">{notice}</p>}
+   </section>
+  </section>
+ )
+}
+
 function HomeSocialSettings({ state, onSaved, reload }: { state: HomeSocialState; onSaved: (s: HomeSocialState) => void; reload: () => Promise<HomeSocialState> }) {
  const [posting, setPosting] = useState(state.posting), [links, setLinks] = useState<ProjectLink[]>(state.links)
  const [baseline, setBaseline] = useState(state), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false)

@@ -802,6 +802,216 @@
   white-space: nowrap;
 }
 
+
+/* Passport Milestone Pill */
+.passport-milestone-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 14px;
+  font-size: 11px;
+}
+
+.milestone-badge {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 9px;
+  background: var(--realm-selected);
+  color: var(--realm-accent);
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--realm-accent);
+}
+
+.milestone-label {
+  color: var(--realm-muted);
+}
+
+.stamp-action-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.stamp-already-badge {
+  font-size: 10px;
+  font-weight: 600;
+  color: #10b981;
+  background: #064e3b40;
+  border: 1px solid #064e3b;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.stamp-recommendation-row {
+  margin-bottom: 10px;
+}
+
+.stamp-native-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--realm-surface);
+  border: 1px dashed var(--realm-accent);
+  color: var(--realm-text);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stamp-native-btn:hover {
+  background: var(--realm-selected);
+  border-style: solid;
+}
+
+.stamp-quick-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.quick-note-chip {
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
+  color: var(--realm-muted);
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.quick-note-chip:hover {
+  color: var(--realm-text);
+  border-color: var(--realm-accent);
+  background: var(--realm-raised);
+}
+
+/* Passport Visa Inspector */
+.passport-inspect-modal {
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-accent);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.inspect-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+}
+
+.inspect-seal {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--realm-raised);
+}
+
+.inspect-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.inspect-meta h5 {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--realm-text);
+}
+
+.inspect-meta p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--realm-muted);
+}
+
+.inspect-meta time {
+  display: block;
+  font-size: 10px;
+  color: var(--realm-muted);
+  margin-top: 2px;
+}
+
+.inspect-badge-tag {
+  display: inline-block;
+  font-size: 10px;
+  color: var(--realm-accent);
+  margin-top: 4px;
+}
+
+.inspect-close-btn {
+  background: transparent;
+  border: 0;
+  color: var(--realm-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.inspect-close-btn:hover {
+  color: var(--realm-text);
+}
+
+.inspect-quote {
+  margin: 10px 0;
+  padding: 8px 12px;
+  background: var(--realm-raised);
+  border-left: 3px solid var(--realm-accent);
+  border-radius: 0 4px 4px 0;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--realm-text);
+  line-height: 1.5;
+}
+
+.inspect-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.inspect-delete-btn {
+  background: #3f1219;
+  border: 1px solid #7f1d1d;
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.inspect-delete-btn:hover {
+  background: #7f1d1d;
+  color: #fff;
+}
+
+.passport-stamp-item.is-inspecting {
+  box-shadow: 0 0 0 2px var(--realm-accent);
+  background: var(--realm-selected);
+}
+
 /* Reduced Motion Disables Animations */
 @media (prefers-reduced-motion: reduce) {
   .vinyl-disc.is-spinning {

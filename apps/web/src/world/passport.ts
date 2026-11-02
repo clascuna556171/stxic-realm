@@ -55,8 +55,21 @@ export function getPassportStamps(): RoomStamp[] {
 export function savePassportStamp(stamp: Omit<RoomStamp, 'id' | 'date'>): RoomStamp {
   const existing = getPassportStamps()
   const today = new Date().toISOString().slice(0, 10)
-  const duplicate = existing.find(s => s.roomId === stamp.roomId && s.date.slice(0, 10) === today)
-  if (duplicate) return duplicate
+  const duplicateIndex = existing.findIndex(s => s.roomId === stamp.roomId && s.date.slice(0, 10) === today)
+
+  if (duplicateIndex >= 0) {
+    const updatedStamp: RoomStamp = {
+      ...existing[duplicateIndex],
+      ...stamp,
+      date: new Date().toISOString(),
+    }
+    const updated = [...existing]
+    updated[duplicateIndex] = updatedStamp
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    } catch {}
+    return updatedStamp
+  }
 
   const newStamp: RoomStamp = {
     ...stamp,
@@ -69,6 +82,15 @@ export function savePassportStamp(stamp: Omit<RoomStamp, 'id' | 'date'>): RoomSt
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
   } catch {}
   return newStamp
+}
+
+export function deletePassportStamp(id: string): RoomStamp[] {
+  const existing = getPassportStamps()
+  const updated = existing.filter(s => s.id !== id)
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+  } catch {}
+  return updated
 }
 
 /**
