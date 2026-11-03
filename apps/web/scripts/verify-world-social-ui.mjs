@@ -171,7 +171,7 @@ try {
  await alice.getByLabel('West portal destination',{exact:true}).selectOption(channel);await alice.getByRole('button',{name:'Save channel portals',exact:true}).click();await alice.getByRole('button',{name:'Save channel portals',exact:true}).waitFor({state:'visible'});await alice.waitForFunction(()=>document.querySelector('.shared-hall-portals button')?.disabled===false);assert.equal(await alice.getByText('The hall changed. Reload destinations before saving.',{exact:true}).count(),0)
  await alice.getByLabel('New announcement',{exact:true}).fill('Welcome to our shared hall.');await alice.getByRole('button',{name:'Publish announcement',exact:true}).click();await alice.getByText('Announcement saved.',{exact:true}).waitFor()
  await bob.goto(hallUrl);await openHallDetails(bob);await bob.getByText('Welcome to our shared hall.',{exact:true}).waitFor();assert.equal(await bob.getByLabel('New announcement',{exact:true}).count(),0)
- await alice.getByRole('textbox',{name:'Message this channel',exact:true}).fill('Hall message bridges into the world')
+ await alice.locator('.hall-conversation').getByRole('textbox',{name:'Message #general',exact:true}).fill('Hall message bridges into the world')
  await alice.getByRole('button',{name:'Send',exact:true}).click()
  await alice.locator('.hall-speech').getByText('Hall message', {exact:false}).waitFor()
  await bob.locator('.hall-conversation').getByText('Hall message bridges into the world',{exact:true}).waitFor()

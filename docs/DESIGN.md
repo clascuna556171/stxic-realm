@@ -46,7 +46,7 @@ Homes now share deeper window reveals, framed cutaway walls, quieter floors, con
 
 ## World resident artwork — 2 November 2026
 
-The shared 48×64 character family now uses smaller stepped heads, visible necks, tapered shoulders, connected sleeves/hands and separated legs with grounded shoes. Short, long, curly and swept hair retain distinct silhouettes through four views. Everyday jacket/denim, medieval cloak/leather/brass and paneled tech clothing share anatomy while retaining their construction and selected colors. Complete limb groups drive opposing walk phases; idle breathing/blinking, bent-knee seating and closed-eye bed rest preserve identity and existing furniture anchors/occlusion. Character Studio adds facing and pose inspection only. Source, provenance, coverage and local verification limits: [world character artwork](CHARACTER_ART.md).
+The 3 November character overhaul keeps the shared 48×64 canvas with broader expressive heads, compact bodies, contiguous stepped silhouettes and consistent dark outlines. Short, long, curly and swept hair use authored color clusters; everyday chore jackets, medieval flared mantles/leather/brass and cropped tech shells have distinct garment construction. Opposing connected limbs, restrained breathing/blinking, bent-knee seating and closed-eye bed rest preserve existing pivots, furniture anchors and occlusion. All current options and starters remain usable through the same React/Phaser drawing functions. Source, before/after sheets, provenance, coverage and local verification limits: [world character artwork](CHARACTER_ART.md).
 
 ## Companions and home materials — 2 November 2026
 
