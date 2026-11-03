@@ -3,6 +3,7 @@ import {WorkspaceNav} from './WorkspaceNav'
 import {Icon} from './Icon'
 import {THEMES, getActiveTheme, applyTheme, type RealmTheme} from './theme'
 import './appearance-theme.css'
+import {GlassToggle} from './GlassToggle'
 
 export default function AppearanceTheme() {
   const [selectedTheme, setSelectedTheme] = useState<string>(() => getActiveTheme())
@@ -40,6 +41,7 @@ export default function AppearanceTheme() {
           <p className="muted">Customize the colors and visual mood of Realm on this device.</p>
         </div>
 
+        <GlassToggle/>
         {/* Default Themes */}
         <section className="theme-group-section" aria-labelledby="default-themes-title">
           <h2 id="default-themes-title" className="theme-group-title">Default Themes</h2>

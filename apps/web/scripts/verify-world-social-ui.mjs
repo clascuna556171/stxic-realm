@@ -79,8 +79,9 @@ async function contextFor(name,brokenRenderer=false) {
  return {context,page}
 }
 const hallUrl=origin+'/?server-hall='+space,homeUrl=origin+'/?home='+users.alice
-const refresh=page=>page.getByRole('button',{name:'Refresh shared hall',exact:true}).click()
-const openHallDetails=async page=>{await page.getByRole('button',{name:'Refresh shared hall',exact:true}).waitFor();const toggle=page.getByRole('button',{name:'Board & settings',exact:true});if(await toggle.isVisible())await toggle.click()}
+const refresh=async page=>{await page.locator('.community-hall-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Refresh shared hall',exact:true}).click()}
+const pageWaitHallActivities=page=>page.getByRole('navigation',{name:'Community sections'}).waitFor();
+const openHallDetails=async page=>{await page.locator('.community-hall-tools').evaluate(e=>e.open=true);await page.getByRole('button',{name:'Refresh shared hall',exact:true}).waitFor();await page.locator('.community-hall-tools').evaluate(e=>e.open=false);await page.getByRole('button',{name:(page.viewportSize()?.width??1280)>900?'Hall':'Community',exact:true}).click();const notices=page.getByRole('navigation',{name:'Community sections'}).getByRole('button',{name:'Noticeboard',exact:true});if(await notices.count())await notices.click();await page.locator('.community-owner-settings').evaluate(e=>e.open=true)}
 const homeRefresh=page=>page.getByRole('button',{name:'Refresh home social',exact:true}).click()
 const overflow=async page=>assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false)
 try {
@@ -166,7 +167,7 @@ try {
  await alice.screenshot({path:resolve(output,'home-desktop.png'),fullPage:true})
  await outsider.goto(homeUrl);await outsider.getByRole('heading',{name:'This visit has ended.'}).waitFor();assert.equal(await outsider.getByText('My project',{exact:true}).count(),0)
  // Optional shared state starts disabled; owners opt in without changing the personal hub.
- await alice.goto(hallUrl);await openHallDetails(alice);await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await alice.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
+ await alice.goto(hallUrl);await openHallDetails(alice);await alice.locator('.community-hall-tools').evaluate(e=>e.open=true);await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await pageWaitHallActivities(alice);await openHallDetails(alice);await alice.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
  await alice.getByRole('button',{name:'Grant decorator: Bob',exact:true}).click();await alice.getByRole('button',{name:'Revoke decorator: Bob',exact:true}).waitFor()
  await alice.getByLabel('West portal destination',{exact:true}).selectOption(channel);await alice.getByRole('button',{name:'Save channel portals',exact:true}).click();await alice.getByRole('button',{name:'Save channel portals',exact:true}).waitFor({state:'visible'});await alice.waitForFunction(()=>document.querySelector('.shared-hall-portals button')?.disabled===false);assert.equal(await alice.getByText('The hall changed. Reload destinations before saving.',{exact:true}).count(),0)
  await alice.getByLabel('New announcement',{exact:true}).fill('Welcome to our shared hall.');await alice.getByRole('button',{name:'Publish announcement',exact:true}).click();await alice.getByText('Announcement saved.',{exact:true}).waitFor()
@@ -179,29 +180,29 @@ try {
 
  await alice.screenshot({path:resolve(output,'hall-desktop.png'),fullPage:true})
  await bob.setViewportSize({width:320,height:780});await overflow(bob);await bob.screenshot({path:resolve(output,'hall-phone.png'),fullPage:true})
- await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Remove component',exact:true}).click();await bob.getByRole('button',{name:'Undo',exact:true}).click();await bob.getByRole('button',{name:'Redo',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()
+ await bob.locator('.community-hall-tools').evaluate(e=>e.open=true);await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Remove component',exact:true}).click();await bob.getByRole('button',{name:'Undo',exact:true}).click();await bob.getByRole('button',{name:'Redo',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()
  assert.equal(await bob.evaluate(id=>localStorage.getItem('stxic-realm:hall:v1:'+id),users.bob),null,'shared saves never overwrite personal local layouts')
- await bob.reload();await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).waitFor();await refresh(alice)
+ await bob.reload();await openHallDetails(bob);await bob.locator('.community-hall-tools').evaluate(e=>e.open=true);await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).waitFor();await refresh(alice)
  await alice.waitForFunction(()=>document.querySelector('.hall-pixel-canvas')?.getAttribute('aria-label')?.includes('8 independently'))
  // A saved shared layout reloads for another member; stale drafts retain edits and require reload.
- await alice.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await alice.getByRole('button',{name:'Add Potted fern',exact:true}).click()
- await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Add Brass lantern',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()
+ await alice.locator('.community-hall-tools').evaluate(e=>e.open=true);await alice.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await alice.getByRole('button',{name:'Add Potted fern',exact:true}).click()
+ await bob.locator('.community-hall-tools').evaluate(e=>e.open=true);await bob.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await bob.getByRole('button',{name:'Add Brass lantern',exact:true}).click();await bob.getByRole('button',{name:'Save hall',exact:true}).click();await bob.getByText('Shared hall saved for server members.',{exact:true}).waitFor()
  await alice.evaluate(()=>window.dispatchEvent(new Event('online')));await alice.getByText('The shared hall changed on the server. Reload before saving your changes.',{exact:true}).waitFor();assert.equal(await alice.getByRole('button',{name:'Save hall',exact:true}).isDisabled(),true)
  await alice.getByRole('button',{name:'Reload saved hall',exact:true}).click();await alice.getByText('Loaded the saved hall.',{exact:true}).waitFor()
  await alice.setViewportSize({width:390,height:844});await overflow(alice);await alice.screenshot({path:resolve(output,'editor-phone.png'),fullPage:true})
  const canvas=alice.locator('.hall-pixel-canvas');await canvas.focus();await alice.keyboard.press('ArrowRight');await alice.getByLabel('Column',{exact:true}).fill('8');await alice.getByLabel('Row',{exact:true}).fill('8');await alice.getByRole('button',{name:'Move component',exact:true}).click()
  // Moderator can edit/remove content; ordinary decorators cannot. Server rejects stale board edits.
- await mod.goto(hallUrl);await mod.getByLabel('New announcement',{exact:true}).fill('Unsaved announcement draft')
+ await mod.goto(hallUrl);await pageWaitHallActivities(mod);await openHallDetails(mod);await mod.getByLabel('New announcement',{exact:true}).fill('Unsaved announcement draft')
  failedReads.add(`${users.moderator}:get_server_hall`);await refresh(mod);await mod.getByRole('alert').filter({hasText:'Temporary connection failure.'}).waitFor();assert.equal(await mod.getByLabel('New announcement',{exact:true}).isVisible(),false)
  failedReads.delete(`${users.moderator}:get_server_hall`);await refresh(mod);await mod.getByLabel('New announcement',{exact:true}).waitFor();assert.equal(await mod.getByLabel('New announcement',{exact:true}).inputValue(),'Unsaved announcement draft')
  await mod.getByRole('button',{name:'Edit announcement',exact:true}).click();await mod.getByLabel('Edit announcement',{exact:true}).fill('Moderator revised this announcement.');await mod.getByRole('button',{name:'Save announcement edit',exact:true}).click();await mod.getByText('Moderator revised this announcement.',{exact:true}).waitFor()
  await alice.goto(hallUrl);await openHallDetails(alice);await alice.getByRole('button',{name:'Revoke decorator: Bob',exact:true}).click();await bob.evaluate(()=>window.dispatchEvent(new Event('online')));await bob.getByText('Editing permission changed. Your draft is still open. Reload to check current access.',{exact:true}).waitFor();assert.equal(await bob.getByRole('button',{name:'Save hall',exact:true}).isDisabled(),true)
- await alice.getByRole('button',{name:'Disable shared hall',exact:true}).click();await mod.getByRole('button',{name:'Refresh shared hall',exact:true}).click();await mod.getByText('This server’s hall is disabled. Its saved arrangement is retained. Chat remains available.',{exact:true}).waitFor();assert.equal(await mod.locator('.hall-pixel-canvas').count(),0);assert.ok(await mod.getByRole('link',{name:'Return to chat',exact:true}).getAttribute('href'))
- await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await mod.reload();await mod.getByText('Moderator revised this announcement.',{exact:true}).waitFor()
+ await alice.locator('.community-hall-tools').evaluate(e=>e.open=true);await alice.getByRole('button',{name:'Disable shared hall',exact:true}).click();await refresh(mod);await mod.getByText('This server’s shared hall and activities are disabled. Ask community staff about opening it. Chat remains available.',{exact:true}).waitFor();assert.equal(await mod.locator('.hall-pixel-canvas').count(),0);assert.ok(await mod.getByRole('link',{name:'Return to chat',exact:true}).getAttribute('href'))
+ await alice.locator('.community-hall-tools').evaluate(e=>e.open=true);await alice.getByRole('button',{name:'Enable shared hall',exact:true}).click();await mod.reload();await pageWaitHallActivities(mod);await openHallDetails(mod);await mod.getByText('Moderator revised this announcement.',{exact:true}).waitFor()
  await outsider.goto(hallUrl);await outsider.getByRole('alert').filter({hasText:'Space unavailable or permission changed.'}).waitFor();assert.equal(await outsider.locator('.hall-pixel-canvas').count(),0)
- const broken=await contextFor('alice',true);await broken.page.goto(hallUrl);await broken.page.getByText('The hall scene could not load. Channel controls, announcements and chat are still available.',{exact:true}).waitFor();await broken.page.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
+ const broken=await contextFor('alice',true);await broken.page.goto(hallUrl);await pageWaitHallActivities(broken.page);await openHallDetails(broken.page);await broken.page.getByText('The hall scene could not load. Channel controls, announcements and chat are still available.',{exact:true}).waitFor();await broken.page.getByRole('heading',{name:'Announcement board',exact:true}).waitFor()
  await broken.page.getByRole('button',{name:'West channel portal · #general',exact:true}).click();await broken.page.locator('.scene-arrival').getByRole('button',{name:'Enter channel #general',exact:true}).click();await broken.page.getByRole('textbox',{name:'Message #general',exact:true}).fill('Chat survives the renderer failure.');await broken.page.getByRole('button',{name:'Send',exact:true}).click();await broken.page.getByText('Chat survives the renderer failure.',{exact:true}).waitFor();await broken.page.goto(hallUrl)
- await broken.page.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await broken.page.getByText('The hall preview could not load. You can still arrange components using the list and position fields.',{exact:true}).waitFor();await broken.page.getByLabel('Column',{exact:true}).fill('8');await broken.page.getByRole('button',{name:'Move component',exact:true}).click();assert.ok(await broken.page.getByRole('link',{name:'Back to the hall',exact:true}).getAttribute('href'))
+ await openHallDetails(broken.page);await broken.page.locator('.community-hall-tools').evaluate(e=>e.open=true);await broken.page.getByRole('button',{name:'Decorate shared hall',exact:true}).click();await broken.page.getByText('The hall preview could not load. You can still arrange components using the list and position fields.',{exact:true}).waitFor();await broken.page.getByLabel('Column',{exact:true}).fill('8');await broken.page.getByRole('button',{name:'Move component',exact:true}).click();assert.ok(await broken.page.getByRole('link',{name:'Back to the hall',exact:true}).getAttribute('href'))
  const sharedHallBounds=await mod.locator('.shared-hall-scene').boundingBox();await mod.getByRole('button',{name:'West channel portal · #general',exact:true}).focus();await mod.keyboard.press('Enter');await mod.locator('.scene-arrival').getByRole('button',{name:'Enter channel #general',exact:true}).waitFor();for(const key of ['x','y','width','height'])assert.ok(Math.abs((await mod.locator('.shared-hall-scene').boundingBox())[key]-sharedHallBounds[key])<1,'shared Hall arrival keeps scene geometry');await mod.locator('.scene-arrival').getByRole('button',{name:'Enter channel #general',exact:true}).click();await mod.waitForURL('**/?space=*&channel=*');await mod.getByRole('textbox',{name:'Message #general',exact:true}).waitFor()
  // Simulated reconnect reloads persisted SQL state, and later revocation clears protected views.
  await asUser(users.alice,()=>sqlRpc('manage_space',{p_action:'remove',p_space:space,p_target:users.moderator,p_revision:0}))
@@ -235,21 +236,21 @@ try {
   if(width<=900)await alice.getByRole('button',{name:'Room',exact:true}).click()
   await alice.waitForFunction(()=>{const h=document.querySelector('.room-canvas')?.getBoundingClientRect(),c=document.querySelector('.room-canvas canvas')?.getBoundingClientRect();return h&&c&&c.width>=h.width*.9&&c.height>=h.height*.9})
   await alice.screenshot({path:resolve(workspaceOutput,`shared-home-${label}.png`),fullPage:true})
-  await alice.goto(hallUrl);await alice.locator('.shared-hall-scene .hall-pixel-canvas').waitFor();await viewportFit(alice,`shared hall ${label}`)
+  await alice.goto(hallUrl);await alice.getByRole('button',{name:'Hall',exact:true}).click();await alice.locator('.shared-hall-scene .hall-pixel-canvas').waitFor();await viewportFit(alice,`shared hall ${label}`)
   await openHallDetails(alice);await alice.getByLabel('West portal destination',{exact:true}).scrollIntoViewIfNeeded();await viewportFit(alice,`hall settings ${label}`)
   if(width<=900)await alice.getByRole('button',{name:'Hall',exact:true}).click()
   await alice.screenshot({path:resolve(workspaceOutput,`shared-hall-${label}.png`),fullPage:true})
  }
  await alice.setViewportSize({width:1280,height:720});await alice.goto(origin+'/?spaces');await alice.getByRole('heading',{name:'Server Halls',exact:true}).waitFor();await viewportFit(alice,'personal halls')
- await alice.getByRole('link',{name:'Create a server',exact:true}).click();await alice.getByRole('button',{name:'Create space',exact:true}).waitFor();await viewportFit(alice,'server management pane')
- await alice.locator('.hall-management>summary').click();await alice.locator('.hall-scene').waitFor();await viewportFit(alice,'return to halls')
+ await alice.locator('[data-hall-task="create"]').click();await alice.getByRole('button',{name:'Create server',exact:true}).waitFor();await viewportFit(alice,'server management pane')
+ await alice.keyboard.press('Escape');await alice.locator('.hall-scene').waitFor();await viewportFit(alice,'return to halls')
  for(const [label,width,height] of [['wide',1920,972],['phone',390,844]]){
   await alice.setViewportSize({width,height});await viewportFit(alice,`personal halls ${label}`)
   await alice.screenshot({path:resolve(output,`personal-halls-${label}.png`),fullPage:true})
   if(width<=900)await alice.getByRole('button',{name:'Servers & channels',exact:true}).click()
   await alice.locator('.hall-enter').scrollIntoViewIfNeeded();await visibleInViewport(alice,'.hall-enter',`personal hall Enter ${label}`)
-  await alice.getByRole('link',{name:'Join a server',exact:true}).click();await alice.getByLabel('Membership invitation',{exact:true}).waitFor();await viewportFit(alice,`personal hall management ${label}`)
-  await alice.locator('.hall-management>summary').click()
+  await alice.locator('[data-hall-task="join"]').click();await alice.getByLabel('Membership invitation',{exact:true}).waitFor();await viewportFit(alice,`personal hall management ${label}`)
+  await alice.keyboard.press('Escape')
   if(width<=900)await alice.getByRole('button',{name:'Hall',exact:true}).click()
   await alice.locator('.hall-scene').waitFor()
  }

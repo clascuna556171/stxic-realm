@@ -1,0 +1,51 @@
+.realm-loading{min-height:100dvh;box-sizing:border-box;background:var(--realm-bg);color:var(--realm-text);padding:clamp(20px,4vw,56px);display:flex;flex-direction:column;gap:24px}
+.realm-loading-status{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;max-width:1440px;margin:0 auto}
+.realm-loading-status .realm-brand{display:flex;align-items:center;gap:10px}
+.realm-loading-status .realm-brand svg{width:48px;height:36px}
+.realm-loading-status .realm-brand>span{display:flex;flex-direction:column}
+.realm-loading-status .realm-brand small{font-size:10px;letter-spacing:.12em}
+.realm-loading-status .realm-brand strong{font-size:22px;font-weight:600}
+.realm-loading-status p{margin:0;font-size:14px;line-height:1.5;color:var(--realm-muted)}
+.realm-loading-frame{width:100%;max-width:1440px;margin:0 auto;flex:1;min-height:360px;display:grid;grid-template-columns:72px 220px minmax(0,1fr);border:1px solid var(--realm-line);border-radius:16px;overflow:hidden;background:var(--realm-surface)}
+.realm-loading-rail{display:flex;flex-direction:column;align-items:center;gap:24px;padding:24px 12px;border-right:1px solid var(--realm-line)}
+.realm-loading-sidebar{display:flex;flex-direction:column;gap:24px;padding:28px 24px;border-right:1px solid var(--realm-line)}
+.realm-loading-content{min-width:0;display:flex;flex-direction:column}
+.realm-loading-header{height:76px;box-sizing:border-box;border-bottom:1px solid var(--realm-line);display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 28px}
+.realm-loading .skeleton-block{display:block;flex-shrink:0;border-radius:4px;background:var(--realm-raised);animation:realm-skeleton-breathe 1.8s ease-in-out infinite}
+.realm-loading .skeleton-nav{width:32px;height:32px;border-radius:8px}
+.realm-loading-rail .skeleton-nav:first-child{margin-bottom:20px}
+.realm-loading .skeleton-title{height:18px;width:132px;max-width:70%}
+.realm-loading .skeleton-line{height:12px;width:100%}
+.realm-loading-sidebar .skeleton-line:nth-child(2n){width:72%}
+.realm-loading .skeleton-avatar{width:36px;height:36px;border-radius:10px}
+.realm-loading .skeleton-name{width:96px;max-width:45%;height:12px}
+.realm-loading-messages{display:flex;flex-direction:column;justify-content:flex-end;gap:32px;flex:1;padding:40px 28px}
+.realm-loading-message{display:flex;gap:16px}
+.realm-loading-message>div{display:flex;flex-direction:column;gap:12px;flex:1;max-width:620px}
+.realm-loading-message .skeleton-line:last-child{width:65%}
+.realm-loading-message:nth-child(2n) .skeleton-line:last-child{width:42%}
+.realm-loading-composer{height:48px;margin:0 28px 28px}
+.realm-loading-scene{flex:1;margin:28px;min-height:240px}
+.realm-loading-rows{display:flex;flex-direction:column;padding:32px 28px;gap:28px}
+.realm-loading-rows>div{display:flex;flex-direction:column;gap:14px;padding-bottom:28px;border-bottom:1px solid var(--realm-line)}
+.realm-loading-rows .skeleton-line{width:60%}
+.realm-loading-frame.is-page,.realm-loading-frame.is-scene{grid-template-columns:72px minmax(0,1fr)}
+.realm-loading-frame:not(.is-chat) .realm-loading-sidebar{display:none}
+@keyframes realm-skeleton-breathe{0%,100%{opacity:.45}50%{opacity:.85}}
+@media(max-width:760px){
+ .realm-loading{padding:20px 16px;gap:20px}
+ .realm-loading-status{align-items:center}
+ .realm-loading-status p{max-width:150px;font-size:13px;text-align:right}
+ .realm-loading-frame,.realm-loading-frame.is-page,.realm-loading-frame.is-scene{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 64px;min-height:400px}
+ .realm-loading-sidebar{display:none}
+ .realm-loading-rail{grid-row:2;flex-direction:row;justify-content:space-around;gap:8px;padding:16px 12px;border-right:0;border-top:1px solid var(--realm-line)}
+ .realm-loading-rail .skeleton-nav:first-child{display:none}
+ .realm-loading-rail .skeleton-nav{width:26px;height:26px}
+ .realm-loading-header{height:64px;padding:16px 20px}
+ .realm-loading-messages{padding:28px 20px;gap:28px}
+ .realm-loading-composer{margin:0 20px 20px}
+ .realm-loading-scene{margin:20px}
+ .realm-loading-rows{padding:28px 20px}
+}
+@media(prefers-reduced-motion:reduce){.realm-loading .skeleton-block{animation:none;opacity:.65}}
+@media(forced-colors:active){.realm-loading .skeleton-block{background:GrayText;animation:none}}

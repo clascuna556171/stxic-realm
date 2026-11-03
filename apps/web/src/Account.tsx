@@ -1,3 +1,4 @@
+import {LoadingScreen} from './LoadingScreen'
 import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from 'react'
 import type {Session} from '@supabase/supabase-js'
 import {client} from './data'
@@ -38,7 +39,7 @@ export function AccountProvider({children}:{children:ReactNode}){
 export function useAccount(){const value=useContext(Context);if(!value)throw new Error('AccountProvider is required');return value}
 export function AccountGate({children}:{children:ReactNode}){
  const account=useAccount()
- if(account.loading)return <main className="setup" role="status">Loading your account…</main>
+ if(account.loading)return <LoadingScreen message="Loading your account…"/>
  if(!account.session)return <main className="setup"><h1>Sign in to continue.</h1><p>Profiles, friends and shared homes belong to your Realm account.</p><a href="/">Go to sign in</a></main>
  if(!account.identity)return <main className="setup"><h1>Account unavailable</h1><p role="alert">{account.error}</p><button className="primary" onClick={()=>void account.reload().catch(()=>{})}>Try again</button> <a href="/?privacy">Privacy & data</a> <a href="/auth/recover">Recover account</a> <button onClick={()=>void client?.auth.signOut()}>Sign out</button></main>
  return children

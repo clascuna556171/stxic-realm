@@ -6,7 +6,8 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto'
 import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import assert from 'node:assert/strict'
-const root=resolve(import.meta.dirname,'../../..'),origin=process.env.REALM_UI_ORIGIN??'http://127.0.0.1:5175',output=resolve(root,'.impeccable/review/app-refinement')
+const glass=process.env.REALM_UI_GLASS==='1'
+const root=resolve(import.meta.dirname,'../../..'),origin=process.env.REALM_UI_ORIGIN??'http://127.0.0.1:5175',output=resolve(root,glass?'.impeccable/review/glass/full-suite':'.impeccable/review/app-refinement')
 await mkdir(output,{recursive:true})
 const env=await readFile(resolve(root,'apps/web/.env.local'),'utf8'),backend=env.match(/^VITE_SUPABASE_URL=(.*)$/m)?.[1]?.trim()
 assert.ok(backend,'Public backend URL needed only to intercept the configured client')
@@ -55,6 +56,7 @@ async function fixture(authenticated=true){
  const b64=value=>Buffer.from(JSON.stringify(value)).toString('base64url'),token=`${b64({alg:'HS256',typ:'JWT'})}.${b64({sub:user.id,exp:Math.floor(Date.now()/1000)+3600,role:'authenticated'})}.fixture`
  const session={access_token:token,refresh_token:'fixture',expires_in:3600,expires_at:Math.floor(Date.now()/1000)+3600,token_type:'bearer',user}
  const context=await browser.newContext({viewport:{width:1630,height:886}})
+ if(glass)await context.addInitScript(()=>localStorage.setItem('stxic-realm:glass','true'))
  if(authenticated)await context.addInitScript(({key,session})=>localStorage.setItem(key,JSON.stringify(session)),{key:storageKey,session})
  await context.routeWebSocket('**/realtime/v1/**',ws=>ws.close())
  await context.route('**/*',async route=>{
@@ -78,6 +80,7 @@ async function fixture(authenticated=true){
   }catch(error){console.error('FIXTURE ERROR',url.pathname,error.message??error);return reply({code:error.code??'fixture',message:error.message},400)}
  })
  const page=await context.newPage();page.setDefaultTimeout(15000);page.on('pageerror',error=>pageErrors.push(error.message))
+ if(glass){const cdp=await context.newCDPSession(page);await cdp.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-transparency',value:'no-preference'}]})}
  return page
 }
 
@@ -88,16 +91,29 @@ const initialHall=await asUser(users.alice,()=>sqlRpc('get_server_hall',{p_space
 await asUser(users.alice,()=>sqlRpc('manage_server_hall',{p_space:space,p_action:'enabled',p_revision:initialHall.revision,p_enabled:true}))
 const direct=await asUser(users.alice,()=>sqlRpc('open_direct',{p_user:users.bob}))
 const checks=[],metrics=[]
-const routes=[['chat','', '[data-message]'],['halls','?spaces','.hall-pixel-canvas'],['people','?friends','.social-content'],['profile','?profile','.account-profile-editor'],['settings','?settings','.settings-content'],['character','?appearance','.appearance-grid'],['home-studio','?room-studio','.room-layout'],['hall-studio','?hall-studio','.hall-workbench'],['privacy','?privacy','.admin-content'],['moderation','?moderation','.admin-content'],['platform','?platform','.admin-content'],['direct','?dm='+direct,'.conversation'],['home','?home='+users.alice,'.room-canvas canvas'],['shared-hall','?server-hall='+space,'.shared-hall-scene .hall-pixel-canvas'],['room-preview','?room-preview','.room-canvas canvas'],['hall-preview','?hall-preview','.hall-pixel-canvas']]
+const routes=[['chat','', '[data-message]'],['halls','?spaces','.hall-pixel-canvas'],['people','?friends','.social-content'],['profile','?profile','.account-profile-editor'],['settings','?settings','.settings-content'],['character','?appearance','.appearance-grid'],['home-studio','?room-studio','.room-layout'],['hall-studio','?hall-studio','.hall-workbench'],['privacy','?privacy','.admin-content'],['moderation','?moderation','.admin-content'],['platform','?platform','.admin-content'],['direct','?dm='+direct,'.conversation'],['home','?home='+users.alice,'.room-canvas canvas'],['shared-hall','?server-hall='+space,'.shared-hall-content'],['room-preview','?room-preview','.room-canvas canvas'],['hall-preview','?hall-preview','.hall-pixel-canvas']]
 try{
  const page=await fixture()
  const sizes=process.env.REALM_UI_FOLLOWUP?[['phone',390,844],['narrow-phone',320,740],['zoom-reflow',720,450]]:[['desktop',1440,900],['laptop',1280,720],['phone',390,844],['narrow-phone',320,740],['reflow',720,900]]
  for(const [size,width,height]of sizes){
   await page.setViewportSize({width,height})
   for(const [name,path,ready]of routes){
-   await page.goto(origin+'/'+path);await page.locator(ready).first().waitFor();await page.evaluate(()=>document.fonts.ready);if(name==='chat')await page.locator('.community-member-disclosure').waitFor({state:'attached'});if(name==='halls')await page.locator('a.hall-enter').waitFor({state:'attached'});if(name==='profile')assert.equal(await page.locator('.account-profile-content').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(48, 48, 48)','profile uses shared surface')
+   await page.goto(origin+'/'+path);await page.locator(ready).first().waitFor();await page.evaluate(()=>document.fonts.ready);if(name==='chat')await page.locator('.community-member-disclosure').waitFor({state:'attached'});if(name==='halls')await page.locator('a.hall-enter').waitFor({state:'attached'});if(name==='profile'&&!glass)assert.equal(await page.locator('.account-profile-content').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(48, 48, 48)','profile uses shared surface')
    const result=await page.evaluate(()=>{const root=getComputedStyle(document.documentElement),frame=document.querySelector('.workspace-page,.community-shell'),nav=document.querySelector('.workspace-nav'),style=getComputedStyle(frame),rect=frame.getBoundingClientRect(),navRect=nav.getBoundingClientRect();return{token:root.getPropertyValue('--realm-bg').trim(),background:style.backgroundColor,radius:style.borderTopLeftRadius,frame:{x:rect.x,y:rect.y,width:rect.width},nav:{x:navRect.x,y:navRect.y,bottom:navRect.bottom,width:navRect.width},horizontal:document.documentElement.scrollWidth>innerWidth,vertical:document.documentElement.scrollHeight>innerHeight,viewport:!!document.querySelector('.viewport-world,.dm-page,.community-shell')}})
-   assert.equal(result.token,'#202020',name+' shared neutral token');assert.equal(result.background,'rgb(32, 32, 32)',name+' neutral frame');assert.equal(result.horizontal,false,name+' horizontal fit')
+   assert.equal(result.token,'#202020',name+' shared neutral token');assert.equal(result.background,glass?'rgba(0, 0, 0, 0)':'rgb(32, 32, 32)',name+' frame material');assert.equal(result.horizontal,false,name+' horizontal fit')
+   if(glass){
+    if(name==='chat'){
+     const alpha=await page.evaluate(()=>{
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=1;const ctx=canvas.getContext('2d');
+      return ['.chat','.composer','.chat-header'].map(selector=>{ctx.clearRect(0,0,1,1);ctx.fillStyle=getComputedStyle(document.querySelector(selector)).backgroundColor;ctx.fillRect(0,0,1,1);return ctx.getImageData(0,0,1,1).data[3]});
+     });assert.ok(alpha[0]>0&&alpha[0]<255,'chat content pane is translucent');assert.ok(alpha[1]>0&&alpha[1]<255,'composer is translucent');assert.equal(alpha[2],0,'channel header transmits the pane material');
+    }
+    const geometry=await page.evaluate(()=>{
+     const root=document.documentElement,selectors='.workspace-page,.community-shell,.workspace-nav,.community-topbar,.chat,.composer,.settings-content,.room-content,.halls-content,.dm-content';
+     const boxes=()=>Array.from(document.querySelectorAll(selectors),el=>({class:el.className,rect:el.getBoundingClientRect().toJSON(),scrollWidth:el.scrollWidth,scrollHeight:el.scrollHeight}));
+     const enabled=boxes();root.dataset.glass='false';const disabled=boxes();root.dataset.glass='true';return{enabled,disabled};
+    });assert.deepEqual(geometry.enabled,geometry.disabled,name+' '+size+' identical geometry with glass on/off');
+   }
    if(result.viewport)assert.equal(result.vertical,false,name+' viewport fit')
    assert.ok(result.nav.y>=0&&result.nav.bottom<=height+1,name+' navigation fits')
    if(width>650){assert.equal(result.radius,'32px');assert.ok(Math.abs(result.nav.x-(width<=1300?22:32))<2,name+' same rail inset')}

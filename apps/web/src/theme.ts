@@ -214,6 +214,17 @@ export const THEMES: RealmTheme[] = [
 ]
 
 export const THEME_STORAGE_KEY = 'stxic-realm:theme'
+export const GLASS_STORAGE_KEY = 'stxic-realm:glass'
+
+export function getGlassEnabled(): boolean {
+  try { return localStorage.getItem(GLASS_STORAGE_KEY) === 'true' } catch { return false }
+}
+
+export function applyGlass(enabled: boolean) {
+  document.documentElement.dataset.glass = String(enabled)
+  try { localStorage.setItem(GLASS_STORAGE_KEY, String(enabled)) } catch {}
+  window.dispatchEvent(new CustomEvent('realm:glass-change'))
+}
 
 export function getActiveTheme(): string {
   try {

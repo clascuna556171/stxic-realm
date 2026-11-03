@@ -2,6 +2,7 @@ import {WorkspaceNav} from './WorkspaceNav'
 import {Icon} from './Icon'
 import {useAccount} from './Account'
 import './settings.css'
+import {GlassToggle} from './GlassToggle'
 
 export default function Settings(){
  const {session}=useAccount()
@@ -10,7 +11,7 @@ export default function Settings(){
  <a href="/?appearance&section=interface#interface-settings"><Icon name="settings"/><span><strong>Interface & colors</strong><small>Application themes, personal accents and room mood</small></span><Icon name="arrow"/></a>
  <a href="/?privacy"><Icon name="shield"/><span><strong>Privacy & data</strong><small>Blocked accounts, exports and account deletion</small></span><Icon name="arrow"/></a>
 
- </div></section><section aria-labelledby="settings-world"><h2 id="settings-world">Your world</h2><div className="settings-destinations">
+ </div><GlassToggle/></section><section aria-labelledby="settings-world"><h2 id="settings-world">Your world</h2><div className="settings-destinations">
  <a href="/?appearance"><Icon name="avatar"/><span><strong>Character</strong><small>Your pixel character, clothes and accessories</small></span><Icon name="arrow"/></a>
  <a href="/?room-studio"><Icon name="studio"/><span><strong>Home Studio</strong><small>Room layout and who can visit</small></span><Icon name="arrow"/></a>
  <a href={session?`/?home=${session.user.id}#home-social`:'/?room-preview'}><Icon name="book"/><span><strong>Guestbook & project links</strong><small>Home visitors, posting rules and your shared links</small></span><Icon name="arrow"/></a>

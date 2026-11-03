@@ -1,0 +1,102 @@
+/* A material preference independent of color themes and application behavior. */
+.glass-setting{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;margin:8px 0 20px;border-block:1px solid var(--realm-line);color:var(--realm-text)}
+.glass-setting>div{min-width:0}
+.glass-setting strong{font-size:15px;font-weight:600}
+.glass-setting p{margin:6px 0 0;max-width:58ch;font-size:13px;line-height:1.6;color:var(--realm-muted)}
+.glass-switch{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;min-width:88px;min-height:44px;padding:6px;border:0;border-radius:8px;background:transparent;color:var(--realm-text);font:600 13px var(--realm-ui-font);cursor:pointer}
+.glass-switch:focus-visible{outline:2px solid var(--realm-accent);outline-offset:3px}
+.glass-switch-track{display:flex;align-items:center;width:42px;height:26px;padding:3px;border:1px solid var(--realm-muted);border-radius:20px;background:var(--realm-inset)}
+.glass-switch-track>span{width:18px;height:18px;flex:none;border-radius:50%;background:var(--realm-muted)}
+.glass-switch[aria-checked=true] .glass-switch-track{background:var(--realm-accent);border-color:var(--realm-accent)}
+.glass-switch[aria-checked=true] .glass-switch-track>span{transform:translateX(16px);background:var(--realm-on-accent)}
+@media(max-width:400px){.glass-setting{gap:10px}}
+
+/* Window material. Only paint changes: no positioning, dimensions or transforms.
+   Neutral, diffuse daylight is visible through the entire window, like frosted
+   glazing. The static wallpaper has no external assets or animation. */
+@media(forced-colors:none){
+ html[data-glass=true]{
+  background-color:#2c2c2c;
+  background-image:radial-gradient(ellipse at 14% 8%,#bcbcbc99,transparent 55%),radial-gradient(ellipse at 84% 72%,#87878788,transparent 58%),radial-gradient(ellipse at 65% 0%,#d5d5d555,transparent 48%),linear-gradient(145deg,#5d5d5d,#2d2d2d 52%,#585858);
+  background-attachment:fixed;
+ }
+ html[data-glass=true] body{background:transparent}
+ html[data-glass=true] :is(.workspace-page,.shell.community-shell){
+  --glass-edge:color-mix(in srgb,var(--realm-text) 18%,transparent);
+  --glass-highlight:color-mix(in srgb,var(--realm-text) 30%,transparent);
+  background:linear-gradient(125deg,color-mix(in srgb,var(--realm-bg) 74%,#9c9c9c),var(--realm-bg));
+  border-color:var(--glass-edge);
+  box-shadow:inset 0 1px 0 var(--glass-highlight),0 12px 40px #00000026;
+ }
+ /* Distinct opaque material when system transparency is reduced/unsupported. */
+ html[data-glass=true] .workspace-page>:is(.settings-content,.appearance-content,.appearance-theme-content,.social-content,.account-profile-content,.hall-studio-content,.room-content,.halls-content,.shared-hall-content,.dm-content),
+ html[data-glass=true] .community-shell>.chat,
+ html[data-glass=true] .community-rail>:is(section,.sidebar,.community-hall),
+ html[data-glass=true] :is(.workspace-page,.community-shell)>.workspace-nav{
+  background:linear-gradient(125deg,color-mix(in srgb,var(--realm-surface) 78%,#afafaf),var(--realm-surface));
+  box-shadow:inset 0 1px 0 var(--glass-highlight);
+ }
+ /* Existing chat styles use !important; override only their paint. */
+ html[data-glass=true] .community-shell .chat-header{background:transparent!important}
+ html[data-glass=true]:not([data-theme=light]) :is(.workspace-page,.shell.community-shell){--realm-muted:#ececec}
+ /* Shape and illumination change, never control metrics or hit targets. */
+ html[data-glass=true] .community-shell>.chat{border-radius:22px}
+ html[data-glass=true] .community-rail>:is(section,.sidebar,.community-hall){border-radius:20px}
+ html[data-glass=true] .community-shell .conversation .composer{border-radius:18px!important}
+ html[data-glass=true] :is(.workspace-page,.community-shell) .workspace-nav nav a[aria-current=page]{
+  background:color-mix(in srgb,var(--realm-text) 16%,var(--realm-surface));
+  color:var(--realm-text);
+  box-shadow:inset 0 1px 0 var(--glass-highlight),inset 0 0 0 1px var(--glass-edge);
+ }
+}
+
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+ @media(prefers-reduced-transparency:no-preference) and (forced-colors:none){
+  html[data-glass=true] :is(.workspace-page,.shell.community-shell){background:transparent}
+  /* Filter a noninteractive pseudo-element rather than the frame itself:
+     parent filters would re-anchor fixed navigation and break its layout. */
+  html[data-glass=true] :is(.workspace-page,.shell.community-shell)::before{
+   content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+   background:color-mix(in srgb,var(--realm-bg) 32%,transparent);
+   -webkit-backdrop-filter:blur(36px) saturate(90%);
+   backdrop-filter:blur(36px) saturate(90%);
+   box-shadow:inset 0 1px 0 var(--glass-highlight),inset 0 -1px 0 #ffffff08;
+  }
+  html[data-glass=true] .workspace-page>:is(.settings-content,.appearance-content,.appearance-theme-content,.social-content,.account-profile-content,.hall-studio-content,.room-content,.halls-content,.shared-hall-content,.dm-content),
+  html[data-glass=true] .community-shell>.chat,
+  html[data-glass=true] .community-rail>:is(section,.sidebar,.community-hall){
+   background:color-mix(in srgb,var(--realm-surface) 30%,transparent);
+   border-color:var(--glass-edge);
+  }
+  html[data-glass=true] :is(.workspace-page,.community-shell)>.workspace-nav{
+   background:linear-gradient(135deg,#ffffff0d,transparent 60%),color-mix(in srgb,var(--realm-bg) 48%,transparent);
+   -webkit-backdrop-filter:blur(24px) saturate(110%);
+   backdrop-filter:blur(24px) saturate(110%);
+  }
+  html[data-glass=true] .community-shell .conversation .composer,
+  html[data-glass=true] .community-search,
+  html[data-glass=true] .workspace-page :is(.appearance-grid,.room-layout,.hall-layout,.hall-workbench,.hall-toolbox,.shared-hall-sidebar,.appearance-preview,.room-inspector){
+   background:color-mix(in srgb,var(--realm-bg) 32%,transparent);
+   border-color:var(--glass-edge);
+   box-shadow:inset 0 1px 0 var(--glass-highlight);
+  }
+  html[data-glass=true] .community-shell .conversation .composer{background:color-mix(in srgb,var(--realm-bg) 32%,transparent)!important}
+  html[data-glass=true][data-theme=light] :is(.workspace-page,.shell.community-shell)::before{background:color-mix(in srgb,var(--realm-bg) 80%,transparent)}
+  html[data-glass=true] .community-shell>.community-topbar,
+  html[data-glass=true] .workspace-page>.workspace-header{
+   background:linear-gradient(125deg,#ffffff0b,transparent),color-mix(in srgb,var(--realm-surface) 18%,transparent);
+   border-radius:20px;
+   box-shadow:inset 0 1px 0 var(--glass-highlight);
+  }
+  html[data-glass=true] .community-shell .conversation .composer:focus-within{box-shadow:inset 0 1px 0 var(--glass-highlight),0 0 0 1px var(--realm-accent)!important}
+  /* Floating menus must remain readable above any transmitted background. */
+  html[data-glass=true] :is(.workspace-page,.community-shell) .workspace-more>nav,
+  html[data-glass=true] .community-account>div{
+   background:color-mix(in srgb,var(--realm-surface) 88%,transparent);
+   -webkit-backdrop-filter:blur(24px);
+   backdrop-filter:blur(24px);
+  }
+ }
+}
+
+

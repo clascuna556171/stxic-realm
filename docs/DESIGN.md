@@ -80,6 +80,8 @@ Local verification: production build/typecheck and 37 unit tests pass; intercept
 
 App settings has a dedicated `/?settings` destination grouped into Account & app and Your world. The desktop rail keeps labeled Profile and Settings icons visible. Phones retain Chat/Halls/People/Home and a More disclosure containing Profile, App settings, Character and Home Studio; Escape closes the disclosure and returns focus. Interface & colors links to the existing workbench with `section=interface` and the color section in view. Save ownership and account/character separation remain unchanged.
 
+Glass appearance is an optional, device-saved material toggle in Settings and both interface theme controls. It works independently of the color theme and defaults off. The owner explicitly requested the entire chat window translucent like their reference, including content panels, sidebar and composer. Their subsequent warm-glass prompt and [Apple overview](https://developer.apple.com/documentation/technologyoverviews/liquid-glass) inform soft ambient lighting, smooth frost, gentle highlights and restrained shadows. The owner subsequently rejected the brown/clay interpretation: the backdrop, material fallback, shadows and text illumination now use neutral grayscale; warmth must not tint the application. Full-window translucency is retained while denser navigation and menus separate the functional layer from content. This is a CSS adaptation, not Apple's native material renderer. Blur belongs to a noninteractive pseudo-element, never the frame itself, preserving fixed-navigation geometry. Only paint/corner shapes change; positions, dimensions, scrolling, hit targets and application behavior remain unchanged. Reduced transparency and unsupported blur use opaque tinted panels; forced colors retain the standard interface. The prompt's anti-pixelation direction applies to UI surfaces, not the game's authored pixel art. No animated blur or additional canvas processing is introduced.
+
 Home social controls separate return/refresh from section shortcuts. Guestbook and Project desk have labeled icons, and owners can open/focus Guestbook & project link settings through Home social settings. Posting retains its existing permissions, limits, retry behavior and revision checks.
 
 ## Character-led communication — 29 October 2026
@@ -174,3 +176,14 @@ The subsequent Apple-guided polish keeps scene geometry stable throughout intera
 ## Furniture actions
 
 Home/Hall item tasks use one named native dialog above the Scene/Details workspace, centered on desktop and a bottom sheet on phones. Use the existing obsidian semantic tokens, normal interface type, controls and standalone action links with at least 44px targets, explicit focus rings, Tab containment, Close/Escape and return focus to the opener. Keep the fixed movement toolbar and canvas geometry stable; notes, timers and links belong in the dialog. See [item interactions](ITEM_INTERACTIONS.md) for storage, permissions and local effects.
+
+## Loading skeleton — 3 November 2026
+
+Startup, account restoration and lazy-route fallbacks share `LoadingScreen.tsx` and `loading-screen.css`. Use the existing Realm mark and neutral theme tokens, with decorative chat, scene or content placeholders chosen from the destination. Phones use a bottom navigation placeholder. Announce one loading status, hide decorative blocks from assistive technology, and disable the opacity pulse for reduced motion. Placeholders have no interactive controls, account data, invented progress or minimum display delay. This replaces the plain full-screen text; internal links still perform document navigation.
+
+Local Chromium verification: `node apps/web/scripts/verify-loading-ui.mjs` (default port 5182; override with `REALM_UI_ORIGIN`) holds lazy imports to inspect desktop, phone, 320px and landscape states, checks overflow and motion preferences, then releases imports to confirm recovery. Captures and results: `.impeccable/review/loading-screen/`. These checks use guest sessions, not live authenticated backend evidence.
+
+
+## Server Halls entrance — 3 November 2026
+
+Keep selected community and direct entry visible above both Hall and Servers & channels. Directory selection does not move the traveler; door controls explicitly walk to an entrance. Show every selected-server channel, real archive/closed/empty/unavailable states and scoped retry controls. Join/Create open their own focused workspace forms; server settings stay secondary and permission-gated. Personal hall options remain separate from shared community halls. Preserve the existing neutral tokens, optional Glass material, authored pixels and saved world geometry. See [Server Halls implementation and local verification](SERVER_HALLS_UI.md).

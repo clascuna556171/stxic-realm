@@ -21,6 +21,7 @@ import { CharacterAlcove } from './world/CharacterAlcove'
 import { useAccount } from './Account'
 import { appearanceFor, errorText } from './account-repository'
 import { THEMES, getActiveTheme, applyTheme } from './theme'
+import {GlassToggle} from './GlassToggle'
 import './character-inspection.css'
 import './appearance-theme.css'
 
@@ -345,6 +346,7 @@ export default function AppearanceStudio() {
             <p>Customize the colors and visual mood of Realm on this device. Neutral themes respect your personal accent.</p>
            </div>
           </div>
+          <GlassToggle/>
           <h3 className="theme-group-title" id="default-themes-title">Default Themes</h3>
           <div className="theme-tile-grid" role="radiogroup" aria-labelledby="default-themes-title">
            {defaultThemes.map(t => {

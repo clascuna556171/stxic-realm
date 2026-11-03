@@ -1,3 +1,4 @@
+import {LoadingScreen} from './LoadingScreen'
 import {useModalFocus} from './useModalFocus'
 import {AccountPortrait} from './AccountPortrait'
 import {Brand} from './Brand'
@@ -466,6 +467,6 @@ function Chat({session}:{session:Session}){
 export default function App(){
  const account=useAccount()
  if(!client)return <main className="setup"><h1>Set up Realm</h1><p>Add your Supabase project URL and public key to <code>apps/web/.env.local</code> to connect.</p></main>
- if(account.loading)return <main className="setup" role="status">Opening Realm…</main>
+ if(account.loading)return <LoadingScreen/>
  return account.session?<AccountGate><Chat key={account.session.user.id} session={account.session}/></AccountGate>:<SignIn/>
 }

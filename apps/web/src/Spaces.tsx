@@ -27,6 +27,9 @@ function Spaces() {
   [token, setToken] = useState(() => new URLSearchParams(location.search).get('invite') ?? ''),
   [grant, setGrant] = useState(''),
   [error, setError] = useState(''),
+  [listError, setListError] = useState(''),
+  [detailError, setDetailError] = useState(''),
+  [task, setTask] = useState<'join' | 'create' | null>(() => new URLSearchParams(location.search).has('invite') ? 'join' : null),
   [notice, setNotice] = useState(''),
   [busy, setBusy] = useState(false),
   [loading, setLoading] = useState(true),
@@ -45,23 +48,23 @@ function Spaces() {
   setSpaces(rows)
   setSelected(current => (rows.some(s => s.id === current) ? current : (rows[0]?.id ?? '')))
   setLoading(false)
-  setError('')
+  setListError('')
  }
  async function detail() {
   if (!selected) return
   const ticket = ++detailSerial.current
   setDetailsLoading(true)
+  setDetailError('')
   try {
    const [rows, d] = await Promise.all([listChannels(client!, selected), rpc<SpaceData>(client!, 'space_admin_data', { p_space: selected })])
    if (!alive.current || ticket !== detailSerial.current) return
    setChannels(rows)
    setData(d)
-   setError('')
   } catch (e) {
    if (alive.current && ticket === detailSerial.current) {
     setData(null)
     setChannels([])
-    setError(errorText(e))
+    setDetailError(errorText(e))
    }
   } finally { if (alive.current && ticket === detailSerial.current) setDetailsLoading(false) }
  }
@@ -69,15 +72,13 @@ function Spaces() {
   alive.current = true
   if (location.search.includes('invite=')) history.replaceState(null, '', '/?spaces')
   void load().catch(e => {
-   setError(errorText(e))
+   setListError(errorText(e))
    setLoading(false)
   })
   const timer = setInterval(
    () =>
     void load().catch(e => {
-     setData(null)
-     setChannels([])
-     setError(errorText(e))
+     setListError(errorText(e))
     }),
    15000,
   )
@@ -89,12 +90,18 @@ function Spaces() {
   }
  }, [])
  useEffect(() => {
+  detailSerial.current++
+  setDetailsLoading(false)
+  setDetailError('')
   setData(null)
   setChannels([])
   setGrant('')
   setRename(space?.name ?? '')
   void detail()
  }, [selected])
+ useEffect(() => {
+  if (task) requestAnimationFrame(() => document.querySelector<HTMLInputElement>('.hall-task input')?.focus())
+ }, [task])
  useEffect(() => {
   if (selected) void detail()
  }, [spaces])
@@ -121,6 +128,7 @@ function Spaces() {
   if (typeof id === 'string') {
    setSelected(id)
    setName('')
+   setTask(null)
   }
  }
  async function invite(e: FormEvent) {
@@ -145,11 +153,16 @@ function Spaces() {
     <a href="/">Back to chat</a>
    </header>
    <div className="halls-content">
-    <ServerHall spaces={spaces} selected={selected} onSelect={setSelected} channels={channels} loading={loading} detailsLoading={detailsLoading} error={!spaces.length ? error : undefined} onManage={() => { if (management.current) { management.current.open = true; requestAnimationFrame(()=>management.current?.querySelector('summary')?.focus({preventScroll:true})) } }} onRetry={() => { setError(''); setLoading(true); void load().catch(e => { setError(errorText(e)); setLoading(false) }) }} />
-    {error && spaces.length > 0 && <p className="error" role="alert">{error}</p>}
+    <ServerHall spaces={spaces} selected={selected} onSelect={setSelected} channels={channels} loading={loading} detailsLoading={detailsLoading} error={listError} detailsError={detailError} onDetailsRetry={() => void detail()} onTask={setTask} onManage={() => { if (management.current) { management.current.open = true; requestAnimationFrame(()=>management.current?.querySelector('summary')?.focus({preventScroll:true})) } }} onRetry={() => { setListError(''); setLoading(true); void load().catch(e => { setListError(errorText(e)); setLoading(false) }) }} />
     {notice && <p role="status">{notice}</p>}
-    <details ref={management} className="hall-management" id="hall-management" open={token ? true : undefined}>
-    <summary>Manage spaces</summary>
+    {task && <section className="hall-task" aria-label={task === 'join' ? 'Join a server' : 'Create a server'} onKeyDown={e => { if (e.key === 'Escape') { setTask(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-hall-task="${task}"]`)?.focus()) } }}>
+     <div className="hall-task-heading"><h2>{task === 'join' ? 'Join a server' : 'Create a server'}</h2><button onClick={() => { setTask(null); requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(`[data-hall-task="${task}"]`)?.focus()) }}>Back to hall</button></div>
+     {!enabled && <p role="status">Server administration is awaiting operator setup.</p>}
+     {error && <p role="alert">{error}</p>}
+     {task === 'join' ? <><p>Paste the invitation link or token shared with your account.</p><form className="admin-fields" onSubmit={e => { e.preventDefault(); void action('membership_invite', { p_action: 'redeem', p_token: token }, 'You joined the server.').then(v => { if (v) { setToken(''); setTask(null); if (typeof v === 'object' && 'space_id' in v) setSelected(String(v.space_id)) } }) }}><label>Membership invitation<input value={token} onChange={e => setToken(membershipToken(e.target.value))} autoComplete="off" maxLength={500} required /></label><button disabled={busy || !enabled || !token}>Accept invitation</button></form></> : <form className="admin-fields" onSubmit={create}><label>Server name<input required maxLength={80} value={name} onChange={e => setName(e.target.value)} /></label><button disabled={busy || !enabled || !name.trim()}>Create server</button></form>}
+    </section>}
+    <details ref={management} className="hall-management" id="hall-management">
+    <summary>Server settings & membership</summary>
     <div className="admin-content">
     <nav className="admin-links" aria-label="Administration">
      <a href="/?privacy">Privacy & data</a>
@@ -157,37 +170,7 @@ function Spaces() {
     </nav>
     {!enabled && <p className="muted" role="status">Space administration is awaiting operator setup. Existing conversations remain available.</p>}
     {error && <p className="error" role="alert">{error}</p>}
-    <section className="admin-section">
-     <h2>Join a space</h2>
-     <form
-      className="admin-fields"
-      onSubmit={e => {
-       e.preventDefault()
-       void action('membership_invite', { p_action: 'redeem', p_token: token }, 'You joined the space.').then(v => {
-        if (v) {
-         setToken('')
-         if (typeof v === 'object' && 'space_id' in v) setSelected(String(v.space_id))
-        }
-       })
-      }}
-     >
-      <label>
-       Membership invitation
-       <input value={token} onChange={e => setToken(membershipToken(e.target.value))} autoComplete="off" maxLength={500} required />
-      </label>
-      <button disabled={busy || !enabled || !token}>Accept invitation</button>
-     </form>
-    </section>
-    <section className="admin-section">
-     <h2>Create a space</h2>
-     <form className="admin-fields" onSubmit={create}>
-      <label>
-       Space name
-       <input required maxLength={80} value={name} onChange={e => setName(e.target.value)} />
-      </label>
-      <button disabled={busy || !enabled || !name.trim()}>Create space</button>
-     </form>
-    </section>
+    {detailError && <div role="alert"><p>Server details unavailable. {detailError}</p><button onClick={() => void detail()}>Retry server details</button></div>}
     {!loading && !spaces.length && <p className="social-empty">You have no spaces yet. Create one or accept a membership invitation.</p>}
     {spaces.length > 0 && (
      <section className="admin-section">
