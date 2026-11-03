@@ -185,6 +185,7 @@ export default function AppearanceStudio() {
      </div>
      <span className="local-label">{account.session ? 'Saved to your account' : 'Device-only preview'}</span>
     </div>
+    <div className="appearance-mobile-actions"><a href="#appearance-preview">Character preview <Icon name="arrow"/></a><button className="primary" onClick={() => void save()} disabled={!dirty || saving}>{saving?'Saving…':'Save appearance'}</button><p role="status">{notice||(dirty?'You have unsaved changes.':'Your current look is saved.')}</p></div>
     <div className="appearance-grid">
      <section className="appearance-controls">
       <nav className="editor-tabs" aria-label="Appearance sections">
@@ -348,7 +349,7 @@ export default function AppearanceStudio() {
        </div>
       )}
      </section>
-     <aside className="appearance-preview">
+     <aside id="appearance-preview" className="appearance-preview">
       <div className="preview-title">
        <h2>Preview</h2>
        <span>{dirty ? 'Unsaved' : 'Saved'}</span>

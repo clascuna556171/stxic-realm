@@ -11,6 +11,8 @@ import './world/world-theme.css'
 import './navigation.css'
 import './modern-shell.css'
 import './workspace-layout.css'
+import './community-shell.css'
+import './realm-theme.css'
 import './world/interaction.css'
 import {AuthCallback,Recovery} from './Auth'
 const Settings=lazy(()=>import('./Settings'))

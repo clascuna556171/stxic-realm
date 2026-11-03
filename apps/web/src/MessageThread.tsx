@@ -1,5 +1,6 @@
+import {useModalFocus} from './useModalFocus'
 import {useTyping} from './world/useWorldActivity'
-import {useEffect,useLayoutEffect,useRef,useState,type FormEvent} from 'react'
+import {Fragment,useEffect,useLayoutEffect,useRef,useState,type FormEvent} from 'react'
 import {useAccount} from './Account'
 import {errorText,publicIdentities,rpc,type PublicIdentity} from './account-repository'
 import {client} from './data'
@@ -285,11 +286,12 @@ function formatDiscordTimestamp(dateStr: string) {
  }
 }
 
-export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,onSync,onOpenSettings,availableChannels}:{kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
+export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,searchQuery='',onSync,onOpenSettings,availableChannels}:{kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;searchQuery?:string;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
  const user=useAccount().session!.user.id,key=draftKey(user,kind,id)
  const worldTyping=useTyping(kind==='channel'&&visible&&!readOnly?{kind:'channel',id}:null,user)
  const [messages,setMessages]=useState<StreamMessage[]>([]),[people,setPeople]=useState<Record<string,PublicIdentity>>({}),[body,setBody]=useState(()=>{try{return localStorage.getItem(key)??''}catch{return ''}}),[error,setError]=useState(''),[status,setStatus]=useState('Loading messages…'),[loading,setLoading]=useState(true),[older,setOlder]=useState(false),[end,setEnd]=useState(false),[sending,setSending]=useState(false),[denied,setDenied]=useState(false),[editing,setEditing]=useState<StreamMessage|null>(null),[editBody,setEditBody]=useState(''),[changing,setChanging]=useState(false),[report,setReport]=useState<StreamMessage|null>(null)
  const [activeMenu,setActiveMenu]=useState<string|null>(null),[copiedId,setCopiedId]=useState<string|null>(null),[replyingTo,setReplyingTo]=useState<StreamMessage|null>(null)
+ const [pinsOnly,setPinsOnly]=useState(false)
  const [reactions,setReactions]=useState<Record<string,Record<string,string[]>>>(()=>{try{const s=localStorage.getItem(`realm_reactions_${id}`);return s?JSON.parse(s):{}}catch{return {}}})
  const [pinnedIds,setPinnedIds]=useState<Set<string>>(()=>{try{const s=localStorage.getItem(`realm_pinned_${id}`);return s?new Set(JSON.parse(s)):new Set()}catch{return new Set()}})
 
@@ -311,7 +313,9 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  const stopSubscription=useRef<()=>void>(()=>{});const alive=useRef(false),watermark=useRef<number|null>(null),visibility=useRef<string|undefined>(undefined),syncing=useRef(false),queued=useRef(false),retry=useRef<string|null>(null),draftVersion=useRef(0),thread=useRef<HTMLElement|null>(null),prepend=useRef<number|null>(null),atBottom=useRef(true),syncRef=useRef<()=>Promise<void>>(async()=>{}),read=useRef(0)
 
  useEffect(()=>{try{localStorage.setItem(key,body)}catch{/* Storage is optional. */}},[body,key])
- useEffect(()=>{if(!activeMenu)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')setActiveMenu(null)};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[activeMenu])
+ const menuOpener=useRef<HTMLButtonElement|null>(null)
+ const forwardDialog=useModalFocus(!!forwardingMessage,menuOpener),emojiDialog=useModalFocus(!!emojiPickerMessage,menuOpener)
+ useEffect(()=>{if(!activeMenu)return;const article=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===activeMenu);article?.querySelector<HTMLButtonElement>('[role=menuitem]')?.focus();const h=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();setActiveMenu(null);menuOpener.current?.focus()}};window.addEventListener('keydown',h);return()=>{window.removeEventListener('keydown',h);if(document.activeElement===document.body)menuOpener.current?.focus()}},[activeMenu])
  useEffect(()=>{if(!forwardingMessage)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')closeForward()};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[forwardingMessage])
  useEffect(()=>{if(!emojiPickerMessage)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')closeEmojiPicker()};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[emojiPickerMessage])
 
@@ -350,7 +354,11 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   return()=>{active=false}
  },[forwardingMessage])
 
+ function rememberMessageOpener(m:StreamMessage){
+  menuOpener.current=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===m.id)?.querySelector<HTMLButtonElement>('.message-actions-trigger')??null
+ }
  function openForward(m:StreamMessage){
+  rememberMessageOpener(m)
   setForwardingMessage(m)
   setForwardSearch('')
   setForwardNote('')
@@ -368,6 +376,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  }
 
  function openEmojiPicker(m:StreamMessage,startEditingQuick=false){
+  rememberMessageOpener(m)
   setEmojiPickerMessage(m)
   setEmojiSearch('')
   setEditingQuickReactions(startEditingQuick)
@@ -467,17 +476,17 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
 
  useEffect(()=>{let active=true;void publicIdentities(client!,messages.flatMap(m=>m.author_id?[m.author_id]:[])).then(rows=>{if(active)setPeople(rows)}).catch(()=>{});return()=>{active=false}},[messages])
 
- useLayoutEffect(()=>{const el=thread.current;if(!el||!visible)return;if(prepend.current!==null){el.scrollTop+=el.scrollHeight-prepend.current;prepend.current=null}else if(atBottom.current)el.scrollTop=el.scrollHeight},[messages,visible])
+ useLayoutEffect(()=>{const el=thread.current;if(!el||!visible)return;if(searchQuery.trim()||pinsOnly)el.scrollTop=0;else if(prepend.current!==null){el.scrollTop+=el.scrollHeight-prepend.current;prepend.current=null}else if(atBottom.current)el.scrollTop=el.scrollHeight},[messages,visible,searchQuery,pinsOnly])
 
  useEffect(()=>{
-  const root=thread.current;if(!root||denied)return
+  const root=thread.current;if(!root||denied||!visible)return
   const observer=new IntersectionObserver(entries=>{
    if(document.visibilityState!=='visible')return
    const reached=entries.filter(e=>e.isIntersecting&&e.intersectionRatio>=0.8).map(e=>messages.find(m=>m.id===(e.target as HTMLElement).dataset.read)).filter((m):m is StreamMessage=>!!m).sort((a,b)=>b.created_revision-a.created_revision)[0]
    if(reached&&reached.created_revision>read.current){read.current=reached.created_revision;void rpc(client!,'message_read',{p_kind:kind,p_stream:id,p_message:reached.id}).then(()=>onSync?.()).catch(e=>{read.current=0;fail(e)})}
   },{root,threshold:0.8})
   root.querySelectorAll('[data-read]').forEach(el=>observer.observe(el));return()=>observer.disconnect()
- },[messages,kind,id,denied])
+ },[messages,kind,id,denied,visible,searchQuery,pinsOnly])
 
  function toggleReaction(msgId:string,emoji:string){
   setReactions(prev=>{
@@ -532,31 +541,36 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   emojis:cat.emojis.filter(item=>item.e.includes(normalizedEmojiQuery)||item.k.includes(normalizedEmojiQuery))
  })).filter(cat=>cat.emojis.length>0)
 
+ const query=searchQuery.trim().toLocaleLowerCase()
+ const displayedMessages=messages.filter(message=>(!query||!message.removed_at&&message.body.toLocaleLowerCase().includes(query))&&(!pinsOnly||pinnedIds.has(message.id)))
  return (
   <div className="conversation">
    <div className="dm-toolbar">
     <span role="status">{status}</span>
     <button className="text-button" onClick={()=>void syncRef.current()}>Refresh messages</button>
+    {kind==='channel'&&<button className="room-pins-toggle" type="button" aria-pressed={pinsOnly} onClick={()=>setPinsOnly(value=>!value)} title="Pinned messages saved on this device"><PinIcon/>{pinsOnly?'All messages':'Pinned'}</button>}
    </div>
    {error&&<p className="error" role="alert">{error}</p>}
    {report&&<ReportForm kind={kind} stream={id} message={report.id} onClose={()=>setReport(null)} onReported={()=>{setReport(null);void syncRef.current()}}/>}
    <section ref={thread} className="dm-thread" aria-label={title} onScroll={e=>{const el=e.currentTarget;atBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<80}}>
     {!end&&messages.length>0&&<button className="load-earlier" disabled={older} onClick={()=>void earlier()}>{older?'Loading earlier messages…':'Load earlier messages'}</button>}
-    {kind==='channel'&&end&&<div className="channel-start-welcome"><div className="channel-start-badge" aria-hidden="true">#</div><h2>Welcome to #{channelName||title.replace(/^Message #/,'')}!</h2><p className="channel-start-sub">This is the start of the #{channelName||title.replace(/^Message #/,'')} channel.</p>{topic&&<div className="channel-start-topic"><p>{topic}</p></div>}{onOpenSettings&&<button type="button" className="channel-start-edit-btn" onClick={onOpenSettings}>Edit Channel</button>}</div>}
+    {kind==='channel'&&end&&!query&&!pinsOnly&&!messages.length&&<div className="channel-start-welcome"><div className="channel-start-badge" aria-hidden="true">#</div><h2>Make yourself at home.</h2><p className="channel-start-sub">This is the beginning of #{channelName||title.replace(/^Message #/,'')}. A hello is a good place to start.</p>{topic&&<div className="channel-start-topic"><p>{topic}</p></div>}{onOpenSettings&&<button type="button" className="channel-start-edit-btn" onClick={onOpenSettings}>Edit Channel</button>}</div>}
     {!loading&&!messages.length&&!denied&&kind!=='channel'&&<p className="social-empty">No messages yet. Start the conversation.</p>}
-    {messages.map(m=>{
+    {(query||pinsOnly)&&<p className="room-search-status" role="status">{displayedMessages.length} {displayedMessages.length===1?'message':'messages'}{query?' matching your search':''}{pinsOnly?' pinned on this device':''}. Searches cover loaded messages.{!end?' Load earlier messages to search more history.':''}</p>}
+    {displayedMessages.map((m,index)=>{
      const isOwn=m.author_id===user,person=m.author_id?people[m.author_id]:undefined
      const authorName=isOwn?(person?.display_name||'You'):(person?.display_name||'Member')
      const isMenuOpen=activeMenu===m.id,isPinned=pinnedIds.has(m.id),msgReactions=reactions[m.id]||{}
      return (
-      <article key={m.id} data-message={m.id} className={`message ${isOwn?'is-own':'is-peer'} ${isMenuOpen?'has-active-menu':''}`}>
+      <Fragment key={m.id}>{kind==='channel'&&(index===0||new Date(m.created_at).toDateString()!==new Date(displayedMessages[index-1].created_at).toDateString())&&<div className="room-date-divider"><time dateTime={m.created_at}>{new Date(m.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})}</time></div>}<article data-message={m.id} className={`message ${isOwn?'is-own':'is-peer'} ${isMenuOpen?'has-active-menu':''}`}>
        <MemberPortrait person={person}/>
        <div className="message-content">
         <div className="message-meta">
          <strong className="message-author">{authorName}</strong>
          <time dateTime={m.created_at}>{formatDiscordTimestamp(m.created_at)}</time>
-         {isPinned&&<span className="message-pinned-badge" title="Pinned message">📌</span>}
+         {isPinned&&<span className="message-pinned-badge" title="Pinned on this device"><PinIcon size={14}/></span>}
          {m.edited_at&&!m.removed_at&&<span className="message-edited-badge">(edited)</span>}
+         {!m.removed_at&&<button type="button" className="message-actions-trigger" aria-label={`Actions for message by ${authorName}`} aria-haspopup="menu" aria-expanded={isMenuOpen} onClick={e=>{menuOpener.current=e.currentTarget;setActiveMenu(isMenuOpen?null:m.id)}}><DotsIcon/></button>}
         </div>
         <div className="message-bubble">
          {m.removed_at?<p className="muted">Message removed</p>:editing?.id===m.id?(
@@ -588,11 +602,11 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
          {isOwn&&<button type="button" className="toolbar-btn" title="Edit" disabled={changing||readOnly} onClick={()=>{setEditing(m);setEditBody(m.body)}}><PencilIcon/></button>}
          <button type="button" className="toolbar-btn" title="Reply" onClick={()=>setReplyingTo(m)}><ReplyIcon/></button>
          <button type="button" className="toolbar-btn" title="Forward" onClick={()=>openForward(m)}><ForwardIcon/></button>
-         <button type="button" className={`toolbar-btn ${isMenuOpen?'is-active':''}`} title="More" onClick={()=>setActiveMenu(isMenuOpen?null:m.id)}><DotsIcon/></button>
+         <button type="button" className={`toolbar-btn ${isMenuOpen?'is-active':''}`} title="More" aria-haspopup="menu" aria-expanded={isMenuOpen} onClick={e=>{menuOpener.current=e.currentTarget;setActiveMenu(isMenuOpen?null:m.id)}}><DotsIcon/></button>
          {isMenuOpen&&(
           <>
            <div className="menu-backdrop" onClick={()=>setActiveMenu(null)}/>
-           <div className="message-more-popover" role="menu">
+           <div className="message-more-popover" role="menu" aria-label="Message actions" onKeyDown={e=>{if(!['ArrowDown','ArrowUp','Home','End'].includes(e.key))return;e.preventDefault();const items=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not(:disabled)')),i=items.indexOf(document.activeElement as HTMLButtonElement);items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(e.key==='ArrowDown'?1:items.length-1))%items.length]?.focus()}}>
             <div className="menu-emoji-row">
              {quickReactions.map(emoji=>(
               <button key={emoji} type="button" className="menu-emoji-btn" onClick={()=>{toggleReaction(m.id,emoji);setActiveMenu(null)}} title={`React with ${emoji}`}>{emoji}</button>
@@ -614,7 +628,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
         </aside>
        )}
        <span className="read-marker" data-read={m.id} aria-hidden="true"/>
-      </article>
+      </article></Fragment>
      )
     })}
    </section>
@@ -628,15 +642,16 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     </div>
    )}
    <form className="composer" onSubmit={send}>
-    <label className="sr-only" htmlFor="stream-body">{title}</label>
-    <input id="stream-body" value={body} disabled={readOnly||denied} maxLength={4000} onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}} placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}/>
-    <button disabled={sending||readOnly||denied||!body.trim()}>{sending?'Sending…':'Send'}</button>
+    <label className={kind==='channel'?'room-composer-label':'sr-only'} htmlFor="stream-body">{kind==='channel'?`New message · #${channelName}`:title}</label>
+    {kind==='channel'?<textarea id="stream-body" aria-label={title} rows={2} value={body} disabled={readOnly||denied} maxLength={4000} onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();e.currentTarget.form?.requestSubmit()}}} placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':'Say something…'}/>:<input id="stream-body" value={body} disabled={readOnly||denied} maxLength={4000} onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}} placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}/>}
+    {kind==='channel'&&<span className="room-composer-hint">Shift + Enter for a new line</span>}
+    <button disabled={sending||readOnly||denied||!body.trim()}>{sending?'Sending…':'Send'}{kind==='channel'&&<ForwardIcon size={18}/>}</button>
    </form>
    <p className="muted dm-note">{readOnly?'Archived conversations preserve their history.':'Drafts stay on this device for this account. Press Enter to send.'}</p>
 
    {forwardingMessage&&(
     <div className="modal-backdrop" role="presentation" onClick={e=>{if(e.target===e.currentTarget)closeForward()}}>
-     <div className="modal-dialog realm-forward-dialog" role="dialog" aria-modal="true" aria-labelledby="realm-forward-title">
+     <div ref={forwardDialog} tabIndex={-1} className="modal-dialog realm-forward-dialog" role="dialog" aria-modal="true" aria-labelledby="realm-forward-title">
       <div className="realm-forward-header">
        <div className="realm-forward-header-left">
         <div className="realm-forward-badge" aria-hidden="true"><ForwardIcon size={20}/></div>
@@ -654,20 +669,20 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
        {forwardSearch&&<button type="button" className="realm-forward-search-clear" onClick={()=>setForwardSearch('')} aria-label="Clear search">✕</button>}
       </div>
 
-      <div className="realm-forward-destinations" role="listbox" aria-label="Destinations">
+      <div className="realm-forward-destinations" role="group" aria-label="Destinations">
        {filteredDestinations.length===0?<p className="realm-forward-empty">No channels found matching &ldquo;{forwardSearch}&rdquo;</p>:filteredDestinations.map(dest=>{
         const isChecked=selectedDests.has(dest.id)
         return (
-         <div key={dest.id} role="option" aria-selected={isChecked} className={`realm-forward-dest-item ${isChecked?'is-selected':''}`} onClick={()=>toggleDest(dest.id)}>
-          <div className="realm-forward-dest-glyph" aria-hidden="true">#</div>
-          <div className="realm-forward-dest-info">
+         <button type="button" key={dest.id} aria-pressed={isChecked} className={`realm-forward-dest-item ${isChecked?'is-selected':''}`} onClick={()=>toggleDest(dest.id)}>
+          <span className="realm-forward-dest-glyph" aria-hidden="true">#</span>
+          <span className="realm-forward-dest-info">
            <span className="realm-forward-dest-name">{dest.name}</span>
            <span className="realm-forward-dest-space">{dest.spaceName}</span>
-          </div>
-          <div className={`realm-forward-dest-check ${isChecked?'is-checked':''}`}>
+          </span>
+          <span className={`realm-forward-dest-check ${isChecked?'is-checked':''}`}>
            {isChecked&&<span aria-hidden="true">✓</span>}
-          </div>
-         </div>
+          </span>
+         </button>
         )
        })}
       </div>
@@ -702,7 +717,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
 
    {emojiPickerMessage&&(
     <div className="modal-backdrop" role="presentation" onClick={e=>{if(e.target===e.currentTarget)closeEmojiPicker()}}>
-     <div className="modal-dialog emoji-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="emoji-picker-title">
+     <div ref={emojiDialog} tabIndex={-1} className="modal-dialog emoji-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="emoji-picker-title">
       <div className="emoji-picker-header">
        <div>
         <h2 id="emoji-picker-title">Add Reaction</h2>

@@ -1,5 +1,45 @@
 # Design and experience
 
+## Interface refinement — 3 November 2026
+
+The communication interface recedes around messages and authored pixel worlds. Keep default surfaces strictly neutral and consume `realm-theme.css`; private accents, profile styles, badge/frame colors and world materials remain independent. Community navigation now uses dark inset surfaces, with pale fills reserved for the current destination and the existing logo. Do not restore bright community cards or decorative folded shapes.
+
+Conventional UI uses the shared type roles: 12px captions, 13px control labels, 14px body/help copy, 15px channel messages and 26–34px page titles. Navigation labels remain 11–12px even in short landscape layouts. Phone text inputs use 16px to avoid automatic input zoom. Use subtle dividers and 8px control/16px panel radii; Settings destinations and administrative groups use rows instead of nested cards. Settings is a two-column directory above 1000px and one column below it.
+
+Profile editing opens on Edit on phones. Save/reload actions and their live status share one sticky, in-flow header; fields have scroll margins so focus clears it. The six customization tabs use a horizontally scrolling row on phones, with arrow/Home/End navigation bringing the focused tab into view. Preserve the separate live Preview. Do not add a fixed save bar over fields or bottom navigation.
+
+Character/interface editing also puts controls before its preview on phones. A sticky, in-flow action row retains the existing save operation, its disabled/saving states and a direct link to the full character preview below the controls. The desktop inspection panel remains beside the controls. Preview facing and pose controls are inspection settings, independent of account portraits and authoritative world movement.
+
+Every message has a persistent, labeled actions button. Keyboard activation focuses the menu; arrows/Home/End navigate enabled actions and Escape restores focus. Phones reveal the floating toolbar only while its menu is open so hover cannot cover the persistent button. Forward destinations are native toggle buttons. Conventional chat dialogs share `useModalFocus` for initial focus, Tab/Shift+Tab containment and restoration; native world dialogs keep their existing dialog lifecycle.
+
+Shared halls retain a minimum scene area at narrow widths and scroll secondary controls within the scene pane. Keep scene geometry, movement authority, pose anchors, catalog identifiers and editing history independent of this interface refinement. Verify overflowing names, long room lists, keyboard focus and the composer as actual tasks, not screenshots alone.
+
+Current verification details and limitations: [interface refinement evidence](UI_REFINEMENT.md). Historical verification below describes its earlier snapshots.
+
+## App-wide neutral theme — 3 November 2026
+
+The owner's correction applies the same charcoal theme to every tab and module and removes the green cast from the earlier mockup implementation. `apps/web/src/realm-theme.css` now owns the shared interface palette, frame, navigation, panel and control treatment. The base colors are strictly grayscale: background `#202020`, inset `#252525`, surface `#303030`, raised `#3e3e3e`, border `#4a4a4a`, primary text `#f1f1f1`, secondary text `#bdbdbd`, and pale surfaces `#dadada` / `#c3c3c3`. Chat consumes these tokens through its existing composition stylesheet. Older blue-gray and sage UI literals in shared and lazy-loaded editor styles now consume semantic tokens.
+
+The shared treatment covers chat, Halls, People, account profiles and their six customization tabs, Settings, character/room/interface editors, Home and Hall Studios, privacy, moderation, platform administration, DMs, shared homes/halls, previews and sign-in. Desktop workspaces share an inset rounded frame and navigation rail; phones share the bottom navigation and surface treatment. Compact world headers and movement controls reserve space for the scene. Profile editing uses the same content panel while saved profile designs retain their own colors.
+
+Authored pixel art, starter portraits, room-material previews, hall swatches, sticky-note colors and frame/badge art keep their intended palettes. Explicit private accent choices still work; a neutral default must not erase customization. The earlier channel-shell section below documents composition and behavior; its warm palette is superseded here.
+
+Local verification: `verify-theme-ui.mjs` passes 56 checks across 16 routes, desktop/phone layouts, nested profile/editor tabs, landscape navigation and guest sign-in. Existing `verify-workspace-ui.mjs` passes all seven sizes with its scene-height and interaction assertions unchanged; `verify-community-ui.mjs` passes all 18 checks. Typecheck, 109 unit tests and the final production build pass. Captures and results are in `.impeccable/review/shared-theme/`, with current world-layout evidence in `.impeccable/review/workspace-layout/`. These are local Chromium and intercepted PGlite fixtures, not hosted Supabase or physical-device verification.
+
+## Community conversation shell — 3 November 2026
+
+The owner's 3 November charcoal reference is implemented for server channels: a small navigation rail, quiet top bar, left-aligned conversation rows and a right-hand community rail containing the server summary, Rooms, member disclosure and shared-hall destination. This supersedes the **channel message alignment** in the 29 October modern social shell below. Direct messages retain their prior layout; the world, studio and profile directions remain in force.
+
+[Community shell CSS](../apps/web/src/community-shell.css) scopes warm charcoal surfaces, pale room navigation and conventional interface type to this workspace. It uses the existing `--realm-*` interface tokens while preserving the owner's private accent and logo choices. Account photos or initials identify people; world characters remain separate. [App](../apps/web/src/App.tsx), [MessageThread](../apps/web/src/MessageThread.tsx) and [ServerDetails](../apps/web/src/ServerDetails.tsx) own the corresponding behavior:
+
+- Member and room counts reflect authorized data, with loading, failure and retry states. Member disclosure exposes real account links and roles. Shared hall opens the selected server's existing `/?server-hall=` route; it does not imply presence or hall availability.
+- Channel composition supports multiple lines: Enter sends, Shift + Enter adds a line, and composition input is respected. Search (Ctrl/Cmd + K) filters loaded messages only; the result notice explains loading earlier history. Pinned filtering uses pins saved on this device. Existing drafts, history, archive states and room-management permissions remain.
+- At widths of 1100px or less, Community replaces the conversation while open, retaining its mounted thread and draft. Closing, Escape or room selection restores focus after rendering. At 650px or less, navigation moves to the bottom. Long room headings clamp to two lines, channel lists have bounded scrolling, and short screens allow the navigation/community rails to scroll so controls and the hall link remain reachable.
+
+Keep React, Phaser 3.90, existing identifiers, saved layouts and server-owned permissions. This scoped shell does not redefine authored pixel palettes, founder authority, equipment or room collision. Respect reduced motion and existing asynchronous teardown behavior.
+
+Local evidence: [verification artifact](../.impeccable/review/community-shell/verification.json) records 18 passing checks across seven viewport layouts, plus an 80-character phone heading and 40-room scrolling case. The lead run passed typecheck, 109 unit tests and production build. Follow-up independent review found all three original P2 findings resolved and returned a bounded **SHIP** verdict from source, rendered images and the test artifact; it did not independently rerun every suite. These checks use intercepted Auth/PostgREST and local PGlite SQL/RLS, not hosted Supabase. The existing profile and world-social regression suites also passed sequentially; the latter exercised 1,554 intercepted requests. No deployment or hosted migration is established by this evidence.
+
 ## Authored home architecture — 2 November 2026
 
 Homes now share deeper window reveals, framed cutaway walls, quieter floors, constructed furniture and usable linen bedding. Cozy oak/plaster, medieval stone/leather/brass and tech slate/metal remain distinct. Sofa rugs and bedside runners follow the supplied layout rather than fixed room coordinates; saved homes, starter positions, collision and pose anchors stay unchanged. See [home artwork and compatibility](HOME_ART.md) for shared consumers, provenance and local rendering verification.

@@ -16,7 +16,7 @@ The existing React/Vite client uses Supabase authentication, membership-scoped s
 
 ## Brand Commitments
 
-The latest owner-approved direction is a modern charcoal communication app with the user's private accent color, rounded chat bubbles and an optional server-details panel. Conventional app screens use readable modern type; pixel art and display lettering remain mainly in worlds and studios. Account portraits remain separate from world characters. This supersedes earlier pixel-lettering treatment of the chat shell.
+The latest owner-approved direction is one neutral charcoal and grayscale theme across all tabs, modules and editors, with matching framed workspaces, navigation, panels and controls. Avoid a green or sage cast in default app surfaces. Preserve the user's explicitly chosen private accent and authored profile colors. Channel conversations use left-aligned rows; direct messages retain their existing layout. Conventional app screens use readable modern type; pixel art and display lettering remain mainly in worlds and studios. Account portraits remain separate from world characters.
 
 STXIC Realm retains its existing logo and personal theme settings. The owner's reference is `docs/images/realm-room-character-concept-v3.png`: detailed pixel art, warm lighting, rich materials and mature fantasy character silhouettes. Avoid anime, childish cartoons, generic dashboard compositions and unnecessary dependencies.
 
@@ -27,6 +27,7 @@ STXIC Realm retains its existing logo and personal theme settings. The owner's r
 - Build on working character customization, room layouts and account systems.
 - Account profiles use uploaded photos and banners, independent of the in-app pixel character. Profiles, people lists and communication portraits use account photos (initials when absent); rooms and halls keep the world character.
 - Favor coherent art, efficient rendering and reduced-motion support.
+- Keep conversations and scenes primary: quiet community navigation, readable conventional type, compact Settings rows and direct access to phone editor fields. Persistent message actions must work through keyboard and touch. Save feedback belongs beside its action; dialogs own and restore focus.
 - Personal hub customization uses browser-local saves scoped by account. A separate shared Server Hall implementation stores validated, revisioned arrangements per space, with owner enablement and explicit decorator grants. Its two additive migrations are local and await hosted rollout; personal hub layouts are never implicitly imported or overwritten.
 
 ## Evidence on Hand

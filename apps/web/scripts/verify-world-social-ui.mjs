@@ -220,13 +220,13 @@ try {
   await alice.locator('.dm-thread').evaluate(e=>e.scrollTop=0)
   assert.equal((await alice.locator('.chat-header').boundingBox()).y,before.y,'chat heading stays in place')
   await visibleInViewport(alice,'.composer',`composer after scroll ${label}`)
-  if(width>800){
+  if(width>1100){
    const heading=await alice.locator('.sidebar-heading').boundingBox()
    assert.ok(await alice.locator('.sidebar>nav').evaluate(e=>e.scrollHeight>e.clientHeight),'long channels scroll inside their list')
    await alice.locator('.sidebar>nav').evaluate(e=>e.scrollTop=e.scrollHeight)
    assert.equal((await alice.locator('.sidebar-heading').boundingBox()).y,heading.y)
-   await visibleInViewport(alice,'.account',`account controls ${label}`)
-  }else await visibleInViewport(alice,'.account',`compact account controls ${label}`)
+   await visibleInViewport(alice,'.community-account',`account controls ${label}`)
+  }else await visibleInViewport(alice,'.community-account',`compact account controls ${label}`)
   await alice.locator('.dm-thread').evaluate(e=>e.scrollTop=e.scrollHeight)
   await alice.screenshot({path:resolve(workspaceOutput,`chat-${label}.png`),fullPage:true})
   await alice.goto(homeUrl);await alice.locator('.room-canvas canvas').waitFor();await viewportFit(alice,`shared home ${label}`);await visibleInViewport(alice,'.room-main .walk-menu summary',`home controls ${label}`)
