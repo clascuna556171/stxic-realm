@@ -160,8 +160,191 @@ button.secondary-btn:disabled,
   cursor: not-allowed !important;
   transform: none !important;
 }
-.modal-actions .primary { background:var(--realm-accent); color:var(--realm-on-accent); border:0; }
-.modal-actions .primary:disabled { opacity:.5; cursor:not-allowed; }
+/* Theme-aware Action / Primary Buttons: simple green in default themes, matched in color themes */
+:root,
+[data-theme="dark"],
+[data-theme="light"],
+[data-theme="ash"],
+[data-theme="onyx"] {
+  --realm-save-btn-bg: #23a55a;
+  --realm-save-btn-text: #ffffff;
+  --realm-save-btn-hover: #1f8b4c;
+  --realm-action-btn-bg: #23a55a;
+  --realm-action-btn-text: #ffffff;
+  --realm-action-btn-hover: #1f8b4c;
+}
+
+[data-theme="forest-green"] {
+  --realm-save-btn-bg: #2ecc71;
+  --realm-save-btn-text: #ffffff;
+  --realm-save-btn-hover: #27ae60;
+  --realm-action-btn-bg: #2ecc71;
+  --realm-action-btn-text: #ffffff;
+  --realm-action-btn-hover: #27ae60;
+}
+
+[data-theme="ocean-blue"] {
+  --realm-save-btn-bg: #0284c7;
+  --realm-save-btn-text: #ffffff;
+  --realm-save-btn-hover: #0369a1;
+  --realm-action-btn-bg: #0284c7;
+  --realm-action-btn-text: #ffffff;
+  --realm-action-btn-hover: #0369a1;
+}
+
+[data-theme="gothic-red"] {
+  --realm-save-btn-bg: #e63946;
+  --realm-save-btn-text: #ffffff;
+  --realm-save-btn-hover: #c92a37;
+  --realm-action-btn-bg: #e63946;
+  --realm-action-btn-text: #ffffff;
+  --realm-action-btn-hover: #c92a37;
+}
+
+/* Master Primary Action Buttons across the application */
+button.primary,
+a.primary,
+.primary,
+.modal-actions .primary,
+.modal-actions button.primary,
+.channel-settings-actions .primary,
+.channel-settings-save-btn,
+.hall-primary,
+.hall-intro-actions .hall-primary,
+.hall-intro-actions a.hall-primary,
+.hall-enter,
+.room-action-btn.primary,
+.studio-primary,
+.room-app .studio-actions .studio-primary,
+.room-app .studio-form-actions button:first-child,
+.save-appearance,
+.wildlife-encounter-modal button.primary,
+.profile-editor-actions button.primary,
+.profile-editor-top button.primary,
+.profile-editor-top .primary,
+.frame-workshop-footer button.primary,
+.social-actions .primary,
+.social-actions button.primary,
+.friend-request-form button.primary,
+.friend-request-form button[type="submit"],
+.realm-forward-send-btn,
+.hall-studio-page button.primary {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: 6px !important;
+  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)) !important;
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  font: 600 13.5px var(--realm-ui-font) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  transition: background .12s ease, opacity .12s ease !important;
+  box-sizing: border-box !important;
+}
+
+button.primary:hover:not(:disabled),
+a.primary:hover:not(:disabled),
+.primary:hover:not(:disabled),
+.modal-actions .primary:hover:not(:disabled),
+.modal-actions button.primary:hover:not(:disabled),
+.channel-settings-actions .primary:hover:not(:disabled),
+.channel-settings-save-btn:hover:not(:disabled),
+.hall-primary:hover:not(:disabled),
+.hall-intro-actions .hall-primary:hover:not(:disabled),
+.hall-intro-actions a.hall-primary:hover:not(:disabled),
+.hall-enter:hover:not(:disabled),
+.room-action-btn.primary:hover:not(:disabled),
+.studio-primary:hover:not(:disabled),
+.room-app .studio-actions .studio-primary:hover:not(:disabled),
+.room-app .studio-form-actions button:first-child:hover:not(:disabled),
+.save-appearance:hover:not(:disabled),
+.wildlife-encounter-modal button.primary:hover:not(:disabled),
+.profile-editor-actions button.primary:hover:not(:disabled),
+.profile-editor-top button.primary:hover:not(:disabled),
+.profile-editor-top .primary:hover:not(:disabled),
+.frame-workshop-footer button.primary:hover:not(:disabled),
+.social-actions .primary:hover:not(:disabled),
+.social-actions button.primary:hover:not(:disabled),
+.friend-request-form button.primary:hover:not(:disabled),
+.friend-request-form button[type="submit"]:hover:not(:disabled),
+.realm-forward-send-btn:hover:not(:disabled),
+.hall-studio-page button.primary:hover:not(:disabled) {
+  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)) !important;
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
+  filter: none !important;
+}
+
+button.primary:disabled,
+a.primary:disabled,
+.primary:disabled,
+.modal-actions .primary:disabled,
+.modal-actions button.primary:disabled,
+.channel-settings-actions .primary:disabled,
+.channel-settings-save-btn:disabled,
+.hall-primary:disabled,
+.hall-intro-actions .hall-primary:disabled,
+.hall-intro-actions a.hall-primary:disabled,
+.hall-enter.is-disabled,
+.room-action-btn.primary:disabled,
+.studio-primary:disabled,
+.room-app .studio-actions .studio-primary:disabled,
+.room-app .studio-form-actions button:first-child:disabled,
+.save-appearance:disabled,
+.wildlife-encounter-modal button.primary:disabled,
+.profile-editor-actions button.primary:disabled,
+.profile-editor-top button.primary:disabled,
+.profile-editor-top .primary:disabled,
+.frame-workshop-footer button.primary:disabled,
+.social-actions .primary:disabled,
+.social-actions button.primary:disabled,
+.friend-request-form button.primary:disabled,
+.friend-request-form button[type="submit"]:disabled,
+.realm-forward-send-btn:disabled,
+.hall-studio-page button.primary:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+}
+
+/* Compact Notice buttons (e.g. Bond with Moon Owl) */
+.home-wildlife-notice button,
+.room-app .home-wildlife-notice button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 0 14px !important;
+  border-radius: 6px !important;
+  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)) !important;
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
+  border: 0 !important;
+  border-color: transparent !important;
+  font: 600 12.5px var(--realm-ui-font) !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+  transition: background .12s ease, opacity .12s ease !important;
+}
+
+.home-wildlife-notice button:hover:not(:disabled),
+.room-app .home-wildlife-notice button:hover:not(:disabled) {
+  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)) !important;
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
+  filter: none !important;
+}
+
+.home-wildlife-notice button:disabled,
+.room-app .home-wildlife-notice button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  filter: none !important;
+}
 .realm-chat .chat-server-identity h1 { font:600 16px/1.4 var(--realm-ui-font); margin:0; }
 .chat-server-seal { display:grid; place-items:center; flex:none; width:44px; height:44px; border-radius:50%; background:var(--realm-selected); color:var(--realm-accent); font-size:19px; font-weight:600; }
 .realm-chat .space-switcher { font-size:12px; }
@@ -193,22 +376,18 @@ button.secondary-btn:disabled,
 .conversation .dm-thread { padding:16px 8px 32px; scrollbar-gutter:stable; }
 .conversation .message { position:relative; display:flex; align-items:flex-start; gap:16px; padding:10px 14px; margin:18px 0; border-radius:6px; border:0; transition:background .1s ease; }
 .conversation .message:hover, .conversation .message.has-active-menu { background:var(--realm-surface) !important; }
-.conversation .message.is-peer { flex-direction:row !important; }
-.conversation .message.is-own { flex-direction:row-reverse !important; }
+.conversation .message.is-peer, .conversation .message.is-own { flex-direction:row !important; }
 .conversation .message > .member-portrait { width:40px; height:40px; border:0; border-radius:50%; padding:0; background:var(--realm-surface); margin-top:2px; flex:0 0 40px; overflow:hidden; cursor:pointer; }
 .conversation .message > .member-portrait:hover { opacity:.9; }
-.conversation .message-content { display:flex; flex-direction:column; flex:1 1 auto; min-width:0; max-width:calc(100% - 56px); align-items:flex-start; }
-.conversation .is-own .message-content { align-items:flex-end !important; text-align:right !important; }
-.conversation .message-meta { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin:0 0 6px 0; justify-content:flex-start; }
-.conversation .is-own .message-meta { justify-content:flex-end !important; }
+.conversation .message-content, .conversation .is-own .message-content { display:flex; flex-direction:column; flex:1 1 auto; min-width:0; max-width:calc(100% - 56px); align-items:flex-start !important; text-align:left !important; }
+.conversation .message-meta, .conversation .is-own .message-meta { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; margin:0 0 6px 0; justify-content:flex-start !important; }
 .conversation .message-meta strong, .conversation .message-author { font-size:15px; font-weight:600; color:var(--realm-text); cursor:pointer; }
 .conversation .message-meta strong:hover, .conversation .message-author:hover { text-decoration:underline; }
 .conversation .message-meta time { font-size:12px; color:var(--realm-muted); font-weight:400; }
 .conversation .message-pinned-badge { font-size:12px; margin-left:2px; }
 .conversation .message-edited-badge { font-size:11px; color:var(--realm-muted); margin-left:4px; }
 .message-bubble, .conversation .is-own .message-bubble { min-width:0; max-width:100%; padding:0 !important; border-radius:0 !important; background:transparent !important; color:var(--realm-text) !important; box-shadow:none !important; }
-.conversation .message .message-bubble p { margin:0; font-size:15px; line-height:1.5; color:var(--realm-text); white-space:pre-wrap; overflow-wrap:anywhere; }
-.conversation .is-own .message-bubble p { text-align:right !important; }
+.conversation .message .message-bubble p, .conversation .is-own .message-bubble p { margin:0; font-size:15px; line-height:1.5; color:var(--realm-text); white-space:pre-wrap; overflow-wrap:anywhere; text-align:left !important; }
 .conversation .message .message-bubble .muted { color:var(--realm-muted); font-style:italic; }
 .conversation .message-actions { display:none !important; }
 .conversation .composer { flex:none; min-height:56px; padding:6px 8px 6px 12px; border-radius:18px; background:var(--realm-surface); border:1px solid var(--realm-line); }
@@ -560,7 +739,63 @@ button.secondary-btn:disabled,
 .modal-dialog .channel-topic-box textarea:focus,
 .modal-dialog .channel-topic-box textarea:focus-visible { background:transparent !important; border:0 !important; outline:none !important; outline-offset:0 !important; box-shadow:none !important; color:var(--realm-text) !important; font:14px/1.4 var(--realm-ui-font) !important; padding:10px 12px !important; resize:none !important; min-height:90px; height:90px; width:100% !important; box-sizing:border-box; }
 .channel-topic-count { display:none !important; }
-.channel-settings-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:20px; padding-top:16px; border-top:1px solid var(--realm-line); }
+.channel-settings-actions {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: 20px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--realm-line) !important;
+}
+
+.channel-settings-actions-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.channel-settings-actions-right .secondary-btn,
+.channel-settings-actions-right button.secondary-btn {
+  min-height: 36px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  border-radius: 6px !important;
+  font: 600 13.5px var(--realm-ui-font) !important;
+}
+
+.channel-settings-delete-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: transparent !important;
+  color: #f87e7a !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: background .12s ease, color .12s ease !important;
+}
+
+.channel-settings-delete-btn svg {
+  width: 16px !important;
+  height: 16px !important;
+  stroke: #f87e7a !important;
+  color: #f87e7a !important;
+  flex-shrink: 0 !important;
+}
+
+.channel-settings-delete-btn:hover:not(:disabled) {
+  background: #35292d !important;
+  color: #f87e7a !important;
+}
+
+.channel-settings-delete-btn:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+}
 
 /* Discord-Style Floating Action Toolbar on Message Hover */
 .message-hover-toolbar {
@@ -584,16 +819,20 @@ button.secondary-btn:disabled,
   display: flex !important;
 }
 
-.conversation .message.is-own:hover .message-hover-toolbar,
-.conversation .message.is-own.has-active-menu .message-hover-toolbar {
-  left: 16px !important;
-  right: auto !important;
+/* Prevent toolbar from staying stuck open when clicking reactions */
+.community-shell .conversation .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar,
+.community-shell .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar,
+.conversation .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar {
+  display: none !important;
 }
 
-.conversation .message.is-own .message-more-popover {
-  left: 0 !important;
-  right: auto !important;
+.conversation .message.is-own:hover .message-hover-toolbar,
+.conversation .message.is-own.has-active-menu .message-hover-toolbar {
+  right: 16px !important;
+  left: auto !important;
 }
+
+/* Positioned dynamically via fixed overlay coords */
 
 .toolbar-btn {
   display: flex !important;
@@ -641,24 +880,27 @@ button.secondary-btn:disabled,
 
 /* Three Dots Popover Menu */
 .message-more-popover {
-  position: absolute !important;
-  top: 36px !important;
-  right: 0 !important;
+  position: fixed !important;
   width: 220px !important;
-  background: var(--realm-inset) !important;
-  border: 1px solid var(--realm-line) !important;
+  max-height: min(390px, calc(100vh - 32px)) !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  scrollbar-width: thin !important;
+  background: var(--realm-inset, #111214) !important;
+  border: 1px solid var(--realm-line, #232428) !important;
   border-radius: 8px !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65) !important;
   padding: 6px 8px !important;
-  z-index: 130 !important;
+  z-index: 9999 !important;
   display: flex !important;
   flex-direction: column !important;
+  margin: 0 !important;
 }
 
 .menu-backdrop {
   position: fixed !important;
   inset: 0 !important;
-  z-index: 120 !important;
+  z-index: 9998 !important;
   cursor: default !important;
   background: transparent !important;
 }
@@ -789,7 +1031,7 @@ button.secondary-btn:disabled,
 }
 
 .conversation .is-own .message-reaction-list {
-  justify-content: flex-end !important;
+  justify-content: flex-start !important;
 }
 
 .message-reaction-pill {
@@ -1544,3 +1786,348 @@ button.secondary-btn:disabled,
 
 
 
+
+
+/* ==========================================================================
+   Discord-Aligned Workspace Shell & Chat Cleanups
+   ========================================================================== */
+
+/* Top Breadcrumb: Non-clickable Static Display */
+.community-space-switch.is-static {
+  cursor: default !important;
+  pointer-events: none !important;
+  user-select: text !important;
+}
+.community-space-switch.is-static:hover strong,
+.community-space-switch.is-static strong {
+  text-decoration: none !important;
+}
+
+/* Chat Header: Compact Discord-Standard Height (48px), Full-Width (No Gaps), Clean Typography */
+.realm-chat .chat-header,
+.community-shell .chat-header {
+  flex: none !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 0 16px !important;
+  margin: 0 !important;
+  margin-inline: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  gap: 10px !important;
+  background: var(--realm-bg) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.24) !important;
+  display: flex !important;
+  align-items: center !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16) !important;
+  border-radius: 0 !important;
+}
+
+.chat-channel-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.chat-channel-hash {
+  color: var(--realm-muted) !important;
+  font-size: 20px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  flex: none !important;
+}
+
+.chat-channel-title h1,
+.chat-channel-title h2,
+.community-shell .chat-channel-title h1 {
+  font: 600 16px/1.2 var(--realm-ui-font) !important;
+  margin: 0 !important;
+  color: var(--realm-text) !important;
+  letter-spacing: -0.01em !important;
+  white-space: nowrap !important;
+  flex: none !important;
+}
+
+.chat-channel-topic-divider {
+  width: 1px !important;
+  height: 16px !important;
+  background: var(--realm-line) !important;
+  flex: none !important;
+  margin: 0 4px !important;
+}
+
+.chat-channel-topic,
+.chat-channel-title p,
+.community-shell .chat-channel-title p {
+  margin: 0 !important;
+  color: var(--realm-muted) !important;
+  font-size: 13px !important;
+  line-height: 1.3 !important;
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: none !important;
+  flex: 1 1 auto !important;
+}
+
+.chat-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex: none !important;
+}
+
+.chat-header-actions a,
+.chat-header-actions button {
+  min-width: 32px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 4px 8px !important;
+  border-radius: 6px !important;
+  color: var(--realm-muted) !important;
+}
+
+.chat-header-actions a:hover,
+.chat-header-actions button:hover {
+  background: var(--realm-surface) !important;
+  color: var(--realm-text) !important;
+}
+
+/* Compact Modern Chat Composer: Discord Multi-line Auto-Expanding on Shift+Enter, No Blue Rings */
+.community-shell .conversation .composer,
+.conversation .composer {
+  display: flex !important;
+  align-items: flex-end !important;
+  gap: 10px !important;
+  min-height: 44px !important;
+  height: auto !important;
+  max-height: 320px !important;
+  padding: 8px 12px !important;
+  background: var(--realm-raised) !important;
+  border: 1px solid var(--realm-line) !important;
+  border-radius: 8px !important;
+  margin: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  transition: border-color .15s ease !important;
+}
+
+.community-shell .conversation .composer:focus-within,
+.conversation .composer:focus-within {
+  border-color: #4e5058 !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.room-composer-label {
+  display: none !important;
+}
+
+.community-shell .composer textarea,
+.conversation .composer textarea,
+.conversation .composer input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-height: 24px !important;
+  height: auto !important;
+  max-height: 280px !important;
+  padding: 2px 0 !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--realm-text) !important;
+  font: 14px/1.4 var(--realm-ui-font) !important;
+  resize: none !important;
+  caret-color: var(--realm-text) !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  field-sizing: content;
+}
+
+.community-shell .composer textarea:focus,
+.community-shell .composer textarea:focus-visible,
+.conversation .composer textarea:focus,
+.conversation .composer textarea:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.community-shell .composer textarea::placeholder,
+.conversation .composer textarea::placeholder,
+.conversation .composer input::placeholder {
+  color: #80848e !important;
+}
+
+.community-shell .composer textarea::-ms-reveal,
+.community-shell .composer textarea::-ms-clear,
+.conversation .composer textarea::-ms-reveal,
+.conversation .composer textarea::-ms-clear,
+.conversation .composer input::-ms-reveal,
+.conversation .composer input::-ms-clear {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.room-composer-hint {
+  display: none !important;
+}
+
+.community-shell .composer > button,
+.conversation .composer button,
+.composer-send-btn {
+  min-width: 32px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  background: var(--realm-surface) !important;
+  color: var(--realm-text) !important;
+  border: 1px solid var(--realm-line) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  flex: none !important;
+  margin-bottom: 2px !important;
+  transition: all .12s ease !important;
+}
+
+.community-shell .composer > button:hover:not(:disabled),
+.conversation .composer button:hover:not(:disabled),
+.composer-send-btn:hover:not(:disabled) {
+  background: #35373c !important;
+  color: #fff !important;
+  border-color: #4e5058 !important;
+}
+
+.community-shell .composer > button:disabled,
+.conversation .composer button:disabled,
+.composer-send-btn:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+.community-shell .conversation > .dm-note,
+.conversation .dm-note {
+  margin-top: 4px !important;
+  font-size: 11px !important;
+  color: var(--realm-muted) !important;
+  opacity: 0.7 !important;
+}
+
+/* Ensure All Messages Have Avatar On The Left and Reaction Toolbar On The Right */
+.community-shell .conversation .message.is-own,
+.conversation .message.is-own {
+  flex-direction: row !important;
+}
+
+.community-shell .conversation .is-own .message-content,
+.conversation .is-own .message-content {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+
+.community-shell .conversation .is-own .message-meta,
+.conversation .is-own .message-meta {
+  justify-content: flex-start !important;
+}
+
+.community-shell .conversation .is-own .message-bubble p,
+.conversation .is-own .message-bubble p {
+  text-align: left !important;
+}
+
+.community-shell .conversation .message.is-own:hover .message-hover-toolbar,
+.community-shell .conversation .message.is-own.has-active-menu .message-hover-toolbar,
+.conversation .message.is-own:hover .message-hover-toolbar,
+.conversation .message.is-own.has-active-menu .message-hover-toolbar {
+  right: 16px !important;
+  left: auto !important;
+}
+
+/* Popover position handled dynamically with fixed coords */
+
+/* Hide Static 3 Dots in Message Meta Header (Use Hover Action Toolbar Instead) */
+.message-actions-trigger {
+  display: none !important;
+}
+
+/* Discord-Style Start of Channel Welcome Banner */
+.channel-start-welcome {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 28px 0 20px !important;
+  margin-bottom: 16px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.channel-start-badge {
+  display: grid !important;
+  place-items: center !important;
+  width: 68px !important;
+  height: 68px !important;
+  border-radius: 50% !important;
+  background: var(--realm-raised) !important;
+  color: var(--realm-text) !important;
+  font-size: 42px !important;
+  font-weight: 700 !important;
+  font-family: var(--realm-ui-font) !important;
+  margin-bottom: 12px !important;
+}
+
+.channel-start-welcome h2 {
+  font: 700 32px/1.2 var(--realm-ui-font) !important;
+  color: var(--realm-text) !important;
+  margin: 0 0 8px !important;
+  letter-spacing: -0.02em !important;
+}
+
+.channel-start-sub {
+  font-size: 14px !important;
+  color: var(--realm-muted) !important;
+  margin: 0 0 10px !important;
+  line-height: 1.4 !important;
+}
+
+.channel-start-topic-text {
+  font-size: 14px !important;
+  color: var(--realm-text) !important;
+  line-height: 1.5 !important;
+  margin: 4px 0 16px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+  max-width: none !important;
+}
+
+.channel-start-edit-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  background: var(--realm-surface) !important;
+  color: var(--realm-text) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border: 1px solid var(--realm-line) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  width: fit-content !important;
+  transition: background .12s ease !important;
+}
+
+.channel-start-edit-btn:hover {
+  background: var(--realm-raised) !important;
+  color: #fff !important;
+}

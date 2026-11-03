@@ -46,7 +46,7 @@ input, textarea { caret-color: var(--realm-accent); }
 .room-app .room-object-list[data-thumbnails=true] small { color:var(--realm-muted); }
 .room-app .direction-pad button { border-color: var(--realm-line); background: var(--realm-surface); color: var(--realm-text); }
 .room-app .direction-pad button:hover { background: var(--realm-raised); }
-.room-app .studio-actions .studio-primary, .room-app .studio-form-actions button:first-child { background: var(--realm-accent); border-color: var(--realm-accent); color: var(--realm-on-accent); }
+.room-app .studio-actions .studio-primary, .room-app .studio-form-actions button:first-child { background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)); border: 0; color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)); min-height: 36px; padding: 0 16px; border-radius: 6px; font-weight: 600; }
 .character-stage:has(.alcove-backdrop) { background: #222c35; border: 1px solid #586473; border-radius: 5px; isolation: isolate; }
 .character-stage .alcove-backdrop { opacity: 1; }
 .character-stage:has(.alcove-backdrop) .pixel-character { position: relative; filter: drop-shadow(3px 5px 2px #111820a1); }

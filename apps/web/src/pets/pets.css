@@ -499,9 +499,17 @@
 }
 .wildlife-encounter-modal button { cursor: pointer; }
 .wildlife-encounter-modal button.primary {
-  background: var(--realm-accent);
-  color: var(--realm-bg);
-  border-color: var(--realm-accent);
+  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a));
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff));
+  border: 0;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.wildlife-encounter-modal button.primary:hover:not(:disabled) {
+  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c));
 }
 .wildlife-encounter-modal button:disabled { cursor: wait; opacity: .6; }
 .pet-collection-panel :focus-visible, .wildlife-encounter-modal :focus-visible, .profile-banner-pet:focus-visible {

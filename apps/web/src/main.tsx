@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import { AccountProvider, AccountGate, useAccount } from './Account'
 import { applyAppearance, readAppearance } from './appearance'
+import { applyTheme, getActiveTheme } from './theme'
 import AppearanceStudio from './AppearanceStudio'
 import './styles.css'
 import './social.css'
@@ -16,6 +17,7 @@ import './realm-theme.css'
 import './world/interaction.css'
 import {AuthCallback,Recovery} from './Auth'
 const Settings=lazy(()=>import('./Settings'))
+const AppearanceTheme=lazy(()=>import('./AppearanceTheme'))
 const Spaces=lazy(()=>import('./Spaces'))
 const HallPreview=lazy(()=>import('./HallPreview'))
 const SharedServerHall=lazy(()=>import('./world/SharedServerHall'))
@@ -30,11 +32,13 @@ const DirectMessages=lazy(()=>import('./DirectMessages'))
 const Friends=lazy(()=>import('./Social').then(m=>({default:m.FriendsPage})))
 const Profile=lazy(()=>import('./Social').then(m=>({default:m.ProfilePage})))
 applyAppearance(readAppearance())
+applyTheme(getActiveTheme())
 function Routes(){
  const account=useAccount(),params=new URLSearchParams(window.location.search)
  if(window.location.pathname==='/auth/callback')return <AuthCallback/>
  if(window.location.pathname==='/auth/recover')return <Recovery/>
  if(params.has('privacy'))return <Privacy key={account.session?.user.id??'signed-out'}/>
+ if(params.has('appearance-theme')||params.has('theme'))return <AppearanceTheme/>
  if(account.loading)return <main className="setup" role="status">Loading your account…</main>
  if(params.has('settings'))return <Settings/>
  if(params.has('appearance'))return account.session?<AccountGate><AppearanceStudio key={account.session.user.id}/></AccountGate>:<AppearanceStudio key="local"/>

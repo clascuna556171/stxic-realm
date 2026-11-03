@@ -7,8 +7,8 @@
 .hall-save-actions > span { color:var(--realm-muted); font-size:10px; margin-right:7px; }
 .hall-studio-page button { min-height:40px; border:1px solid var(--realm-line); border-radius:5px; background:var(--realm-surface); color:var(--realm-text); padding:9px 13px; font-size:11px; }
 .hall-studio-page button:hover:not(:disabled) { background:var(--realm-raised); }
-.hall-studio-page button.primary { background:var(--realm-accent); border-color:var(--realm-accent); color:var(--realm-on-accent); }
-.hall-studio-page button.primary:hover:not(:disabled) { filter:brightness(1.05); }
+.hall-studio-page button.primary { background:var(--realm-action-btn-bg,var(--realm-save-btn-bg,#23a55a)); border:0; color:var(--realm-action-btn-text,var(--realm-save-btn-text,#ffffff)); font-weight:600; min-height:36px; padding:0 16px; border-radius:6px; }
+.hall-studio-page button.primary:hover:not(:disabled) { background:var(--realm-action-btn-hover,var(--realm-save-btn-hover,#1f8b4c)); filter:none; }
 .hall-studio-layout { display:grid; grid-template-columns:minmax(0,1fr) 310px; gap:20px; align-items:start; }
 .hall-workbench { min-width:0; border:1px solid var(--realm-line); border-radius:8px; overflow:hidden; background:var(--realm-surface); }
 .hall-workbench-head { display:flex; justify-content:space-between; gap:16px; align-items:center; min-height:54px; padding:12px 18px; font-size:11px; }

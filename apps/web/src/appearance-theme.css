@@ -1,0 +1,252 @@
+/* Appearance Theme Settings Page */
+.appearance-theme-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--realm-bg);
+  color: var(--realm-text);
+}
+
+.appearance-theme-content {
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.appearance-theme-intro {
+  margin-bottom: 32px;
+}
+
+.appearance-theme-intro h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--realm-text);
+  letter-spacing: -0.02em;
+}
+
+.appearance-theme-intro p {
+  font-size: 14px;
+  margin: 0;
+  color: var(--realm-muted);
+}
+
+.theme-group-section {
+  margin-bottom: 36px;
+}
+
+.theme-group-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--realm-text);
+  letter-spacing: -0.01em;
+}
+
+/* Theme Tile Grid */
+.theme-tile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  text-align: center;
+  transition: transform 0.12s ease;
+  outline: none;
+}
+
+.theme-card:focus-visible {
+  outline: 2px solid var(--realm-accent);
+  outline-offset: 4px;
+  border-radius: 14px;
+}
+
+.theme-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Discord-Style Tile Preview */
+.theme-tile-preview {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 16px;
+  border: 2.5px solid var(--realm-line);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  overflow: visible;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.theme-tile-inner-strip {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+}
+
+.tile-light .theme-tile-inner-strip {
+  background: #ffffff !important;
+}
+
+.tile-ash .theme-tile-inner-strip {
+  background: #2b2d31 !important;
+}
+
+.tile-dark .theme-tile-inner-strip {
+  background: #18191f !important;
+}
+
+.tile-onyx .theme-tile-inner-strip {
+  background: #000000 !important;
+}
+
+/* Selected State */
+.theme-card.is-selected .theme-tile-preview {
+  border-width: 3.5px !important;
+  box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2), 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.theme-checked-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--realm-accent, #5865f2);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  z-index: 5;
+  border: 2px solid var(--realm-bg);
+}
+
+.theme-checked-badge svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.5;
+}
+
+.theme-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--realm-text);
+  margin-top: 4px;
+}
+
+.theme-card.is-selected .theme-card-name {
+  color: var(--realm-text);
+  font-weight: 700;
+}
+
+/* Color Themes Grid */
+.color-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.color-theme-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--realm-surface);
+  border: 1px solid var(--realm-line);
+  border-radius: 14px;
+  transition: all 0.15s ease;
+}
+
+.color-theme-card:hover {
+  background: var(--realm-raised);
+  border-color: var(--realm-accent);
+}
+
+.color-theme-card.is-selected {
+  border-color: var(--realm-accent) !important;
+  background: var(--realm-raised) !important;
+  box-shadow: 0 0 0 1px var(--realm-accent);
+}
+
+.color-preview {
+  width: 54px;
+  height: 54px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.theme-color-layers {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.color-layer-bg {
+  flex: 1;
+}
+
+.color-layer-accent {
+  height: 12px;
+  width: 100%;
+}
+
+.tile-forest-green .color-layer-bg {
+  background: linear-gradient(135deg, #0a140d 0%, #16301e 100%);
+}
+
+.tile-forest-green .color-layer-accent {
+  background: #2ecc71;
+}
+
+.tile-ocean-blue .color-layer-bg {
+  background: linear-gradient(135deg, #08101e 0%, #132a48 100%);
+}
+
+.tile-ocean-blue .color-layer-accent {
+  background: #38bdf8;
+}
+
+.tile-gothic-red .color-layer-bg {
+  background: linear-gradient(135deg, #15080a 0%, #301017 100%);
+}
+
+.tile-gothic-red .color-layer-accent {
+  background: #e63946;
+}
+
+.theme-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.theme-card-text strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--realm-text);
+}
+
+.theme-card-desc {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--realm-muted);
+}

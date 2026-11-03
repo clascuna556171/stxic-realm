@@ -7,8 +7,8 @@
 .hall-intro-actions { display: flex; gap: 10px; align-items: center; }
 .hall-intro-actions a, .hall-primary { display: inline-flex; gap: 8px; align-items: center; justify-content: center; min-height: 42px; padding: 10px 15px; border: 1px solid var(--realm-line); border-radius: 5px; color: var(--realm-text); font-size: 12px; text-decoration: none; }
 .hall-intro-actions a:hover { background: var(--realm-surface); }
-.hall-primary, .hall-intro-actions .hall-primary { background: var(--realm-accent); border-color: var(--realm-accent); color: var(--realm-on-accent); font-weight: 600; }
-.hall-primary:hover, .hall-intro-actions .hall-primary:hover { background: var(--realm-paper); color: var(--realm-on-accent); }
+.hall-primary, .hall-intro-actions .hall-primary { background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)); border: 0; color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)); font-weight: 600; min-height: 36px; height: 36px; padding: 0 16px; border-radius: 6px; }
+.hall-primary:hover, .hall-intro-actions .hall-primary:hover { background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)); color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)); }
 .hall-intro-actions svg { width: 16px; height: 16px; }
 .hall-preview-note, .hall-layout-warning { display: flex; align-items: center; gap: 9px; color: var(--realm-muted); font-size: 11px; line-height: 1.8; margin: -6px 0 20px; }
 .hall-preview-note svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--realm-muted); }
@@ -87,8 +87,8 @@
 .hall-selected > p { font-size: 11px; color: var(--realm-muted); line-height: 1.8; margin: 12px 0; }
 .hall-channel-preview { display: flex; gap: 5px 12px; flex-wrap: wrap; font-size: 10px; line-height: 1.8; margin-bottom: 16px; color: var(--realm-muted); }
 .hall-channel-preview a { color: var(--realm-muted); text-underline-offset: 3px; }
-.hall-enter { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; padding: 12px 14px; margin: 16px 0; border-radius: 4px; background: var(--realm-accent); color: var(--realm-on-accent); font-size: 12px; font-weight: 600; text-decoration: none; }
-.hall-enter:hover { filter: brightness(1.07); }
+.hall-enter { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 38px; height: 38px; padding: 0 16px; margin: 16px 0; border-radius: 6px; background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)); color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)); font-size: 13px; font-weight: 600; text-decoration: none; border: 0; }
+.hall-enter:hover { background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)); filter: none; }
 .hall-enter svg { width: 16px; height: 16px; }
 .hall-enter.is-disabled { background: var(--realm-raised); color: var(--realm-muted); }
 .hall-directory-foot { display: flex; align-items: start; gap: 8px; padding: 15px 0; border-top: 1px solid var(--realm-line); color: var(--realm-muted); }

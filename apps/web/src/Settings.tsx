@@ -9,6 +9,7 @@ export default function Settings(){
  <a href={session?'/?profile':'/'}><Icon name="profile"/><span><strong>Your profile</strong><small>Account photo, banner, bio and profile style</small></span><Icon name="arrow"/></a>
  <a href="/?appearance&section=interface#interface-settings"><Icon name="settings"/><span><strong>Interface & colors</strong><small>Private app accent and logo color</small></span><Icon name="arrow"/></a>
  <a href="/?privacy"><Icon name="shield"/><span><strong>Privacy & data</strong><small>Blocked accounts, exports and account deletion</small></span><Icon name="arrow"/></a>
+ <a href="/?appearance-theme"><Icon name="sun"/><span><strong>Appearance Theme</strong><small>Default and rich color themes for Realm</small></span><Icon name="arrow"/></a>
  </div></section><section aria-labelledby="settings-world"><h2 id="settings-world">Your world</h2><div className="settings-destinations">
  <a href="/?appearance"><Icon name="avatar"/><span><strong>Character</strong><small>Your pixel character, clothes and accessories</small></span><Icon name="arrow"/></a>
  <a href="/?room-studio"><Icon name="studio"/><span><strong>Home Studio</strong><small>Room layout and who can visit</small></span><Icon name="arrow"/></a>

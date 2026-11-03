@@ -28,6 +28,6 @@
 .room-object-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
 .room-action-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:6px;background:var(--realm-surface);border:1px solid var(--realm-line);color:var(--realm-text);font-size:11px;font-weight:500;cursor:pointer;transition:background .15s ease,color .15s ease}
 .room-action-btn:hover{background:var(--realm-raised);color:var(--realm-text)}
-.room-action-btn.primary{background:var(--realm-accent);border-color:var(--realm-accent);color:var(--realm-on-accent);font-weight:600}
-.room-action-btn.primary:hover{opacity:.92}
+.room-action-btn.primary{background:var(--realm-action-btn-bg,var(--realm-save-btn-bg,#23a55a));border:0;color:var(--realm-action-btn-text,var(--realm-save-btn-text,#ffffff));font-weight:600;min-height:36px;padding:0 16px;border-radius:6px}
+.room-action-btn.primary:hover{background:var(--realm-action-btn-hover,var(--realm-save-btn-hover,#1f8b4c));opacity:1}
 .room-action-btn svg{width:12px;height:12px}
