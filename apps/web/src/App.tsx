@@ -62,8 +62,7 @@ function Chat({session}:{session:Session}){
   void checkRole()
   return()=>{active=false}
  },[spaceId,session.user.id])
- const isSpaceCreator=myRole==='owner'
- const canManageChannels=isSpaceCreator&&!space?.archived_at&&!space?.closed_at
+ const canManageChannels=roleRank(myRole)>=3&&!space?.archived_at&&!space?.closed_at
 
  const [serverMenuOpen,setServerMenuOpen]=useState(false)
  const serverMenuRef=useRef<HTMLDivElement>(null)
@@ -168,7 +167,7 @@ function Chat({session}:{session:Session}){
  }
 
  async function handleDeleteChannel(c:Channel){
-  if(!c||savingChannel)return
+  if(!c||!client||savingChannel)return
   if(!window.confirm(`Are you sure you want to delete #${c.name}? This cannot be undone.`))return
   setSavingChannel(true)
   setEditError('')

@@ -1,3 +1,5 @@
+import { readAppearance, accents } from './appearance'
+
 export interface RealmTheme {
   id: string
   name: string
@@ -19,7 +21,7 @@ export const THEMES: RealmTheme[] = [
     colorScheme: 'light',
     previewBg: '#f2f3f5',
     previewSurface: '#ffffff',
-    previewAccent: '#5865f2',
+    previewAccent: '#202020',
     description: 'Clean, high-contrast light mode',
     variables: {
       '--realm-bg': '#f2f3f5',
@@ -29,15 +31,15 @@ export const THEMES: RealmTheme[] = [
       '--realm-line': '#d1d4db',
       '--realm-text': '#060607',
       '--realm-muted': '#4e5058',
-      '--realm-accent': '#5865f2',
+      '--realm-accent': '#202020',
       '--realm-on-accent': '#ffffff',
       '--realm-selected': 'rgba(0, 0, 0, 0.08)',
-      '--realm-save-btn-bg': '#23a55a',
-      '--realm-save-btn-text': '#ffffff',
-      '--realm-save-btn-hover': '#1f8b4c',
-      '--realm-action-btn-bg': '#23a55a',
-      '--realm-action-btn-text': '#ffffff',
-      '--realm-action-btn-hover': '#1f8b4c',
+      '--realm-save-btn-bg': 'var(--realm-accent)',
+      '--realm-save-btn-text': 'var(--realm-on-accent)',
+      '--realm-save-btn-hover': 'color-mix(in srgb, var(--realm-accent) 85%, #000000)',
+      '--realm-action-btn-bg': 'var(--realm-accent)',
+      '--realm-action-btn-text': 'var(--realm-on-accent)',
+      '--realm-action-btn-hover': 'color-mix(in srgb, var(--realm-accent) 85%, #000000)',
     },
   },
   {
@@ -45,27 +47,27 @@ export const THEMES: RealmTheme[] = [
     name: 'Ash',
     category: 'default',
     colorScheme: 'dark',
-    previewBg: '#2b2d31',
-    previewSurface: '#313338',
-    previewAccent: '#5865f2',
+    previewBg: '#202020',
+    previewSurface: '#303030',
+    previewAccent: '#dedee6',
     description: 'Smooth charcoal gray medium theme',
     variables: {
-      '--realm-bg': '#2b2d31',
-      '--realm-surface': '#313338',
-      '--realm-raised': '#383a40',
-      '--realm-inset': '#1e1f22',
-      '--realm-line': '#3f4147',
-      '--realm-text': '#dbdee1',
-      '--realm-muted': '#949ba4',
-      '--realm-accent': '#5865f2',
-      '--realm-on-accent': '#ffffff',
+      '--realm-bg': '#202020',
+      '--realm-surface': '#303030',
+      '--realm-raised': '#3e3e3e',
+      '--realm-inset': '#252525',
+      '--realm-line': '#4a4a4a',
+      '--realm-text': '#f1f1f1',
+      '--realm-muted': '#bdbdbd',
+      '--realm-accent': '#dedee6',
+      '--realm-on-accent': '#202020',
       '--realm-selected': 'rgba(255, 255, 255, 0.08)',
-      '--realm-save-btn-bg': '#23a55a',
-      '--realm-save-btn-text': '#ffffff',
-      '--realm-save-btn-hover': '#1f8b4c',
-      '--realm-action-btn-bg': '#23a55a',
-      '--realm-action-btn-text': '#ffffff',
-      '--realm-action-btn-hover': '#1f8b4c',
+      '--realm-save-btn-bg': 'var(--realm-accent)',
+      '--realm-save-btn-text': 'var(--realm-on-accent)',
+      '--realm-save-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
+      '--realm-action-btn-bg': 'var(--realm-accent)',
+      '--realm-action-btn-text': 'var(--realm-on-accent)',
+      '--realm-action-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
     },
   },
   {
@@ -88,12 +90,12 @@ export const THEMES: RealmTheme[] = [
       '--realm-accent': '#dedee6',
       '--realm-on-accent': '#101115',
       '--realm-selected': 'rgba(255, 255, 255, 0.08)',
-      '--realm-save-btn-bg': '#23a55a',
-      '--realm-save-btn-text': '#ffffff',
-      '--realm-save-btn-hover': '#1f8b4c',
-      '--realm-action-btn-bg': '#23a55a',
-      '--realm-action-btn-text': '#ffffff',
-      '--realm-action-btn-hover': '#1f8b4c',
+      '--realm-save-btn-bg': 'var(--realm-accent)',
+      '--realm-save-btn-text': 'var(--realm-on-accent)',
+      '--realm-save-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
+      '--realm-action-btn-bg': 'var(--realm-accent)',
+      '--realm-action-btn-text': 'var(--realm-on-accent)',
+      '--realm-action-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
     },
   },
   {
@@ -116,12 +118,12 @@ export const THEMES: RealmTheme[] = [
       '--realm-accent': '#ffffff',
       '--realm-on-accent': '#000000',
       '--realm-selected': 'rgba(255, 255, 255, 0.12)',
-      '--realm-save-btn-bg': '#23a55a',
-      '--realm-save-btn-text': '#ffffff',
-      '--realm-save-btn-hover': '#1f8b4c',
-      '--realm-action-btn-bg': '#23a55a',
-      '--realm-action-btn-text': '#ffffff',
-      '--realm-action-btn-hover': '#1f8b4c',
+      '--realm-save-btn-bg': 'var(--realm-accent)',
+      '--realm-save-btn-text': 'var(--realm-on-accent)',
+      '--realm-save-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
+      '--realm-action-btn-bg': 'var(--realm-accent)',
+      '--realm-action-btn-text': 'var(--realm-on-accent)',
+      '--realm-action-btn-hover': 'color-mix(in srgb, var(--realm-accent) 88%, #ffffff)',
     },
   },
   // Color Themes
@@ -229,6 +231,14 @@ export function applyTheme(themeId: string) {
   Object.entries(theme.variables).forEach(([k, v]) => {
     root.style.setProperty(k, v)
   })
+  if (theme.category === 'default') {
+    try {
+      const userAppearance = readAppearance()
+      if (userAppearance?.accent && accents[userAppearance.accent]) {
+        root.style.setProperty('--realm-accent', accents[userAppearance.accent])
+      }
+    } catch {}
+  }
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme.id)
   } catch {}

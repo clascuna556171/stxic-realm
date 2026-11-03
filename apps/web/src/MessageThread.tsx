@@ -387,11 +387,20 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   return()=>{active=false}
  },[forwardingMessage])
 
- function rememberMessageOpener(m:StreamMessage){
-  menuOpener.current=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===m.id)?.querySelector<HTMLButtonElement>('.toolbar-btn')??null
+ function rememberMessageOpener(m:StreamMessage,action?:'forward'|'emoji'){
+  const article=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===m.id)
+  if(!article){menuOpener.current=null;return}
+  if(action==='forward'){
+   menuOpener.current=article.querySelector<HTMLButtonElement>('.toolbar-btn[title="Forward"]')??null
+  }else if(action==='emoji'){
+   menuOpener.current=article.querySelector<HTMLButtonElement>('.toolbar-btn[title="Add Reaction"]')??null
+  }else{
+   menuOpener.current=article.querySelector<HTMLButtonElement>('.toolbar-btn[title="More"]')??null
+  }
  }
- function openForward(m:StreamMessage){
-  rememberMessageOpener(m)
+ function openForward(m:StreamMessage,opener?:HTMLButtonElement|null){
+  if(opener)menuOpener.current=opener
+  else rememberMessageOpener(m,'forward')
   setForwardingMessage(m)
   setForwardSearch('')
   setForwardNote('')
@@ -408,8 +417,9 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   setSelectedDests(new Set())
  }
 
- function openEmojiPicker(m:StreamMessage,startEditingQuick=false){
-  rememberMessageOpener(m)
+ function openEmojiPicker(m:StreamMessage,startEditingQuick=false,opener?:HTMLButtonElement|null){
+  if(opener)menuOpener.current=opener
+  else rememberMessageOpener(m,'emoji')
   setEmojiPickerMessage(m)
   setEmojiSearch('')
   setEditingQuickReactions(startEditingQuick)
@@ -418,7 +428,6 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  }
 
  function closeEmojiPicker(){
-  (document.activeElement as HTMLElement)?.blur()
   setEmojiPickerMessage(null)
   setEmojiSearch('')
   setEditingQuickReactions(false)
@@ -669,7 +678,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
         {!m.removed_at&&Object.keys(msgReactions).length>0&&(
          <div className="message-reaction-list">
           {Object.entries(msgReactions).map(([emoji,users])=>(
-           <button key={emoji} type="button" className={`message-reaction-pill ${users.includes(user)?'is-reacted':''}`} onClick={e=>{e.currentTarget.blur();toggleReaction(m.id,emoji)}} title={`${users.length} reaction${users.length>1?'s':''}`}>
+           <button key={emoji} type="button" className={`message-reaction-pill ${users.includes(user)?'is-reacted':''}`} onClick={()=>{toggleReaction(m.id,emoji)}} title={`${users.length} reaction${users.length>1?'s':''}`}>
             <span className="reaction-emoji">{emoji}</span>
             <span className="reaction-count">{users.length}</span>
            </button>
@@ -680,13 +689,13 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
        {!m.removed_at&&(
         <aside className="message-hover-toolbar" aria-label="Message actions">
          {quickReactions.map(emoji=>(
-          <button key={emoji} type="button" className="toolbar-btn" title={`React ${emoji}`} onClick={e=>{e.currentTarget.blur();toggleReaction(m.id,emoji)}}>{emoji}</button>
+          <button key={emoji} type="button" className="toolbar-btn" title={`React ${emoji}`} onClick={()=>{toggleReaction(m.id,emoji)}}>{emoji}</button>
          ))}
          <div className="toolbar-separator"/>
-         <button type="button" className="toolbar-btn" title="Add Reaction" onClick={()=>openEmojiPicker(m)}><SmileIcon/></button>
+         <button type="button" className="toolbar-btn" title="Add Reaction" onClick={e=>openEmojiPicker(m,false,e.currentTarget)}><SmileIcon/></button>
          {isOwn&&<button type="button" className="toolbar-btn" title="Edit" disabled={changing||readOnly} onClick={()=>{setEditing(m);setEditBody(m.body)}}><PencilIcon/></button>}
          <button type="button" className="toolbar-btn" title="Reply" onClick={()=>setReplyingTo(m)}><ReplyIcon/></button>
-         <button type="button" className="toolbar-btn" title="Forward" onClick={()=>openForward(m)}><ForwardIcon/></button>
+         <button type="button" className="toolbar-btn" title="Forward" onClick={e=>openForward(m,e.currentTarget)}><ForwardIcon/></button>
          <button type="button" className={`toolbar-btn ${isMenuOpen?'is-active':''}`} title="More" aria-haspopup="menu" aria-expanded={isMenuOpen} onClick={e=>{menuOpener.current=e.currentTarget;setActiveMenu(isMenuOpen?null:m.id)}}><DotsIcon/></button>
          {isMenuOpen&&(
           <>
@@ -696,13 +705,13 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
              {quickReactions.map(emoji=>(
               <button key={emoji} type="button" className="menu-emoji-btn" onClick={()=>{toggleReaction(m.id,emoji);setActiveMenu(null)}} title={`React with ${emoji}`}>{emoji}</button>
              ))}
-             <button type="button" className="menu-emoji-edit-btn" title="Edit quick reactions (max 3)" aria-label="Edit quick reactions" onClick={()=>openEmojiPicker(m,true)}><PencilIcon size={14}/></button>
+             <button type="button" className="menu-emoji-edit-btn" title="Edit quick reactions (max 3)" aria-label="Edit quick reactions" onClick={e=>openEmojiPicker(m,true,menuOpener.current)}><PencilIcon size={14}/></button>
             </div>
             <div className="menu-divider"/>
-            <button type="button" className="menu-item" role="menuitem" onClick={()=>{openEmojiPicker(m);setActiveMenu(null)}}><span>Add Reaction</span><SmileIcon size={16}/></button>
+            <button type="button" className="menu-item" role="menuitem" onClick={()=>{openEmojiPicker(m,false,menuOpener.current);setActiveMenu(null)}}><span>Add Reaction</span><SmileIcon size={16}/></button>
             {isOwn&&<button type="button" className="menu-item" role="menuitem" disabled={changing||readOnly} onClick={()=>{setEditing(m);setEditBody(m.body);setActiveMenu(null)}}><span>Edit Message</span><PencilIcon size={16}/></button>}
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{setReplyingTo(m);setActiveMenu(null)}}><span>Reply</span><ReplyIcon size={16}/></button>
-            <button type="button" className="menu-item" role="menuitem" onClick={()=>openForward(m)}><span>Forward</span><ForwardIcon size={16}/></button>
+            <button type="button" className="menu-item" role="menuitem" onClick={()=>{openForward(m,menuOpener.current);setActiveMenu(null)}}><span>Forward</span><ForwardIcon size={16}/></button>
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{void navigator.clipboard.writeText(m.body);setCopiedId(m.id);setTimeout(()=>setCopiedId(null),2000);setActiveMenu(null)}}><span>{copiedId===m.id?'Copied!':'Copy Text'}</span><CopyIcon size={16}/></button>
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{togglePin(m.id);setActiveMenu(null)}}><span>{isPinned?'Unpin Message':'Pin Message'}</span><PinIcon size={16}/></button>
             <div className="menu-divider"/>

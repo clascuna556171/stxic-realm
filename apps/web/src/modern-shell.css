@@ -160,18 +160,18 @@ button.secondary-btn:disabled,
   cursor: not-allowed !important;
   transform: none !important;
 }
-/* Theme-aware Action / Primary Buttons: simple green in default themes, matched in color themes */
+/* Theme-aware Action / Primary Buttons */
 :root,
 [data-theme="dark"],
 [data-theme="light"],
 [data-theme="ash"],
 [data-theme="onyx"] {
-  --realm-save-btn-bg: #23a55a;
-  --realm-save-btn-text: #ffffff;
-  --realm-save-btn-hover: #1f8b4c;
-  --realm-action-btn-bg: #23a55a;
-  --realm-action-btn-text: #ffffff;
-  --realm-action-btn-hover: #1f8b4c;
+  --realm-save-btn-bg: var(--realm-accent);
+  --realm-save-btn-text: var(--realm-on-accent);
+  --realm-save-btn-hover: color-mix(in srgb, var(--realm-accent) 88%, #ffffff);
+  --realm-action-btn-bg: var(--realm-accent);
+  --realm-action-btn-text: var(--realm-on-accent);
+  --realm-action-btn-hover: color-mix(in srgb, var(--realm-accent) 88%, #ffffff);
 }
 
 [data-theme="forest-green"] {
@@ -201,150 +201,41 @@ button.secondary-btn:disabled,
   --realm-action-btn-hover: #c92a37;
 }
 
-/* Master Primary Action Buttons across the application */
-button.primary,
-a.primary,
-.primary,
 .modal-actions .primary,
-.modal-actions button.primary,
 .channel-settings-actions .primary,
-.channel-settings-save-btn,
-.hall-primary,
-.hall-intro-actions .hall-primary,
-.hall-intro-actions a.hall-primary,
-.hall-enter,
-.room-action-btn.primary,
-.studio-primary,
-.room-app .studio-actions .studio-primary,
-.room-app .studio-form-actions button:first-child,
-.save-appearance,
-.wildlife-encounter-modal button.primary,
-.profile-editor-actions button.primary,
-.profile-editor-top button.primary,
-.profile-editor-top .primary,
-.frame-workshop-footer button.primary,
-.social-actions .primary,
-.social-actions button.primary,
-.friend-request-form button.primary,
-.friend-request-form button[type="submit"],
-.realm-forward-send-btn,
-.hall-studio-page button.primary {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 36px !important;
-  height: 36px !important;
-  padding: 0 16px !important;
-  border-radius: 6px !important;
-  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)) !important;
-  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
-  border: 0 !important;
-  border-color: transparent !important;
-  font: 600 13.5px var(--realm-ui-font) !important;
-  cursor: pointer !important;
-  box-shadow: none !important;
-  text-decoration: none !important;
-  transition: background .12s ease, opacity .12s ease !important;
-  box-sizing: border-box !important;
+.channel-settings-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, var(--realm-accent)));
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, var(--realm-on-accent)));
+  border: 0;
+  font: 600 13.5px var(--realm-ui-font);
+  cursor: pointer;
+  box-shadow: none;
+  text-decoration: none;
+  transition: background .12s ease, opacity .12s ease;
+  box-sizing: border-box;
 }
 
-button.primary:hover:not(:disabled),
-a.primary:hover:not(:disabled),
-.primary:hover:not(:disabled),
 .modal-actions .primary:hover:not(:disabled),
-.modal-actions button.primary:hover:not(:disabled),
 .channel-settings-actions .primary:hover:not(:disabled),
-.channel-settings-save-btn:hover:not(:disabled),
-.hall-primary:hover:not(:disabled),
-.hall-intro-actions .hall-primary:hover:not(:disabled),
-.hall-intro-actions a.hall-primary:hover:not(:disabled),
-.hall-enter:hover:not(:disabled),
-.room-action-btn.primary:hover:not(:disabled),
-.studio-primary:hover:not(:disabled),
-.room-app .studio-actions .studio-primary:hover:not(:disabled),
-.room-app .studio-form-actions button:first-child:hover:not(:disabled),
-.save-appearance:hover:not(:disabled),
-.wildlife-encounter-modal button.primary:hover:not(:disabled),
-.profile-editor-actions button.primary:hover:not(:disabled),
-.profile-editor-top button.primary:hover:not(:disabled),
-.profile-editor-top .primary:hover:not(:disabled),
-.frame-workshop-footer button.primary:hover:not(:disabled),
-.social-actions .primary:hover:not(:disabled),
-.social-actions button.primary:hover:not(:disabled),
-.friend-request-form button.primary:hover:not(:disabled),
-.friend-request-form button[type="submit"]:hover:not(:disabled),
-.realm-forward-send-btn:hover:not(:disabled),
-.hall-studio-page button.primary:hover:not(:disabled) {
-  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)) !important;
-  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
-  filter: none !important;
+.channel-settings-save-btn:hover:not(:disabled) {
+  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, var(--realm-accent)));
+  color: var(--realm-action-btn-text, var(--realm-save-btn-text, var(--realm-on-accent)));
 }
 
-button.primary:disabled,
-a.primary:disabled,
-.primary:disabled,
 .modal-actions .primary:disabled,
-.modal-actions button.primary:disabled,
 .channel-settings-actions .primary:disabled,
-.channel-settings-save-btn:disabled,
-.hall-primary:disabled,
-.hall-intro-actions .hall-primary:disabled,
-.hall-intro-actions a.hall-primary:disabled,
-.hall-enter.is-disabled,
-.room-action-btn.primary:disabled,
-.studio-primary:disabled,
-.room-app .studio-actions .studio-primary:disabled,
-.room-app .studio-form-actions button:first-child:disabled,
-.save-appearance:disabled,
-.wildlife-encounter-modal button.primary:disabled,
-.profile-editor-actions button.primary:disabled,
-.profile-editor-top button.primary:disabled,
-.profile-editor-top .primary:disabled,
-.frame-workshop-footer button.primary:disabled,
-.social-actions .primary:disabled,
-.social-actions button.primary:disabled,
-.friend-request-form button.primary:disabled,
-.friend-request-form button[type="submit"]:disabled,
-.realm-forward-send-btn:disabled,
-.hall-studio-page button.primary:disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-  filter: none !important;
+.channel-settings-save-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
-/* Compact Notice buttons (e.g. Bond with Moon Owl) */
-.home-wildlife-notice button,
-.room-app .home-wildlife-notice button {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: 32px !important;
-  height: 32px !important;
-  padding: 0 14px !important;
-  border-radius: 6px !important;
-  background: var(--realm-action-btn-bg, var(--realm-save-btn-bg, #23a55a)) !important;
-  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
-  border: 0 !important;
-  border-color: transparent !important;
-  font: 600 12.5px var(--realm-ui-font) !important;
-  cursor: pointer !important;
-  box-shadow: none !important;
-  transition: background .12s ease, opacity .12s ease !important;
-}
-
-.home-wildlife-notice button:hover:not(:disabled),
-.room-app .home-wildlife-notice button:hover:not(:disabled) {
-  background: var(--realm-action-btn-hover, var(--realm-save-btn-hover, #1f8b4c)) !important;
-  color: var(--realm-action-btn-text, var(--realm-save-btn-text, #ffffff)) !important;
-  filter: none !important;
-}
-
-.home-wildlife-notice button:disabled,
-.room-app .home-wildlife-notice button:disabled {
-  opacity: 0.5 !important;
-  cursor: not-allowed !important;
-  filter: none !important;
-}
 .realm-chat .chat-server-identity h1 { font:600 16px/1.4 var(--realm-ui-font); margin:0; }
 .chat-server-seal { display:grid; place-items:center; flex:none; width:44px; height:44px; border-radius:50%; background:var(--realm-selected); color:var(--realm-accent); font-size:19px; font-weight:600; }
 .realm-chat .space-switcher { font-size:12px; }
@@ -1917,7 +1808,7 @@ a.primary:disabled,
 
 .community-shell .conversation .composer:focus-within,
 .conversation .composer:focus-within {
-  border-color: #4e5058 !important;
+  border-color: var(--realm-accent) !important;
   outline: none !important;
   box-shadow: none !important;
 }
@@ -2004,9 +1895,9 @@ a.primary:disabled,
 .community-shell .composer > button:hover:not(:disabled),
 .conversation .composer button:hover:not(:disabled),
 .composer-send-btn:hover:not(:disabled) {
-  background: #35373c !important;
-  color: #fff !important;
-  border-color: #4e5058 !important;
+  background: var(--realm-raised) !important;
+  color: var(--realm-text) !important;
+  border-color: var(--realm-line) !important;
 }
 
 .community-shell .composer > button:disabled,
