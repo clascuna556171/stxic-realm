@@ -711,11 +711,7 @@ button.secondary-btn:disabled,
 }
 
 /* Prevent toolbar from staying stuck open when clicking reactions */
-.community-shell .conversation .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar,
-.community-shell .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar,
-.conversation .message:focus-within:not(:hover):not(.has-active-menu) .message-hover-toolbar {
-  display: none !important;
-}
+/* focus-within handled by realm-theme.css */
 
 .conversation .message.is-own:hover .message-hover-toolbar,
 .conversation .message.is-own.has-active-menu .message-hover-toolbar {
@@ -1948,9 +1944,7 @@ button.secondary-btn:disabled,
 /* Popover position handled dynamically with fixed coords */
 
 /* Hide Static 3 Dots in Message Meta Header (Use Hover Action Toolbar Instead) */
-.message-actions-trigger {
-  display: none !important;
-}
+/* .message-actions-trigger preserved */
 
 /* Discord-Style Start of Channel Welcome Banner */
 .channel-start-welcome {

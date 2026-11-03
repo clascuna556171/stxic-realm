@@ -13,9 +13,15 @@
  --realm-type-title:clamp(26px,2.5vw,34px);--realm-control-height:44px;
  color-scheme:dark;
 }
-html,body{background:var(--realm-bg);color:var(--realm-text)}
+html,body{min-height:100%;background:var(--realm-bg);color:var(--realm-text)}
+html{overflow-x:hidden}
 ::selection{background:var(--realm-accent);color:var(--realm-on-accent)}
-*{scrollbar-color:var(--realm-scrollbar) transparent}
+*{scrollbar-width:thin;scrollbar-color:var(--realm-scrollbar) transparent}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background-color:rgba(255,255,255,0.2);border-radius:9999px}
+*::-webkit-scrollbar-thumb:hover{background-color:rgba(255,255,255,0.38)}
+*::-webkit-scrollbar-corner{background:transparent}
 input,textarea{caret-color:var(--realm-accent)}
 .workspace-page,.shell.community-shell{font-family:var(--realm-ui-font)}
 .workspace-page{
@@ -96,7 +102,7 @@ input,textarea{caret-color:var(--realm-accent)}
 .login :is(.login-hall-link,.login-avatar-link,.login-recovery){color:var(--realm-text)}
 @media(max-width:1300px) and (min-width:651px){:root{--realm-frame-gap:12px;--realm-frame-inset:10px;--realm-nav-width:60px}.workspace-page{padding:10px 10px 10px 82px}.workspace-page>.workspace-nav{padding-inline:6px}.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content){padding:26px}}
 @media(max-height:760px) and (min-width:651px){.workspace-page>.workspace-nav{padding-block:8px}.workspace-page .workspace-nav>nav{margin-top:12px;gap:0}.workspace-page .workspace-nav nav a{min-height:42px;padding:4px 0}.workspace-page .workspace-nav .workspace-account{margin-top:auto}}
-@media(max-height:760px) and (min-width:651px){.workspace-page.viewport-world>.workspace-header{min-height:48px;margin-bottom:6px}.workspace-page.viewport-world .is-scene-controls{height:54px;padding:4px 12px}.workspace-page.viewport-world .is-scene-controls .walk-message{-webkit-line-clamp:1}}
+@media(max-height:760px) and (min-width:651px){.workspace-page.viewport-world>.workspace-header{min-height:42px;margin-bottom:4px}.workspace-page.viewport-world:not(.room-app) .is-scene-controls{height:54px;padding:4px 12px}.workspace-page.viewport-world .is-scene-controls .walk-message{-webkit-line-clamp:1}}
 @media(max-width:650px){
  :root{--realm-frame-gap:0px}
  .workspace-page{width:100%;margin:0;padding:8px 10px calc(80px + env(safe-area-inset-bottom,0px));border:0;border-radius:0;min-height:100dvh}
@@ -175,7 +181,7 @@ input,textarea{caret-color:var(--realm-accent)}
  .appearance-mobile-actions p{grid-column:1/-1;font-size:12px;line-height:1.5;color:var(--realm-muted);margin:0}
  .appearance-mobile-actions svg{width:16px;height:16px}
  .appearance-page .appearance-preview .save-appearance{display:none}
- .appearance-page .appearance-controls :is(button,input,select){scroll-margin-top:120px}
+ .appearance-page .appearance-controls :is(button,input,select){scroll-margin-top:120px;scroll-margin-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
  .conversation .message:not(.has-active-menu) .message-hover-toolbar{display:none!important}
  .conversation .message-actions-trigger{width:44px;min-height:44px}
  .conversation .message-meta time{font-size:12px}

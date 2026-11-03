@@ -3,6 +3,40 @@ import assert from 'node:assert/strict'
 import { defaults, accessories, hairStyles, outfits, skins, hairs, eyeColors } from '../src/appearance.ts'
 import { CHARACTER_HEIGHT, CHARACTER_WIDTH, characterPixels, seatedCharacterPixels, restingCharacterPixels, idleCharacterPixels } from '../src/character.ts'
 
+// Check the final visible pixels, including occlusion by hair and headgear.
+function raster(art) {
+ const pixels=Array(CHARACTER_WIDTH*CHARACTER_HEIGHT).fill(null)
+ for(const p of art)for(let y=p.y;y<p.y+p.h;y++)for(let x=p.x;x<p.x+p.w;x++)pixels[y*CHARACTER_WIDTH+x]=p.color
+ return pixels
+}
+
+test('selected hair, skin and eyes remain visible through every wardrobe/headgear combination',()=>{
+ for(const hairStyle of hairStyles)for(const accessory of accessories)for(const outfit of Object.keys(outfits))for(const direction of ['down','up','left','right']){
+  const a={...defaults,hairStyle,accessory,outfit,eyes:'blue'},visible=raster(characterPixels(a,direction))
+  assert.ok(visible.includes(a.skin),`${hairStyle}/${accessory}/${outfit}/${direction}: selected skin is visible`)
+  assert.ok(visible.includes(a.hair),`${hairStyle}/${accessory}/${outfit}/${direction}: selected hair is visible`)
+  assert.equal(visible.includes(eyeColors.blue),direction!=='up','iris belongs to the face, never the back of the head')
+  for(const alternative of hairStyles.filter(s=>s!==hairStyle))assert.notDeepEqual(raster(characterPixels({...a,hairStyle:alternative},direction)),visible,'hairstyles cannot be silently occluded or substituted')
+ }
+})
+
+test('composited skull and equipment stay fixed during walking and breathing',()=>{
+ for(const hairStyle of hairStyles)for(const accessory of accessories)for(const outfit of Object.keys(outfits))for(const direction of ['down','up','left','right']){
+  const a={...defaults,hairStyle,accessory,outfit},head=art=>raster(art).slice(0,35*CHARACTER_WIDTH)
+  assert.deepEqual(head(characterPixels(a,direction)),head(characterPixels(a,direction,1)))
+  assert.deepEqual(head(characterPixels(a,direction,1)),head(characterPixels(a,direction,2)))
+  assert.deepEqual(head(characterPixels(a,direction)),head(idleCharacterPixels(a,direction,3)))
+ }
+})
+
+test('blink and resting close the visible irises without losing headgear',()=>{
+ for(const accessory of accessories)for(const direction of ['down','left','right']){
+  const a={...defaults,accessory,eyes:'blue'},normal=raster(characterPixels(a,direction)),blink=raster(idleCharacterPixels(a,direction,0)),rest=raster(restingCharacterPixels(a,direction))
+  assert.ok(normal.includes(eyeColors.blue));assert.ok(!blink.includes(eyeColors.blue));assert.ok(!rest.includes(eyeColors.blue))
+  assert.deepEqual(blink.slice(0,24*48),normal.slice(0,24*48),'closing eyes preserves crown/headset/hair')
+ }
+})
+
 test('all character combinations have valid, bounded pixel art', () => {
  for (const hairStyle of hairStyles) for (const accessory of accessories) for (const outfit of Object.keys(outfits)) for (const skin of skins) for (const hair of hairs) for(const eyes of Object.keys(eyeColors)) {
   const a={ ...defaults, hairStyle, accessory, outfit, skin, hair, eyes }

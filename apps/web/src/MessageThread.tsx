@@ -395,7 +395,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   }else if(action==='emoji'){
    menuOpener.current=article.querySelector<HTMLButtonElement>('.toolbar-btn[title="Add Reaction"]')??null
   }else{
-   menuOpener.current=article.querySelector<HTMLButtonElement>('.toolbar-btn[title="More"]')??null
+   menuOpener.current=article.querySelector<HTMLButtonElement>('.message-actions-trigger, .toolbar-btn[title="More"]')??null
   }
  }
  function openForward(m:StreamMessage,opener?:HTMLButtonElement|null){
@@ -639,13 +639,13 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
    </div>
    {error&&<p className="error" role="alert">{error}</p>}
    {report&&<ReportForm kind={kind} stream={id} message={report.id} onClose={()=>setReport(null)} onReported={()=>{setReport(null);void syncRef.current()}}/>}
-   <section ref={thread} className="dm-thread" aria-label={title} onScroll={e=>{if(activeMenu)setActiveMenu(null);const el=e.currentTarget;atBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<80}}>
+   <section ref={thread} className="dm-thread" aria-label={title} onScroll={e=>{const el=e.currentTarget;atBottom.current=el.scrollHeight-el.scrollTop-el.clientHeight<80}}>
     {!end&&messages.length>0&&<button className="load-earlier" disabled={older} onClick={()=>void earlier()}>{older?'Loading earlier messages…':'Load earlier messages'}</button>}
     {kind==='channel'&&end&&!query&&!pinsOnly&&(
      <div className="channel-start-welcome">
       <div className="channel-start-badge" aria-hidden="true">#</div>
-      <h2>Welcome to #{channelName||title.replace(/^Message #/,'')}!</h2>
-      <p className="channel-start-sub">This is the start of the #{channelName||title.replace(/^Message #/,'')} channel.</p>
+      <h2>{messages.length === 0 ? 'Make yourself at home.' : `Welcome to #${channelName || title.replace(/^Message #/, '')}!`}</h2>
+      <p className="channel-start-sub">{messages.length === 0 ? `This is the beginning of #${channelName || title.replace(/^Message #/, '')}. A hello is a good place to start.` : `This is the start of the #${channelName || title.replace(/^Message #/, '')} channel.`}</p>
       {topic&&<p className="channel-start-topic-text">{topic}</p>}
       {onOpenSettings&&<button type="button" className="channel-start-edit-btn" onClick={onOpenSettings}><PencilIcon size={14}/><span>Edit Channel</span></button>}
      </div>
@@ -665,6 +665,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
          <time dateTime={m.created_at}>{formatDiscordTimestamp(m.created_at)}</time>
          {isPinned&&<span className="message-pinned-badge" title="Pinned on this device"><PinIcon size={14}/></span>}
          {m.edited_at&&!m.removed_at&&<span className="message-edited-badge">(edited)</span>}
+          {!m.removed_at&&<button type="button" className="message-actions-trigger" aria-label={`Actions for message by ${authorName}`} aria-haspopup="menu" aria-expanded={isMenuOpen} onClick={e=>{menuOpener.current=e.currentTarget;setActiveMenu(isMenuOpen?null:m.id)}}><DotsIcon/></button>}
         </div>
         <div className="message-bubble">
          {m.removed_at?<p className="muted">Message removed</p>:editing?.id===m.id?(
@@ -782,7 +783,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
       placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}
      />
     )}
-    <button type="submit" className="composer-send-btn" disabled={sending||readOnly||denied||!body.trim()} aria-label="Send message">{sending?'…':'Send'}{kind==='channel'&&<ForwardIcon size={16}/>}</button>
+    <button type="submit" className="composer-send-btn" disabled={sending||readOnly||denied||!body.trim()}>{sending?'…':'Send'}{kind==='channel'&&<ForwardIcon size={16}/>}</button>
    </form>
    <p className="muted dm-note">{readOnly?'Archived conversations preserve their history.':'Drafts stay on this device for this account. Press Enter to send.'}</p>
 

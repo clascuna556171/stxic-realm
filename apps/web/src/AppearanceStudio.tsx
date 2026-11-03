@@ -20,7 +20,9 @@ import { Icon } from './Icon'
 import { CharacterAlcove } from './world/CharacterAlcove'
 import { useAccount } from './Account'
 import { appearanceFor, errorText } from './account-repository'
+import { THEMES, getActiveTheme, applyTheme } from './theme'
 import './character-inspection.css'
+import './appearance-theme.css'
 
 export function PixelCharacter({ value, portrait = false, direction='down', frame=0, pose='standing', tick }: { value: Appearance; portrait?: boolean; direction?: Direction; frame?: number; pose?: string; tick?: number }) {
  const pixels=pose==='seated'?seatedCharacterPixels(value,direction):pose==='resting'?restingCharacterPixels(value,direction):tick!==undefined&&pose==='idle'?idleCharacterPixels(value,direction,tick):characterPixels(value,direction,frame)
@@ -84,10 +86,14 @@ const moodDescriptions = {
  tech: 'Cool carbon slate, neon telemetry, and a twilight skyline.',
 }
 
+const defaultThemes = THEMES.filter(t => t.category === 'default')
+const colorThemes = THEMES.filter(t => t.category === 'color')
+
 export default function AppearanceStudio() {
  const account = useAccount()
  const [saving, setSaving] = useState(false)
  const [value, setValue] = useState(readAppearance)
+ const [activeTheme, setActiveTheme] = useState<string>(() => getActiveTheme())
  const [saved, setSaved] = useState(value)
  const [notice, setNotice] = useState('')
  const [direction,setDirection]=useState<Direction>('down')
@@ -106,8 +112,32 @@ export default function AppearanceStudio() {
   return () => window.removeEventListener('beforeunload', guard)
  }, [dirty])
 
+ useEffect(() => {
+  const onThemeChange = (e: Event) => {
+   const detail = (e as CustomEvent)?.detail
+   if (typeof detail === 'string') setActiveTheme(detail)
+  }
+  window.addEventListener('realm:theme-change', onThemeChange)
+  return () => window.removeEventListener('realm:theme-change', onThemeChange)
+ }, [])
+
+ function handleSelectTheme(themeId: string) {
+  setActiveTheme(themeId)
+  applyTheme(themeId)
+ }
+
  function update<K extends keyof Appearance>(key: K, next: Appearance[K]) {
-  setValue(v => ({ ...v, [key]: next }))
+  const nextVal = { ...value, [key]: next }
+  setValue(nextVal)
+  if (key === 'accent' || key === 'logo') {
+   applyAppearance(nextVal)
+   if (key === 'accent') {
+    const theme = THEMES.find(t => t.id === activeTheme)
+    if (theme?.category === 'default' && accents[next as keyof typeof accents]) {
+     document.documentElement.style.setProperty('--realm-accent', accents[next as keyof typeof accents])
+    }
+   }
+  }
   setNotice('')
  }
 
@@ -137,7 +167,9 @@ export default function AppearanceStudio() {
     localStorage.setItem(APPEARANCE_KEY, JSON.stringify(value))
     applyAppearance(value)
    }
-   setSaved(value)
+    applyAppearance(value)
+    applyTheme(activeTheme)
+    setSaved(value)
    setNotice(account.session ? 'Appearance saved to your account.' : 'Appearance saved on this device.')
   } catch (e) {
    setNotice(errorText(e))
@@ -306,47 +338,173 @@ export default function AppearanceStudio() {
        </>
       ) : (
        <div className="space-controls">
-        <h2>Room Mood Variations</h2>
-        <p>Your room atmosphere updates floors, architecture, and window views independently of the app theme.</p>
-        <fieldset>
-         <legend>Room mood</legend>
-         <div className="mood-choices">
-          {moods.map(x => (
-           <button key={x} aria-pressed={value.mood === x} onClick={() => update('mood', x)}>
-            <span className={`mood-sample ${x}`} aria-hidden="true" />
-            <span>
-             <strong>{x === 'cozy' ? 'Cozy (Default)' : x === 'medieval' ? 'Medieval Study' : 'Tech Gaming Room'}</strong>
-             <small>{moodDescriptions[x]}</small>
-            </span>
-            {value.mood === x && <Icon name="check" />}
-           </button>
-          ))}
-         </div>
-        </fieldset>
-        <h2 id="interface-settings">Obsidian, with your accent.</h2>
-        <p>The app stays neutral. Colors personalize actions and the orbital R mark.</p>
-        <fieldset>
-         <legend>Interface accent</legend>
-         <div className="color-options">
-          {(Object.keys(accents) as Appearance['accent'][]).map(x => (
-           <button key={x} aria-pressed={value.accent === x} onClick={() => update('accent', x)}>
-            <i style={{ background: accents[x] }} />
-            {x}
-           </button>
-          ))}
-         </div>
-        </fieldset>
-        <label className="logo-select">
-         Logo color
-         <select value={value.logo} onChange={e => update('logo', e.target.value as Appearance['logo'])}>
-          {Object.keys(accents).map(x => (
-           <option key={x} value={x}>
-            {x}
-           </option>
-          ))}
-         </select>
-        </label>
-       </div>
+         <section className="theme-group-section" aria-labelledby="interface-settings">
+          <div className="section-title-row">
+           <div>
+            <h2 id="interface-settings">Application Theme</h2>
+            <p>Customize the colors and visual mood of Realm on this device. Neutral themes respect your personal accent.</p>
+           </div>
+          </div>
+          <h3 className="theme-group-title" id="default-themes-title">Default Themes</h3>
+          <div className="theme-tile-grid" role="radiogroup" aria-labelledby="default-themes-title">
+           {defaultThemes.map(t => {
+            const isSelected = activeTheme === t.id
+            return (
+             <button
+              type="button"
+              key={t.id}
+              role="radio"
+              aria-checked={isSelected}
+              className={`theme-card ${isSelected ? 'is-selected' : ''}`}
+              onClick={() => handleSelectTheme(t.id)}
+             >
+              <div
+               className={`theme-tile-preview tile-${t.id}`}
+               style={{
+                background: t.previewSurface,
+                borderColor: isSelected ? t.previewAccent : 'var(--realm-line)',
+               }}
+              >
+               <div
+                className="theme-tile-inner-strip"
+                style={{
+                 background: t.previewBg,
+                }}
+               />
+               {isSelected && (
+                <span className="theme-checked-badge" style={{ background: t.previewAccent, color: t.previewSurface }} aria-hidden="true">
+                 <Icon name="check" />
+                </span>
+               )}
+              </div>
+              <strong className="theme-card-name">{t.name}</strong>
+             </button>
+            )
+           })}
+          </div>
+
+          <h3 className="theme-group-title" id="color-themes-title">Atmospheric Color Themes</h3>
+          <div className="theme-tile-grid color-themes-grid" role="radiogroup" aria-labelledby="color-themes-title">
+           {colorThemes.map(t => {
+            const isSelected = activeTheme === t.id
+            return (
+             <button
+              type="button"
+              key={t.id}
+              role="radio"
+              aria-checked={isSelected}
+              className={`theme-card color-theme-card ${isSelected ? 'is-selected' : ''}`}
+              onClick={() => handleSelectTheme(t.id)}
+             >
+              <div
+               className={`theme-tile-preview color-preview tile-${t.id}`}
+               style={{
+                background: t.previewSurface,
+                borderColor: isSelected ? t.previewAccent : 'var(--realm-line)',
+               }}
+              >
+               <div className="theme-color-layers">
+                <div className="color-layer-bg" style={{ background: t.previewBg }} />
+                <div className="color-layer-accent" style={{ background: t.previewAccent }} />
+               </div>
+               {isSelected && (
+                <span className="theme-checked-badge" style={{ background: t.previewAccent }} aria-hidden="true">
+                 <Icon name="check" />
+                </span>
+               )}
+              </div>
+              <div className="theme-card-text">
+               <strong className="theme-card-name">{t.name}</strong>
+               <small className="theme-card-desc muted">{t.description}</small>
+              </div>
+             </button>
+            )
+           })}
+          </div>
+         </section>
+
+         <section className="theme-group-section" aria-labelledby="personal-accent-title">
+          <h2 id="personal-accent-title">Personal Accent &amp; Logo</h2>
+          <p>Personalize interactive highlights and the orbital R mark across chat and menus.</p>
+          <fieldset>
+           <legend>Interface accent</legend>
+           <div className="color-options" role="radiogroup" aria-label="Interface accent">
+            {(Object.keys(accents) as Appearance['accent'][]).map(x => (
+             <button
+              key={x}
+              type="button"
+              role="radio"
+              aria-checked={value.accent === x}
+              aria-pressed={value.accent === x}
+              onClick={() => update('accent', x)}
+             >
+              <i style={{ background: accents[x] }} />
+              {x}
+             </button>
+            ))}
+           </div>
+          </fieldset>
+          <fieldset>
+           <legend>Orbital logo mark</legend>
+           <div className="color-options" role="radiogroup" aria-label="Orbital logo color">
+            {(Object.keys(accents) as Appearance['logo'][]).map(x => (
+             <button
+              key={x}
+              type="button"
+              role="radio"
+              aria-checked={value.logo === x}
+              aria-pressed={value.logo === x}
+              onClick={() => update('logo', x)}
+             >
+              <i style={{ background: accents[x] }} />
+              {x}
+             </button>
+            ))}
+           </div>
+          </fieldset>
+          <label className="logo-select sr-only">
+           Logo color
+           <select
+            value={value.logo}
+            aria-label="Logo color"
+            onChange={e => update('logo', e.target.value as Appearance['logo'])}
+           >
+            {Object.keys(accents).map(x => (
+             <option key={x} value={x}>
+              {x}
+             </option>
+            ))}
+           </select>
+          </label>
+         </section>
+
+         <section className="theme-group-section" aria-labelledby="room-mood-title">
+          <h2 id="room-mood-title">Room Mood Variations</h2>
+          <p>Your room atmosphere updates floors, architecture, and window views independently of the app theme.</p>
+          <fieldset>
+           <legend>Room mood</legend>
+           <div className="mood-choices" role="radiogroup" aria-label="Room mood">
+            {moods.map(x => (
+             <button
+              key={x}
+              type="button"
+              role="radio"
+              aria-checked={value.mood === x}
+              aria-pressed={value.mood === x}
+              onClick={() => update('mood', x)}
+             >
+              <span className={`mood-sample ${x}`} aria-hidden="true" />
+              <span>
+               <strong>{x === 'cozy' ? 'Cozy (Default)' : x === 'medieval' ? 'Medieval Study' : 'Tech Gaming Room'}</strong>
+               <small>{moodDescriptions[x]}</small>
+              </span>
+              {value.mood === x && <Icon name="check" />}
+             </button>
+            ))}
+           </div>
+          </fieldset>
+         </section>
+        </div>
       )}
      </section>
      <aside id="appearance-preview" className="appearance-preview">

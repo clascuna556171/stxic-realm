@@ -9,15 +9,18 @@ const phase=process.argv.includes('--before')?'before':'after'
 const sheetsOnly=process.argv.includes('--sheets-only')
 const origin='http://127.0.0.1:5189'
 const server=await createServer({root:resolve('apps/web'),server:{host:'127.0.0.1',port:5189,strictPort:true,forwardConsole:false}});await server.listen()
-const output=resolve('.impeccable/review/character-art');await mkdir(output,{recursive:true})
+const output=resolve(process.env.REALM_CHARACTER_ART_OUTPUT??'.impeccable/review/character-art');await mkdir(output,{recursive:true})
+if(phase==='before'&&!sheetsOnly)await writeFile(resolve(output,'before-character.ts'),await readFile(resolve('apps/web/src/character.ts'),'utf8'))
 const browser=await chromium.launch({channel:'chrome',args:['--disable-features=LocalNetworkAccessChecks']})
 const errors=[]
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000}})
  page.on('pageerror',e=>errors.push(e.message))
  await page.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort())
- if(phase==='before'&&sheetsOnly){
-  const source=await readFile(resolve(output,'before-character.ts'),'utf8')
+ let baseline
+ try{baseline=await readFile(resolve(output,'before-character.ts'),'utf8')}catch(error){if(phase==='before'&&sheetsOnly)throw error}
+ if(baseline&&((phase==='before'&&sheetsOnly)||phase==='after')){
+  const source=baseline
   const code=stripTypeScriptTypes(source.replace("'./appearance.ts'","'/src/appearance.ts'"))
   await page.route('**/__before-character.js',r=>r.fulfill({contentType:'text/javascript',body:code}))
  }
@@ -58,6 +61,33 @@ try{
   // Export the canvas directly: tall element screenshots can crop at the scroll origin.
   const png=await page.locator('#sheet').evaluate(c=>c.toDataURL('image/png').split(',')[1])
   await writeFile(resolve(output,`${phase}-${outfit}-${scale}x.png`),Buffer.from(png,'base64'))
+ }
+ if(phase==='after'){
+  // A compact review artifact complements the exhaustive, very wide matrices.
+  // Both revisions are rendered directly from their saved TypeScript source.
+  for(const kind of baseline?['comparison','poses']:['poses']){
+   const png=await page.evaluate(async kind=>{
+    const {art,a}=window.characterReview,old=kind==='comparison'?await import('/__before-character.js'):null,canvas=document.querySelector('#sheet'),ctx=canvas.getContext('2d')
+    canvas.width=960;canvas.height=kind==='comparison'?462:716
+    ctx.fillStyle='#202630';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.font='17px monospace';ctx.fillStyle='#eee0bd'
+    ctx.fillText(kind==='comparison'?'STXIC Realm · original character overhaul':'Medieval scout · directions and poses · 2× / native',22,28)
+    const paint=(pixels,x,y,scale)=>{for(const p of pixels){ctx.fillStyle=p.color;ctx.fillRect(x+p.x*scale,y+p.y*scale,p.w*scale,p.h*scale)}}
+    if(kind==='comparison'){
+     const looks=[['Everyday / swept',{hairStyle:'swept',accessory:'glasses'}],['Medieval / curls',{outfit:'medieval',hairStyle:'curly',skin:a.skins[3],hair:a.hairs[1]}],['Tech / headset',{outfit:'tech',skin:a.skins[4],accessory:'headphones'}],['Long hair / crown',{outfit:'medieval',hairStyle:'long',hair:a.hairs[2],accessory:'crown'}],['Silver / tech',{outfit:'tech',hairStyle:'swept',hair:a.hairs[4]}],['Long hair / headset',{outfit:'tech',hairStyle:'long',hair:a.hairs[3],accessory:'headphones'}]]
+     looks.forEach(([label,look],i)=>{const x=22+i%3*314,y=50+Math.floor(i/3)*202,value={...a.defaults,...look};ctx.fillStyle='#2a3039';ctx.fillRect(x,y,298,190);paint(old.characterPixels(value),x+28,y+12,2);paint(art.characterPixels(value),x+162,y+12,2);ctx.fillStyle='#b7bfca';ctx.font='13px monospace';ctx.fillText('Before',x+42,y+152);ctx.fillText('After',x+180,y+152);ctx.fillStyle='#eee0bd';ctx.fillText(label,x+12,y+176)})
+    }else{
+     const look={...a.defaults,outfit:'medieval',hairStyle:'swept',hair:a.hairs[2]},states=['stand','blink','breath','walk A','walk B','sit','rest']
+     ;['down','up','left','right'].forEach((direction,row)=>states.forEach((state,col)=>{
+      const x=50+col*128,y=48+row*154,pixels=state==='sit'?art.seatedCharacterPixels(look,direction):state==='rest'?art.restingCharacterPixels(look,direction):state==='blink'||state==='breath'?art.idleCharacterPixels(look,direction,state==='blink'?0:3):art.characterPixels(look,direction,state==='walk A'?1:state==='walk B'?2:0)
+      ctx.fillStyle=row%2?'#2a3039':'#242a33';ctx.fillRect(x,y,116,146);paint(pixels,x+10,y,2);ctx.fillStyle='#eee0bd';ctx.font='12px monospace';ctx.fillText(`${direction} ${state}`,x+4,y+140)
+     }))
+     ctx.fillStyle='#eee0bd';ctx.fillText('Native 48×64',14,695)
+     ;['down','up','left','right'].forEach((direction,i)=>paint(art.characterPixels(look,direction),150+i*60,650,1))
+    }
+    return canvas.toDataURL('image/png').split(',')[1]
+   },kind)
+   await writeFile(resolve(output,`${kind}.png`),Buffer.from(png,'base64'))
+  }
  }
  if(sheetsOnly){console.log(`PASS ${phase} native/3× contact-sheet exports`)}else{
  // Render the production Phaser scene alongside its real furniture, multiple residents and companions.

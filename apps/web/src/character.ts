@@ -4,206 +4,229 @@ import type { Direction } from './world/room.ts'
 export type Pixel = { x: number; y: number; w: number; h: number; color: string }
 export const CHARACTER_WIDTH = 48
 export const CHARACTER_HEIGHT = 64
+type Pose = 'stand' | 'sit' | 'rest'
+type Point = readonly [number, number]
+type Run = Omit<Pixel, 'color'>
+const INK = '#202029', LINEN = '#eee0bd', GOLD = '#cba568', GOLD_LIGHT = '#f1d497', STEEL = '#8295a4', CYAN = '#9ed9d8'
 
-/** Derived material ramps never change the owner's saved palette. */
+/** Material ramps never change the owner's saved palette. */
 function mix(a: string, b: string, ratio: number): string {
  const channel = (at: number) => Math.round(parseInt(a.slice(at, at + 2), 16) * (1 - ratio) + parseInt(b.slice(at, at + 2), 16) * ratio).toString(16).padStart(2, '0')
  return `#${channel(1)}${channel(3)}${channel(5)}`
 }
 
-type Pose = 'stand' | 'sit' | 'rest'
-/**
- * Original, layered 48×64 residents. Body parts are authored together, never
- * animated by moving arbitrary rectangles. The bottom-center pivot stays (24,64).
- * Face: y17–31; shoulders: y34; hips: y49; soles: y63. Lighting is upper-left.
+// Rasterize authored contours once on pixel centers. Four-neighbor insetting
+// gives the stepped garments consistent one-pixel outlines. Merge equal runs
+// vertically so SVG and Phaser still consume a small list of rectangles.
+const contours = new Map<string, { edge: Run[]; fill: Run[] }>()
+function contour(points: readonly Point[]) {
+ const key = points.map(p => p.join(',')).join(' '), cached = contours.get(key)
+ if (cached) return cached
+ const x0 = Math.min(...points.map(p => p[0])), x1 = Math.max(...points.map(p => p[0]))
+ const y0 = Math.min(...points.map(p => p[1])), y1 = Math.max(...points.map(p => p[1]))
+ const mask = new Set<string>()
+ for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+  let inside = false
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+   const [ax, ay] = points[i], [bx, by] = points[j]
+   if ((ay > y + .5) !== (by > y + .5) && x + .5 < (bx - ax) * (y + .5 - ay) / (by - ay) + ax) inside = !inside
+  }
+  if (inside) mask.add(`${x},${y}`)
+ }
+ const runs = (inset: boolean): Run[] => {
+  const result: Run[] = [], previous = new Map<string, Run>()
+  for (let y = y0; y < y1; y++) {
+   const has = (x: number) => mask.has(`${x},${y}`) && (!inset || [[x-1,y],[x+1,y],[x,y-1],[x,y+1]].every(p => mask.has(p.join(','))))
+   for (let x = x0; x < x1; x++) if (has(x)) {
+    const start = x
+    while (x + 1 < x1 && has(x + 1)) x++
+    const w = x - start + 1, id = `${start},${w}`, above = previous.get(id)
+    if (above && above.y + above.h === y) above.h++
+    else { const run = { x: start, y, w, h: 1 }; result.push(run); previous.set(id, run) }
+   }
+  }
+  return result
+ }
+ const value = { edge: runs(false), fill: runs(true) }; contours.set(key, value)
+ return value
+}
+
+/** Original Realm art: expressive heads, compact bodies, shaped garments.
+ * One source for portraits/Halls/Phaser. Canvas/pivot: 48×64/(24,64).
+ * The support sole ends at y63, preserving existing world/furniture alignment.
  */
 function resident(a: Appearance, direction: Direction, frame: number, pose: Pose, blink = false, inhale = false): Pixel[] {
  const pixels: Pixel[] = []
- const side = direction === 'left' || direction === 'right', rear = direction === 'up'
- // Left profiles use the same anatomy, but retain world-space upper-left lighting.
- const left = direction === 'left'
+ const side = direction === 'left' || direction === 'right', rear = direction === 'up', left = direction === 'left'
+ const seated = pose === 'sit', resting = pose === 'rest', phase = frame === 1 ? 1 : frame === 2 ? -1 : 0
+ const skin = a.skin, skinShade = mix(skin, '#683e38', .3), skinLight = mix(skin, '#ffebc5', .17)
+ const hair = a.hair, hairShade = mix(hair, '#1b1c2b', .38), hairLight = mix(hair, '#f0d8aa', .25)
+ const cloth = outfits[a.outfit], clothShade = mix(cloth, '#202331', .32), clothLight = mix(cloth, '#f1dec0', .24)
+ const pants = a.outfit === 'everyday' ? '#44495c' : a.outfit === 'medieval' ? '#514337' : '#314452'
+ const boot = a.outfit === 'everyday' ? LINEN : a.outfit === 'medieval' ? '#855b3e' : '#516879'
+ const bodyY = inhale ? -1 : 0
  const r = (x: number, y: number, w: number, h: number, color: string) => {
-  if (left) x = 48 - x - w
-  const x0 = Math.max(0, x), y0 = Math.max(0, y), x1 = Math.min(48, x + w), y1 = Math.min(64, y + h)
-  if (x1 > x0 && y1 > y0) pixels.push({ x: x0, y: y0, w: x1 - x0, h: y1 - y0, color })
+  if (left) x = CHARACTER_WIDTH - x - w
+  pixels.push({ x, y, w, h, color })
  }
- const ink = '#202029', seam = '#34333b', skin = a.skin, skinShade = mix(skin, '#502d28', .28), skinLight = mix(skin, '#ffead0', .18)
- const hair = a.hair, hairDark = mix(hair, '#151722', .4), hairLight = mix(hair, '#ecd5b5', .24)
- const cloth = outfits[a.outfit], clothShade = mix(cloth, '#1b2330', .34), clothLight = mix(cloth, '#ece5d5', .23)
- const pants = a.outfit === 'everyday' ? '#414858' : a.outfit === 'medieval' ? '#51443a' : '#303f4e'
- const pantsLight = mix(pants, '#b4b5b4', .2), leather = '#745038', leatherLight = '#a37850'
- const gold = '#c7a35f', goldLight = '#f2d99a', metal = '#738795', cyan = '#8bd7d5', linen = '#e8deca'
- const phase = frame === 1 ? 1 : frame === 2 ? -1 : 0
- const seated = pose === 'sit', resting = pose === 'rest'
- const shoulderY = 34 - (inhale ? 1 : 0)
+ const shape = (points: readonly Point[], color: string, dx = 0, dy = 0, outlined = true) => {
+  const art = contour(points)
+  for (const p of art.edge) r(p.x + dx, p.y + dy, p.w, p.h, outlined ? INK : color)
+  if (outlined) for (const p of art.fill) r(p.x + dx, p.y + dy, p.w, p.h, color)
+ }
+ const patch = (points: readonly Point[], color: string, dx = 0, dy = 0) => shape(points, color, dx, dy, false)
 
- // Cloak sits behind the limbs. Its folded hem never replaces either leg.
+ // Scout mantle: flared hem, two broad folds and a burgundy lining.
  if (a.outfit === 'medieval') {
   if (side) {
-   r(13,35,10,20,ink);r(14,36,8,18,'#3b5046');r(left?19:15,37,2,15,'#627669');r(14,52,7,2,'#713f46')
+   shape([[17,34],[25,35],[26,43],[23,51],[20,57],[7,57],[11,51],[13,41]], '#486252')
+   patch([[16,38],[19,38],[17,48],[12,55],[10,55],[14,46]], '#718774')
+   patch([[21,40],[24,39],[23,49],[20,55],[16,55]], '#30493f');r(9,55,11,1,'#884952')
   } else {
-   r(11,35,26,19,ink);r(10,42,28,12,ink);r(12,36,24,17,'#3b5046');r(11,43,26,10,'#35463d')
-   r(13,37,3,15,'#627669');r(33,39,2,14,'#293c35');r(12,52,24,2,'#713f46')
+   shape([[16,34],[31,34],[35,39],[37,48],[43,57],[32,58],[24,56],[15,58],[5,57],[10,48],[12,39]], '#486252')
+   patch([[14,38],[18,37],[15,49],[11,55],[8,55],[12,47]], '#718774')
+   patch([[29,37],[33,39],[35,50],[39,55],[34,55],[30,47]], '#30493f')
+   patch([[8,55],[15,56],[24,54],[32,56],[40,55],[40,56],[32,57],[24,55],[15,57],[8,56]], '#884952')
+   if (rear) { patch([[22,37],[26,37],[29,54],[25,53]], '#30493f'); r(18,38,2,10,'#80917b') }
   }
  }
- const leg = (x: number, far: boolean, step: number) => {
-  // A support sole stays on y63; only the swing leg lifts. Thigh and shoe move as a unit.
-  const lift = step > 0 ? 2 : 0, dx = side ? step * 3 : step
-  const lx = x + dx, y = seated ? 49 : 48
-  r(lx,y,7,14-lift,ink);r(lx+1,y,5,12-lift,far?mix(pants,ink,.15):pants)
-  r(lx+(left?4:1),y+2,2,7-lift,pantsLight)
-  const bootY = (seated ? 56 : 58) - lift
-  const boot = a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:'#283744'
-  r(lx-1,bootY,9,5,ink);r(lx,bootY,7,4,boot)
-  r(lx,bootY+3,8,1,a.outfit==='everyday'?'#a7a294':'#202630')
-  r(lx+(left?4:1),bootY+1,3,1,a.outfit==='medieval'?leatherLight:a.outfit==='tech'?metal:'#fff2da')
-  if(a.outfit==='medieval'){r(lx,bootY-3,6,3,leather);r(lx+3,bootY-2,2,1,gold)}
-  if(a.outfit==='tech'){r(lx+1,bootY-3,4,3,metal);r(lx+2,bootY+1,3,1,cyan)}
+ const leg = (x: number, far: boolean, swing: number) => {
+  const dx = side ? swing * 3 : swing, lift = swing > 0 ? 2 : 0, y = seated ? 51 : 49
+  shape([[0,y],[8,y],[8,58-lift],[7,61-lift],[0,61-lift]], far ? mix(pants, INK, .16) : pants, x + dx)
+  r(x+dx+1,y+1,2,6-lift,mix(pants,LINEN,.19))
+  const by = (seated ? 57 : 58) - lift
+  shape([[0,0],[7,0],[7,2],[9,3],[9,5],[-1,5],[-1,2]], boot, x+dx, by)
+  r(x+dx,by+3,8,1,a.outfit==='everyday'?'#c2bba5':'#4d3b35')
+  r(x+dx+1,by+1,4,1,a.outfit==='medieval'?'#bd8a54':a.outfit==='tech'?CYAN:'#fff0d3')
+  if(a.outfit==='medieval'){r(x+dx,by-2,7,2,'#855b3e');r(x+dx+4,by-1,2,1,GOLD)}
  }
- if(!resting){
-  if(side){leg(18,true,-phase);leg(24,false,phase)}
-  else {leg(15,false,phase);leg(26,true,-phase)}
+ if (resting) {
+  for (const x of [17,25]) {shape([[0,0],[6,0],[7,9],[6,13],[0,13],[-1,10]],pants,x,49);r(x,59,6,3,boot);r(x+1,59,3,1,mix(boot,LINEN,.28))}
+ } else {
+  if(side){leg(19,true,-phase);leg(25,false,phase)}else {leg(14,false,phase);leg(26,true,-phase)}
   if(seated){
-   if(side){r(20,48,15,7,ink);r(21,49,13,5,pants);r(23,49,10,1,pantsLight)}
-   else {r(14,48,20,6,ink);r(15,49,18,4,pants);r(16,49,6,1,pantsLight);r(27,49,5,1,pantsLight)}
+   shape(side?[[18,48],[28,47],[36,51],[36,56],[28,57],[19,54]]:[[13,48],[33,48],[35,52],[32,56],[26,55],[23,53],[19,56],[12,54]],pants)
+   r(side?25:14,50,side?9:7,2,mix(pants,LINEN,.2));if(!side)r(27,50,6,2,mix(pants,LINEN,.2))
   }
  }
-
- // Neck and tailored torso. Wider shoulders taper to the waist rather than a box.
- r(side?21:21,29,6,8,ink);r(22,30,4,6,skinShade);r(22,30,2,4,skin)
- const tx=side?17:15,tw=side?15:18
- r(tx,shoulderY,tw,17+(inhale?1:0),ink);r(tx+1,shoulderY+1,tw-2,15,clothShade)
- r(tx+2,shoulderY+1,tw-5,14,cloth);r(left?tx+tw-4:tx+2,shoulderY+2,2,11,clothLight)
- const arm=(x:number,far:boolean,swing:number)=>{
-  // Continuous shoulder, elbow, cuff and hand; counter-swings the corresponding leg.
-  const y=shoulderY+2,dx=side?swing*2:0,handY=resting?42:seated?44:48+(swing<0?-1:0)
-  r(x,y,6,7,ink);r(x+dx,y+5,6,handY-y-2,ink)
-  r(x+1,y+1,4,6,far?clothShade:cloth);r(x+dx+1,y+6,4,handY-y-3,far?clothShade:cloth)
-  r(x+dx+(left?4:1),y+1,1,6,clothLight)
-  r(x+dx,handY-2,6,3,ink);r(x+dx+1,handY-2,4,2,a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:metal)
-  r(x+dx+1,handY,4,4,ink);r(x+dx+1,handY,3,3,skinShade);r(x+dx+1,handY,2,2,skin);r(x+dx+1,handY,1,1,skinLight)
-  if(a.outfit==='medieval'||a.outfit==='tech'){
-   r(x-1,y-1,8,5,ink);r(x,y-1,6,4,a.outfit==='medieval'?gold:metal);r(x+1,y-1,3,1,a.outfit==='medieval'?goldLight:'#c3ced0')
+ // Tapered shoulder/waist contour beneath the head.
+ r(20,32,9,7,INK);r(21,33,7,5,skinShade);r(21,33,4,3,skin)
+ shape(side?[[19,35],[28,35],[33,40],[32,46],[31,52],[17,52],[16,42]]:[[16,35],[31,35],[35,40],[32,46],[32,52],[15,52],[13,41]],cloth,0,bodyY)
+ patch(side?[[19,37],[23,36],[22,47],[19,49],[18,43]]:[[17,37],[21,36],[20,48],[17,49],[15,41]],clothLight,0,bodyY)
+ patch(side?[[28,37],[31,41],[30,50],[26,50]]:[[29,37],[33,41],[30,49],[26,50]],clothShade,0,bodyY)
+ const arm = (x: number, far: boolean, swing: number) => {
+  const dx = side ? swing * 2 : swing, handY = resting ? 44 : seated ? 47 : 50 + (swing < 0 ? -1 : 0)
+  shape([[0,0],[5,-1],[8,3],[7,7],[6,handY-37],[0,handY-37],[-1,7],[-2,4]],far?clothShade:cloth,x+dx,37+bodyY)
+  r(x+dx,39+bodyY,2,5,far?cloth:clothLight)
+  r(x+dx,handY-2,6,2,a.outfit==='everyday'?LINEN:a.outfit==='medieval'?'#855b3e':STEEL)
+  shape([[0,0],[5,0],[6,2],[5,5],[1,5],[-1,3]],skin,x+dx,handY)
+  r(x+dx+1,handY+1,2,2,skinLight);r(x+dx+4,handY+2,1,2,skinShade)
+  if(a.outfit!=='everyday'){
+   shape([[-2,0],[4,-1],[8,2],[7,5],[0,5],[-3,3]],a.outfit==='medieval'?GOLD:STEEL,x+dx,37+bodyY)
+   r(x+dx-1,38+bodyY,4,1,a.outfit==='medieval'?GOLD_LIGHT:'#bdcbd0')
   }
  }
- if(!side){arm(10,false,-phase);arm(32,true,phase)}
+ if(side)arm(27,true,phase);else {arm(9,false,-phase);arm(32,true,phase)}
  if(a.outfit==='everyday'){
-  if(rear){r(19,34,10,4,ink);r(20,34,8,3,clothShade);r(19,40,10,1,clothLight);r(18,46,12,1,clothShade)}
-  else if(side){r(29,36,2,12,linen);r(28,35,2,5,clothLight);r(28,43,3,3,clothShade)}
-  else {
-   r(21,35,6,13,linen);r(22,36,4,2,'#c6baa6');r(22,41,4,2,'#ad7160')
-   r(19,35,2,13,clothLight);r(27,35,2,13,clothShade);r(20,37,1,5,linen);r(27,37,1,5,linen)
-   r(16,44,4,3,clothShade);r(29,44,3,3,clothShade);r(16,44,4,1,clothLight)
+  // Open chore jacket, folded lapels, linen shirt and deep hem pockets.
+  if(rear){shape([[17,36],[30,36],[29,40],[18,40]],clothShade,0,bodyY);r(18,44,11,1,clothLight)}
+  else if(side){patch([[27,37],[30,40],[29,48],[27,49]],LINEN,0,bodyY);r(26,45,4,3,clothShade)}
+  else{
+   patch([[21,36],[26,36],[28,49],[20,49]],LINEN,0,bodyY)
+   patch([[17,36],[21,37],[23,42],[20,41]],clothLight,0,bodyY);patch([[28,36],[31,38],[27,42],[25,41]],clothShade,0,bodyY)
+   r(22,42+bodyY,4,2,'#af7261');r(16,46+bodyY,4,3,clothShade);r(29,46+bodyY,3,3,clothShade);r(16,46+bodyY,4,1,clothLight)
   }
-  r(tx+1,49,tw-2,2,clothShade)
+  r(16,50,15,2,clothShade)
  }else if(a.outfit==='medieval'){
-  if(rear){r(16,35,16,16,'#3b5046');r(17,36,3,14,'#627669');r(23,36,2,15,'#2d4037');r(29,37,2,13,'#293c35')}
-  else {
-   r(side?28:19,35,side?3:10,2,gold);r(side?28:23,36,2,2,'#8c4d4d')
-   for(let n=0;n<4;n++)r((side?27:17)+n,38+n*2,3,3,leather)
-   r(tx+1,47,tw-2,3,leather);r(side?28:23,47,3,3,gold);r(side?29:24,48,1,1,ink)
-   if(!side){r(16,38,1,8,clothLight);r(30,38,1,7,clothShade)}
-  }
- }else{
-  r(tx+1,35,tw-2,3,'#293c49')
-  if(rear){r(19,38,10,10,ink);r(20,39,8,8,'#536a7a');r(21,40,6,1,'#8d9fa7');r(22,43,4,1,cyan);r(21,46,6,1,'#2b3c49')}
-  else if(side){r(28,38,3,9,'#283b48');r(29,39,1,4,cyan);r(28,46,3,2,metal)}
-  else {r(18,38,4,9,clothLight);r(26,38,4,9,clothShade);r(22,38,4,10,'#253540');r(23,39,1,5,metal);r(19,39,2,3,cyan);r(27,44,2,1,cyan)}
-  r(tx+1,48,tw-2,3,'#25323d');r(side?28:23,48,3,2,metal)
- }
- if(side)arm(20,false,-phase)
- // Long hair is behind the head, but falls over the shoulder/back clothing.
- if(a.hairStyle==='long'){
-  if(side){r(12,15,10,28,ink);r(13,16,8,26,hairDark);r(left?18:14,18,2,22,hair);r(14,41,4,3,hairDark)}
-  else {for(const x of [12,32]){r(x,15,4,26,ink);r(x+1,16,2,24,hairDark)}r(14,18,2,21,hair);r(32,19,2,20,hair);r(13,39,3,3,hairDark);r(32,39,3,3,hairDark)}
- }
- // Head volume and face are shared across every pose and walk frame.
- if(side){
-  r(16,10,15,20,ink);r(14,14,19,13,ink);r(18,12,12,18,skinShade);r(21,14,11,14,skin)
-  r(30,22,5,4,ink);r(30,22,4,3,skin);r(30,27,2,3,skinShade);r(left?28:22,17,2,4,skinLight)
-  r(28,21,3,1,hairDark)
-  if(blink||resting)r(29,24,3,1,ink)
-  else {r(29,23,3,3,ink);r(29,23,2,2,eyeColors[a.eyes]);r(29,23,1,1,linen)}
-  r(29,28,2,1,seam)
- }else{
-  r(16,10,16,21,ink);r(14,14,20,14,ink);r(15,12,18,17,ink)
+  // Brass gorget, leather jerkin, diagonal baldric and substantial belt.
   if(!rear){
-   r(16,14,16,14,skinShade);r(16,13,14,14,skin);r(18,27,12,3,skin);r(20,30,8,1,skinShade)
-   r(13,21,3,5,ink);r(14,22,2,3,skin);r(32,21,3,5,ink);r(32,22,2,3,skinShade)
-   r(17,18,2,4,skinLight);r(21,17,6,2,skinLight)
-   r(17,21,4,1,hairDark);r(27,21,4,1,hairDark)
-   for(const ex of [18,28]){
-    if(blink||resting)r(ex,24,3,1,ink)
-    else {r(ex,23,3,3,ink);r(ex,23,2,2,eyeColors[a.eyes]);r(ex,23,1,1,linen)}
-   }
-   r(24,25,1,2,skinShade);r(23,28,4,1,mix(skin,ink,.48));r(24,29,2,1,skinShade)
+   shape(side?[[22,35],[29,36],[30,39],[25,40],[21,38]]:[[17,35],[30,35],[29,38],[25,40],[21,40],[17,38]],GOLD,0,bodyY)
+   if(!side){r(22,36+bodyY,4,2,GOLD_LIGHT);r(23,38+bodyY,2,2,'#944f58')}
+   patch(side?[[27,40],[30,40],[24,48],[21,48]]:[[17,39],[20,39],[29,47],[26,49]],'#a0764b',0,bodyY)
+   r(side?18:16,49,side?13:16,3,'#583e32');r(side?27:23,49,4,3,GOLD);r(side?28:24,50,2,1,INK)
+  }else{shape([[16,35],[31,35],[29,39],[18,39]],'#314a40',0,bodyY);r(21,40,2,10,'#718774');r(26,42,2,9,'#314a40')}
+ }else{
+  // Cropped utility shell with chamfered panels and restrained cyan hardware.
+  shape(side?[[19,36],[28,36],[31,40],[28,42],[19,39]]:[[16,36],[31,36],[32,39],[27,42],[20,42],[15,39]],'#2c3e4d',0,bodyY)
+  if(rear){shape([[18,40],[29,40],[31,43],[29,49],[18,49],[16,44]],STEEL,0,bodyY);r(20,42+bodyY,8,2,'#435d71');r(22,46+bodyY,4,1,CYAN)}
+  else if(side){r(27,41+bodyY,3,7,clothShade);r(28,42+bodyY,1,3,CYAN)}
+  else {patch([[17,41],[21,42],[20,48],[16,47]],STEEL,0,bodyY);r(23,40+bodyY,2,9,INK);r(18,42+bodyY,2,2,CYAN);r(28,46+bodyY,3,1,CYAN)}
+  r(17,50,14,2,'#263845');r(side?27:23,50,3,2,STEEL)
+ }
+ if(side)arm(19,false,-phase)
+ // Long locks sit behind the face, with a scalloped shoulder silhouette.
+ if(a.hairStyle==='long'){
+  shape(side?[[12,17],[23,15],[24,29],[22,38],[17,44],[11,42],[13,35],[11,28]]:[[12,18],[35,18],[37,32],[35,42],[30,44],[28,39],[19,39],[16,44],[10,42],[12,33]],hairShade)
+  patch(side?[[14,21],[17,21],[17,35],[14,40],[13,39]]:[[13,23],[16,23],[16,37],[13,41],[12,39]],hair);if(!side)r(32,27,2,11,hair)
+ }
+ // Broad cheeks, stepped chin, small ears and a readable brow/eye separation.
+ if(side){
+  shape([[17,13],[29,13],[34,17],[34,23],[38,25],[37,28],[34,29],[33,33],[28,36],[20,35],[15,30],[13,22]],skin)
+  patch([[32,19],[33,23],[36,26],[33,28],[32,32],[27,34],[21,33],[27,35],[32,34],[34,31],[35,28],[37,27],[37,26],[33,24]],skinShade)
+  r(28,19,3,2,skinLight);r(29,23,4,1,hairShade)
+  if(blink||resting)r(30,26,3,1,INK);else {r(30,25,3,4,INK);r(30,25,2,3,eyeColors[a.eyes]);r(30,25,1,1,LINEN)}
+  r(33,29,2,1,skinShade);r(30,32,3,1,mix(skin,INK,.48))
+ }else{
+  shape([[17,12],[30,12],[35,16],[36,24],[35,31],[31,35],[27,37],[20,37],[15,34],[12,29],[11,21],[13,16]],skin)
+  if(!rear){
+   patch([[32,18],[34,20],[34,28],[32,32],[28,35],[20,35],[17,33],[21,36],[27,36],[32,34],[35,30],[35,22]],skinShade)
+   shape([[11,23],[14,23],[15,27],[13,30],[10,28],[9,25]],skin);shape([[34,23],[37,23],[39,25],[38,28],[35,30],[33,27]],skinShade)
+   r(11,25,2,2,skinLight);r(16,20,3,2,skinLight);r(21,19,7,2,skinLight);r(16,23,5,1,hairShade);r(28,23,5,1,hairShade)
+   for(const x of [17,29]){if(blink||resting)r(x,27,3,1,INK);else {r(x,25,3,4,INK);r(x,25,2,3,eyeColors[a.eyes]);r(x,25,1,1,LINEN)}}
+   r(24,28,1,2,skinShade);r(15,30,3,1,skinShade);r(31,30,2,1,skinShade);r(23,33,4,1,mix(skin,INK,.48));r(24,34,2,1,skinLight)
   }
  }
- // Each hairstyle has its own stepped perimeter, part and nape in all views.
- const hx=side?13:13,hw=side?19:22
+ // Continuous hairstyle contours, broad light clusters and carved shadow locks.
  if(a.hairStyle==='curly'){
-  const curls=side?[[15,7],[23,8],[11,12],[27,13],[12,20],[13,26]]: [[17,7],[24,7],[12,11],[29,11],[11,18],[30,18],[13,25],[28,25]]
-  r(15,10,18,9,hairDark)
-  for(const [x,y] of curls){r(x,y,7,7,ink);r(x+1,y+1,5,5,hair);r(x+2,y+1,3,1,hairLight);r(x+4,y+4,2,2,hairDark)}
-  if(rear){r(15,17,18,13,hair);r(16,18,4,3,hairLight);r(21,24,3,4,hairDark);r(29,21,3,6,hairDark)}
+  shape([[16,7],[21,7],[23,8],[28,7],[32,9],[33,12],[37,13],[38,18],[36,21],[37,25],[34,29],[31,27],[31,21],[27,22],[24,20],[20,22],[17,20],[15,24],[15,30],[11,29],[9,25],[10,21],[8,18],[10,13],[14,12]],hair)
+  patch([[14,13],[15,10],[20,9],[22,11],[20,14],[17,14],[16,17],[12,18],[11,16]],hairLight)
+  patch([[25,10],[29,9],[32,12],[30,14],[26,14]],hairLight);patch([[33,15],[36,16],[35,20],[32,21],[33,25],[31,26],[29,22],[30,18]],hairShade)
+  r(20,16,4,2,hairShade);r(12,23,2,3,hairShade)
+  if(rear){shape([[13,18],[34,18],[35,26],[32,33],[27,35],[23,33],[19,35],[14,32],[11,26]],hair);patch([[14,20],[18,21],[17,27],[20,30],[16,31],[13,27]],hairLight);patch([[28,21],[33,20],[32,28],[28,32],[23,31],[25,27]],hairShade)}
+  else if(side){shape([[12,19],[21,19],[21,26],[18,31],[14,31],[12,27]],hairShade);r(15,22,3,4,hair)}
  }else{
   const swept=a.hairStyle==='swept',long=a.hairStyle==='long'
-  r(hx+3,8,hw-6,3,ink);r(hx+1,10,hw-2,5,ink);r(hx,13,hw,5,ink)
-  r(hx+3,9,hw-6,3,hair);r(hx+1,11,hw-2,6,hair);r(left?hx+hw-9:hx+3,11,6,2,hairLight)
+  shape(swept?[[16,8],[28,7],[33,10],[34,14],[37,17],[35,21],[31,22],[27,20],[21,23],[14,24],[10,21],[8,17],[12,16],[12,11]]:long?[[17,8],[29,8],[34,12],[36,17],[35,24],[32,23],[29,19],[24,17],[21,19],[17,22],[13,25],[10,21],[11,15],[13,11]]:[[16,8],[23,7],[26,9],[31,9],[34,12],[34,16],[37,19],[34,23],[30,22],[27,19],[24,22],[20,20],[17,22],[13,23],[10,20],[11,14],[13,12]],hair)
+  patch(swept?[[14,12],[19,10],[28,9],[30,11],[23,12],[18,16],[12,19],[11,17],[14,15]]:[[14,14],[17,10],[23,9],[28,11],[22,12],[20,15],[15,17],[12,18]],hairLight)
+  patch(swept?[[29,14],[33,14],[35,18],[33,20],[28,19],[23,21],[20,21],[25,18]]:[[30,14],[33,15],[34,19],[32,21],[29,19],[26,18],[27,16]],hairShade)
   if(rear){
-   r(14,16,20,long?24:13,ink);r(15,16,18,long?23:12,hair);r(16,18,3,long?18:7,hairLight);r(29,18,3,long?20:9,hairDark)
-   r(21,21,2,long?18:7,hairDark);r(17,long?38:28,4,2,hairDark)
-   if(swept){r(10,13,6,6,ink);r(11,14,5,4,hair);r(12,14,2,1,hairLight);r(26,18,5,2,hairDark)}
+   shape(long?[[12,17],[35,17],[36,30],[34,41],[30,43],[27,40],[23,42],[19,40],[15,43],[11,40]]:[[12,17],[35,17],[35,27],[32,32],[28,34],[25,32],[21,34],[16,32],[12,28]],hair)
+   patch(long?[[14,20],[18,19],[18,32],[15,39],[13,40],[14,32]]:[[14,20],[18,19],[18,27],[21,30],[17,30],[14,27]],hairLight)
+   patch(long?[[30,19],[33,20],[33,34],[30,40],[26,38],[28,30]]:[[30,20],[33,21],[32,28],[28,32],[24,30],[28,27]],hairShade)
+   if(swept)patch([[17,19],[22,19],[26,23],[24,25],[20,22]],hairShade)
   }else if(side){
-   r(13,16,8,long?24:13,ink);r(14,16,6,long?23:12,hairDark);r(left?18:15,17,2,long?21:8,hair)
-   if(swept){r(26,12,8,6,ink);r(26,13,7,4,hair);r(29,17,4,3,hair);r(27,13,3,1,hairLight)}
-   else if(long){r(26,14,6,3,hair);r(29,17,3,3,hairDark)}
-   else {r(27,14,5,4,hair);r(29,18,2,2,hairDark);r(18,7,4,3,hair)}
-  }else{
-   r(13,16,3,long?20:7,ink);r(14,16,2,long?19:6,hair);r(32,16,3,long?20:7,ink);r(32,16,2,long?19:6,hairDark)
-   if(swept){r(11,14,15,4,hair);r(12,18,10,2,hair);r(14,20,4,1,hairDark);r(24,14,7,3,hairDark);r(12,13,9,1,hairLight)}
-   else if(long){r(15,15,7,3,hair);r(16,18,3,2,hair);r(26,15,7,3,hair);r(30,18,3,2,hairDark);r(23,12,2,4,hairDark)}
-   else {r(15,16,5,3,hair);r(22,16,4,4,hair);r(28,16,5,3,hairDark);r(18,7,5,3,hair);r(29,9,4,3,hair)}
-  }
+   shape(long?[[12,18],[21,18],[21,31],[19,40],[15,43],[11,40]]:[[12,18],[21,18],[22,24],[20,28],[17,32],[13,30],[11,26]],hairShade)
+   patch(long?[[14,21],[17,20],[17,35],[14,39],[13,39]]:[[14,20],[17,20],[17,27],[14,29],[13,25]],hair)
+   if(swept)patch([[26,16],[33,15],[35,18],[32,21],[27,23],[28,20]],hair)
+  }else{shape([[11,19],[15,18],[16,23],[15,long?36:28],[12,long?40:31],[10,long?37:27]],hair);shape([[33,19],[36,20],[37,long?36:27],[34,long?40:31],[32,long?35:27]],hairShade)}
  }
- // Ear sits in front of the profile hair. Headgear follows this same skull envelope.
- if(side){r(20,22,4,6,ink);r(21,23,3,4,skinShade);r(21,23,2,2,skin)}
+ if(side){shape([[21,25],[24,24],[27,26],[26,30],[23,31],[21,29]],skin);r(23,26,2,2,skinShade)}
  if(a.accessory==='glasses'){
-  if(rear){r(13,22,2,1,ink);r(33,22,2,1,ink)}
-  else if(side){r(26,22,8,1,ink);r(26,26,8,1,ink);r(26,22,1,5,ink);r(33,22,1,5,ink);r(22,23,4,1,ink);r(27,23,2,1,'#b8d9dd')}
-  else {for(const x of [16,26]){r(x,22,7,1,ink);r(x,26,7,1,ink);r(x,22,1,5,ink);r(x+6,22,1,5,ink);r(x+1,23,1,1,'#b8d9dd')}r(23,23,3,1,gold);r(14,23,2,1,ink);r(33,23,2,1,ink)}
+  if(rear){r(10,25,3,1,INK);r(35,25,3,1,INK)}
+  else{for(const x of side?[28]:[15,27]){r(x,24,8,1,INK);r(x,29,8,1,INK);r(x,25,1,4,INK);r(x+7,25,1,4,INK);r(x+1,25,2,1,'#b9dada')}r(side?24:23,25,4,1,GOLD);if(!side){r(12,25,3,1,INK);r(35,25,2,1,INK)}}
  }else if(a.accessory==='headphones'){
-  if(side){r(20,7,4,15,ink);r(21,8,2,12,metal);r(18,21,8,9,ink);r(19,22,6,7,'#445462');r(20,23,3,5,metal);r(20,24,1,2,cyan)}
-  else {r(15,7,18,3,ink);r(16,8,16,1,metal);for(const x of [11,34]){r(x,14,3,9,ink);r(x,21,4,8,ink);r(x+1,22,2,6,metal);r(x+1,23,1,3,cyan)}}
+  if(side){shape([[20,6],[24,6],[26,12],[25,25],[21,25],[22,12]],STEEL);shape([[19,23],[25,22],[28,25],[28,30],[25,33],[19,31]],'#455766');r(21,25,3,5,STEEL);r(22,26,1,3,CYAN)}
+  else{shape([[12,17],[12,11],[16,6],[31,6],[36,11],[36,20],[33,20],[33,12],[30,9],[17,9],[15,12],[15,17]],STEEL);for(const x of [8,35]){shape([[0,0],[4,-1],[6,2],[6,9],[4,11],[0,10]],'#455766',x,22);r(x+1,24,2,6,STEEL);r(x+2,25,1,3,CYAN)}}
  }else if(a.accessory==='crown'){
-  const x=side?15:15,w=side?17:18
-  r(x-1,5,w+2,6,ink);r(x,7,w,3,gold);r(x,9,w,1,'#8c713f')
-  for(const px of [x,x+7,x+w-3]){r(px,3,3,5,ink);r(px+1,4,1,4,goldLight)}
-  r(x+1,7,w-2,1,goldLight);if(!rear)r(x+(side?13:8),8,2,1,'#984a50')
- }
- if(resting){
-  // Supine on the existing north/south bed: retain the costume, close the eyes,
-  // relax the elbows and bring the legs together beneath the foreground quilt.
-  for(const x of [18,25]){r(x,50,6,12,ink);r(x+1,50,4,10,pants);r(x+1,51,1,8,pantsLight);r(x,60,6,3,a.outfit==='everyday'?linen:a.outfit==='medieval'?leather:metal)}
+  shape([[12,5],[16,8],[22,7],[24,2],[27,7],[32,8],[36,5],[34,16],[14,16]],GOLD);r(15,12,18,2,GOLD_LIGHT);r(15,15,18,1,'#8a633c')
+  if(!rear){r(side?29:23,11,3,3,'#944f58');r(side?30:24,11,1,1,'#e3a08b')}
  }
  return pixels
 }
 
-export function characterPixels(a:Appearance,direction:Direction='down',frame=0):Pixel[]{return resident(a,direction,frame,'stand')}
-export function seatedCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{return resident(a,direction,0,'sit')}
-export function restingCharacterPixels(a:Appearance,direction:Direction='down'):Pixel[]{return resident(a,direction,0,'rest',true)}
-/** Four-second breathing phrase; one brief blink per phrase. Feet and head stay fixed. */
-export function idleCharacterPixels(a:Appearance,direction:Direction='down',tick=1,pose:Pose='stand'):Pixel[]{
- const step=Math.max(0,Math.floor(tick))%16
- return resident(a,direction,0,pose,step===0,step>=3&&step<=7&&pose!=='rest')
+export function characterPixels(a: Appearance, direction: Direction = 'down', frame = 0): Pixel[] { return resident(a, direction, frame, 'stand') }
+export function seatedCharacterPixels(a: Appearance, direction: Direction = 'down'): Pixel[] { return resident(a, direction, 0, 'sit') }
+export function restingCharacterPixels(a: Appearance, direction: Direction = 'down'): Pixel[] { return resident(a, direction, 0, 'rest', true) }
+/** Four-second phrase: 250ms blink and one-pixel chest inhale; fixed skull/soles. */
+export function idleCharacterPixels(a: Appearance, direction: Direction = 'down', tick = 1, pose: Pose = 'stand'): Pixel[] {
+ const step = Math.max(0, Math.floor(tick)) % 16
+ return resident(a, direction, 0, pose, step === 0, step >= 3 && step <= 7 && pose !== 'rest')
 }
-/** Compatibility overlay, used by room-life consumers; rendered after the open eye. */
-export function characterEyeBlinkPixels(a:Appearance,direction:Direction,tick:number):Pixel[]{
+/** Legacy room-life overlay using the same closed-eye clusters. */
+export function characterEyeBlinkPixels(a: Appearance, direction: Direction, tick: number): Pixel[] {
  if(direction==='up'||Math.max(0,Math.floor(tick))%16!==0)return []
- const eyes=direction==='down'?[18,28]:[direction==='left'?16:29]
- const p:Pixel[]=[]
- for(const x of eyes){p.push({x,y:23,w:3,h:3,color:a.skin},{x,y:24,w:3,h:1,color:'#202029'})}
- // Keep eyewear reflection and bridge intact.
- if(a.accessory==='glasses')for(const x of direction==='down'?[17,27]:[direction==='left'?19:27])p.push({x,y:23,w:1,h:1,color:'#b8d9dd'})
- return p
+ const eyes=direction==='down'?[17,29]:[direction==='left'?15:30], pixels: Pixel[]=[]
+ for(const x of eyes)pixels.push({x,y:25,w:3,h:4,color:a.skin},{x,y:direction==='down'?27:26,w:3,h:1,color:INK})
+ if(a.accessory==='glasses')for(const x of direction==='down'?[16,28]:[direction==='left'?17:29])pixels.push({x,y:25,w:2,h:1,color:'#b9dada'})
+ return pixels
 }

@@ -220,11 +220,11 @@ export function getActiveTheme(): string {
     const saved = localStorage.getItem(THEME_STORAGE_KEY)
     if (saved && THEMES.some(t => t.id === saved)) return saved
   } catch {}
-  return 'dark'
+  return 'ash'
 }
 
 export function applyTheme(themeId: string) {
-  const theme = THEMES.find(t => t.id === themeId) || THEMES.find(t => t.id === 'dark')!
+  const theme = THEMES.find(t => t.id === themeId) || THEMES.find(t => t.id === 'ash')!
   const root = document.documentElement
   root.setAttribute('data-theme', theme.id)
   root.style.colorScheme = theme.colorScheme
