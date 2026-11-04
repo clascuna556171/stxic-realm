@@ -18,6 +18,11 @@ import {BadgeModal} from './BadgeModal'
 import {BadgeToastContainer} from './BadgeToast'
 import {getUserBadgeState, trackHallmarkMilestone, syncBadgesToServer, type UserBadgeState} from './badges'
 import {ProfileBannerPet} from './ProfileBannerPet'
+import {BannerShroud} from './BannerShroud'
+import {BannerAnthem} from './BannerAnthem'
+import {BANNER_SHROUDS, BANNER_ANTHEMS, getLocalBannerCosmetics, saveLocalBannerCosmetics} from './banner-cosmetics'
+import {storeCustomAnthem} from './banner-audio'
+import type {BannerShroudId, BannerAnthemId} from './profile-model'
 import {PetCollection} from './pets/PetCollection'
 import {PetSprite} from './pets/PetSprite'
 import {getUserPets} from './pets/pet-repository'
@@ -52,11 +57,27 @@ function ProfileStudio({user}:{user:string}){
   return()=>{active=false}
  },[user,snapshot,own,account.access?.is_founder,account.access?.platform_admin])
  const avatarInputRef=useRef<HTMLInputElement>(null),bannerInputRef=useRef<HTMLInputElement>(null),photoInputRef=useRef<HTMLInputElement>(null)
+ const [customAnthemLoading,setCustomAnthemLoading]=useState(false)
+ const [customAnthemNotice,setCustomAnthemNotice]=useState('')
+ async function handleCustomAnthemUpload(file:File){
+  setCustomAnthemLoading(true)
+  setCustomAnthemNotice('')
+  try{
+   const res=await storeCustomAnthem(file,user,20)
+   style({banner_anthem:'custom'})
+   setCustomAnthemNotice(`Compressed & saved ${res.duration.toFixed(1)}s audio to device.`)
+   setNotice('Custom anthem saved to device. Save profile to keep it active.')
+  }catch{
+   setError('Could not process audio. Please select a valid MP3, WAV or OGG file.')
+  }finally{
+   setCustomAnthemLoading(false)
+  }
+ }
  const serial=useRef(0),alive=useRef(false),latest=useRef({dirty:false,noteDirty:false})
  const dirty=!!draft&&JSON.stringify(draft)!==baseline
  latest.current={dirty,noteDirty:note!==noteBase.note}
  const stale=!!snapshot&&!!draft&&(snapshot.card.revision!==draft.card.revision||snapshot.profile.revision!==draft.profile.revision)
- async function read(reset=false){const ticket=++serial.current;try{const next=await rpc<Snapshot>(client!,'get_profile_card',{p_user:user,p_space:space});if(!alive.current||ticket!==serial.current)return;setSnapshot(next);setMedia(next.media);setLoadError('');if(reset||!latest.current.dirty){const value={profile:next.profile,card:next.card};setDraft(value);setBaseline(JSON.stringify(value))}if(reset||!latest.current.noteDirty){setNote(next.note.note);setNoteBase(next.note)}}catch(e){if(alive.current&&ticket===serial.current){setSnapshot(null);setLoadError(errorText(e))}}}
+ async function read(reset=false){const ticket=++serial.current;try{const next=await rpc<Snapshot>(client!,'get_profile_card',{p_user:user,p_space:space});if(!alive.current||ticket!==serial.current)return;const local=getLocalBannerCosmetics(user);if(local){if(!next.card.style.banner_shroud&&local.banner_shroud)next.card.style.banner_shroud=local.banner_shroud;if(!next.card.style.banner_anthem&&local.banner_anthem)next.card.style.banner_anthem=local.banner_anthem;}setSnapshot(next);setMedia(next.media);setLoadError('');if(reset||!latest.current.dirty){const value={profile:next.profile,card:next.card};setDraft(value);setBaseline(JSON.stringify(value))}if(reset||!latest.current.noteDirty){setNote(next.note.note);setNoteBase(next.note)}}catch(e){if(alive.current&&ticket===serial.current){setSnapshot(null);setLoadError(errorText(e))}}}
  useEffect(()=>{alive.current=true;void read(true);const refresh=()=>{if(!document.hidden)void read()};const timer=setInterval(refresh,15000);window.addEventListener('online',refresh);window.addEventListener('focus',refresh);return()=>{alive.current=false;serial.current++;clearInterval(timer);window.removeEventListener('online',refresh);window.removeEventListener('focus',refresh)}},[user,viewer])
  useEffect(()=>{if(!dirty&&note===noteBase.note)return;const guard=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue=''};window.addEventListener('beforeunload',guard);return()=>window.removeEventListener('beforeunload',guard)},[dirty,note,noteBase.note])
  useEffect(()=>{let active=true;const refresh=async()=>{const entries=await Promise.all(media.filter(m=>m.state==='ready').map(async m=>{try{return [m.id,await profileImageUrl(client!,m.object_path,viewer)] as const}catch{return [m.id,''] as const}}));if(active)setUrls(Object.fromEntries(entries))};void refresh();const timer=setInterval(()=>void refresh(),45000);return()=>{active=false;clearInterval(timer)}},[media,viewer])
@@ -66,7 +87,22 @@ function ProfileStudio({user}:{user:string}){
  async function save(e:FormEvent){e.preventDefault();if(!draft||busy||uploading||stale||!snapshot)return;setBusy(true);setError('');try{
  if(!draft.profile.display_name.trim()||!/^[a-z0-9_]{3,24}$/.test(draft.profile.username)){setTab('identity');throw new Error('Enter a display name and a handle with 3–24 lowercase letters, numbers or underscores.')}
  if(draft.card.connections.some(c=>!c.title.trim()||!safeProjectUrl(c.url))||draft.card.details.some(d=>!d.label.trim())){setTab('sections');throw new Error('Give every detail a label and every connection a title and full HTTPS link.')}
-const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:draft.card,p_revision:draft.card.revision,p_identity_revision:draft.profile.revision});serial.current++;const value={profile:next.profile,card:next.card};setSnapshot(next);setDraft(value);setBaseline(JSON.stringify(value));setMedia(next.media);if(draft.card.avatar_id&&draft.card.banner_id){trackHallmarkMilestone(user,'profile_media')}trackHallmarkMilestone(user,'profile_style');const savedBadges=getUserBadgeState(user,next.roles,!!account.access?.is_founder,!!account.access?.platform_admin,next.badge_state ?? {unlocked:{},featured:[]});setBadgeState(savedBadges);await account.reload();setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
+  const chosenShroud=draft.card.style.banner_shroud,chosenAnthem=draft.card.style.banner_anthem
+  let next:Snapshot
+  try{
+   next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:draft.card,p_revision:draft.card.revision,p_identity_revision:draft.profile.revision})
+   saveLocalBannerCosmetics(user,chosenShroud,chosenAnthem)
+  }catch(saveErr:any){
+   const code=saveErr?.code,msg=saveErr?.message||''
+   if((code==='22023'||msg.includes('Invalid profile settings'))&&(chosenShroud||chosenAnthem)){
+    const {banner_shroud:_s,banner_anthem:_a,...compatStyle}=draft.card.style
+    next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_name:draft.profile.display_name,username:draft.profile.username,bio:draft.profile.bio},p_card:{...draft.card,style:compatStyle as ProfileStyle},p_revision:draft.card.revision,p_identity_revision:draft.profile.revision})
+    saveLocalBannerCosmetics(user,chosenShroud,chosenAnthem)
+    if(chosenShroud)next.card.style.banner_shroud=chosenShroud
+    if(chosenAnthem)next.card.style.banner_anthem=chosenAnthem
+   }else{throw saveErr}
+  }
+  serial.current++;const value={profile:next.profile,card:next.card};setSnapshot(next);setDraft(value);setBaseline(JSON.stringify(value));setMedia(next.media);if(draft.card.avatar_id&&draft.card.banner_id){trackHallmarkMilestone(user,'profile_media')}trackHallmarkMilestone(user,'profile_style');const savedBadges=getUserBadgeState(user,next.roles,!!account.access?.is_founder,!!account.access?.platform_admin,next.badge_state ?? {unlocked:{},featured:[]});setBadgeState(savedBadges);await account.reload();setNotice('Profile saved to your account.')}catch(e){setError(errorText(e))}finally{setBusy(false)}}
  async function reload(){if((dirty||note!==noteBase.note)&&!confirm('Discard unsaved profile edits and reload?'))return;setBusy(true);await read(true);setBusy(false)}
  async function sendUpload(attempt:UploadAttempt){
   try{const result=await invoke<ProfileMedia>(client!,'realm-profile-media',attempt.blob,{'x-realm-slot':attempt.kind,'x-realm-client':attempt.clientId});if(!alive.current)return;setRetryUpload(null);serial.current++;setMedia(ms=>[...ms.filter(m=>m.id!==result.id),result]);if(attempt.kind==='avatar')card({avatar_id:result.id});else if(attempt.kind==='banner')card({banner_id:result.id});else card({gallery:[...(draft?.card.gallery??[]),result.id].slice(0,6)});setNotice('Image uploaded privately. Save your profile to share it.')}
@@ -141,6 +177,37 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
        <div className="social-actions"><button type="button" onClick={()=>card({avatar_id:null})}>Remove account photo</button><button type="button" onClick={()=>card({banner_id:null})}>Remove banner</button></div>
        <h3>Crop & framing</h3>{(['avatar_x','avatar_y','banner_x','banner_y'] as const).map(key=><label key={key}>{({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]}<input type="range" aria-label={({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]} min={0} max={100} value={draft.card.style[key]} onChange={e=>style({[key]:Number(e.target.value)})}/></label>)}
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
+        <h3>Atmosphere & Vinyl Anthem</h3>
+        <label>Banner atmospheric shroud
+         <select aria-label="Banner atmospheric shroud" value={draft.card.style.banner_shroud||'none'} onChange={e=>style({banner_shroud:e.target.value as BannerShroudId})}>
+          {BANNER_SHROUDS.map(s=><option key={s.id} value={s.id}>{s.name} — {s.description}</option>)}
+         </select>
+        </label>
+        <label>Banner vinyl anthem
+         <select aria-label="Banner vinyl anthem" value={draft.card.style.banner_anthem||'none'} onChange={e=>style({banner_anthem:e.target.value as BannerAnthemId})}>
+          {BANNER_ANTHEMS.map(a=><option key={a.id} value={a.id}>{a.name} — {a.subtitle}</option>)}
+         </select>
+        </label>
+        {draft.card.style.banner_anthem==='custom'&&(
+         <div className="profile-custom-anthem-upload">
+          <label className="profile-icon-button primary">
+           <Icon name="sparkle"/>
+           <span>{customAnthemLoading?'Compressing audio...':'Upload 20s audio (MP3/WAV)'}</span>
+           <input
+            type="file"
+            aria-label="Upload custom anthem audio"
+            accept="audio/*"
+            disabled={customAnthemLoading}
+            onChange={e=>{
+             const file=e.target.files?.[0]
+             if(file)void handleCustomAnthemUpload(file)
+             e.target.value=''
+            }}
+           />
+          </label>
+          {customAnthemNotice&&<p className="profile-save-state">{customAnthemNotice}</p>}
+         </div>
+        )}
        <h3>Your upload library <small>{media.length}/30 files</small></h3><p>Unused uploads stay private. Remove an image from your saved profile before deleting its file.</p><ul className="profile-upload-library">{media.map(m=><li key={m.id}>{urls[m.id]&&<ProfileImage src={urls[m.id]} alt={`${m.kind} upload`} loading="lazy"/>}<span>{m.kind} · {m.width} × {m.height}{m.state!=='ready'?` · ${m.state}`:''}</span><div className="social-actions">{m.state==='ready'&&<button type="button" onClick={()=>{if(m.kind==='avatar')card({avatar_id:m.id});else if(m.kind==='banner')card({banner_id:m.id});else card({gallery:draft.card.gallery.includes(m.id)?draft.card.gallery.filter(id=>id!==m.id):[...draft.card.gallery,m.id].slice(0,6)})}}>{m.kind==='photo'?(draft.card.gallery.includes(m.id)?'Hide photo':'Show photo'):'Use image'}</button>}<button type="button" onClick={()=>void removeUpload(m)}>Delete upload</button></div></li>)}</ul>
       </div>
       <div id="profile-panel-frames" role="tabpanel" aria-labelledby="profile-tab-frames" hidden={tab!=='frames'}><FrameGallery style={draft.card.style} savedStyle={snapshot.card.style} avatarSrc={draft.card.avatar_id?urls[draft.card.avatar_id]:undefined} name={draft.profile.display_name} onChange={style} saveBlocked={stale} isFounder={own && (!!account.access?.is_founder)}/></div>
@@ -167,12 +234,14 @@ const next=await rpc<Snapshot>(client!,'save_profile_card',{p_profile:{display_n
 }
 function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onOpenHallmarks,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;bannerPet?:EquippedPetSummary|null;housePets?:EquippedPetSummary[];onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
  const theme=card.style,avatar=card.avatar_id?urls[card.avatar_id]:null,banner=card.banner_id?urls[card.banner_id]:null
- const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font]} as CSSProperties
+ const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font],'--banner-height':`${theme.banner_height}px`} as CSSProperties
  const tilt=useCardTilt<HTMLElement>()
- return <article ref={tilt} className="account-profile-card" style={vars}>
+ return <article ref={tilt} className={`account-profile-card shroud-${theme.banner_shroud||'none'}`} style={vars}>
   <div className="account-profile-banner" style={{height:theme.banner_height}}>
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
+
    <ProfileBannerPet pet={bannerPet}/>
+   <BannerAnthem anthem={theme.banner_anthem} userId={profile.id}/>
    {onEditBanner&&<button type="button" className="profile-banner-pencil-btn" aria-label="Edit banner" title="Edit banner" onClick={onEditBanner}><Icon name="pencil"/><span>Edit banner</span></button>}
   </div>
   <div className="account-profile-card-body">
@@ -196,5 +265,6 @@ function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onO
     {section==='member'&&(card.joined_at?<time dateTime={card.joined_at}>{new Date(card.joined_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}</time>:<p className="profile-empty-copy">Join date unavailable.</p>)}
    </section>)}
   </div>
+  <BannerShroud shroud={theme.banner_shroud}/>
  </article>
 }
