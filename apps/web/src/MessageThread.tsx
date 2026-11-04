@@ -304,6 +304,8 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  const [destinations,setDestinations]=useState<{id:string;name:string;spaceName:string}[]>([])
 
  const [emojiPickerMessage,setEmojiPickerMessage]=useState<StreamMessage|null>(null)
+ const [composerEmojiOpen,setComposerEmojiOpen]=useState(false)
+ const composerEmojiBtnRef=useRef<HTMLButtonElement|null>(null)
  const [emojiSearch,setEmojiSearch]=useState('')
  const emojiSearchInputRef=useRef<HTMLInputElement>(null)
  const [quickReactions,setQuickReactions]=useState<string[]>(()=>loadQuickReactions())
@@ -347,16 +349,16 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   }
   el.scrollTop=0
  },[activeMenu])
- const forwardDialog=useModalFocus(!!forwardingMessage,menuOpener),emojiDialog=useModalFocus(!!emojiPickerMessage,menuOpener)
- useEffect(()=>{if(!activeMenu)return;const article=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===activeMenu);article?.querySelector<HTMLButtonElement>('[role=menuitem]')?.focus({preventScroll:true});const h=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();setActiveMenu(null);menuOpener.current?.focus()}};window.addEventListener('keydown',h);return()=>{window.removeEventListener('keydown',h);if(document.activeElement===document.body)menuOpener.current?.focus()}},[activeMenu])
+ const forwardDialog=useModalFocus(!!forwardingMessage,menuOpener),isEmojiModalOpen=!!emojiPickerMessage||composerEmojiOpen,emojiDialog=useModalFocus(isEmojiModalOpen,menuOpener)
+ useEffect(()=>{if(!activeMenu)return;const article=Array.from(thread.current?.querySelectorAll<HTMLElement>('[data-message]')??[]).find(el=>el.dataset.message===activeMenu);article?.querySelector<HTMLButtonElement>('.menu-item[role=menuitem]')?.focus({preventScroll:true});const h=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();setActiveMenu(null);menuOpener.current?.focus()}};window.addEventListener('keydown',h);return()=>{window.removeEventListener('keydown',h);if(document.activeElement===document.body)menuOpener.current?.focus()}},[activeMenu])
  useEffect(()=>{if(!forwardingMessage)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')closeForward()};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[forwardingMessage])
- useEffect(()=>{if(!emojiPickerMessage)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')closeEmojiPicker()};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[emojiPickerMessage])
+ useEffect(()=>{if(!isEmojiModalOpen)return;const h=(e:KeyboardEvent)=>{if(e.key==='Escape')closeEmojiPicker()};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h)},[isEmojiModalOpen])
 
  useEffect(()=>{
-  if(emojiPickerMessage){
+  if(isEmojiModalOpen){
    requestAnimationFrame(()=>emojiSearchInputRef.current?.focus())
   }
- },[emojiPickerMessage])
+ },[isEmojiModalOpen])
 
  useEffect(()=>{
   if(availableChannels&&availableChannels.length>0){
@@ -429,6 +431,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
 
  function closeEmojiPicker(){
   setEmojiPickerMessage(null)
+  setComposerEmojiOpen(false)
   setEmojiSearch('')
   setEditingQuickReactions(false)
   setQuickReactionAlert('')
@@ -460,6 +463,16 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     return next
    })
    setQuickReactionAlert('')
+   return
+  }
+  if(composerEmojiOpen){
+   setBody(b=>b+emoji)
+   draftVersion.current++
+   retry.current=null
+   closeEmojiPicker()
+   requestAnimationFrame(()=>{
+    if(kind==='channel')composerTextareaRef.current?.focus()
+   })
    return
   }
   if(!emojiPickerMessage)return
@@ -511,18 +524,24 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
    }
    setError('');setDenied(false);setLoading(false);setStatus('Messages up to date');onSync?.()
   }catch(e){fail(e);if(alive.current)setLoading(false)}finally{syncing.current=false;if(queued.current&&alive.current){queued.current=false;void sync()}}}
-  syncRef.current=sync;void sync()
-  const handleCustomReaction=(e:Event)=>{
-   const detail=(e as CustomEvent)?.detail
-   if(!detail||detail.streamId!==id)return
-   applyReactionToggle(detail.msgId,detail.emoji,detail.reactingUser)
+  try{
+   const saved=localStorage.getItem(`realm_reactions_${id}`)
+   setReactions(saved?JSON.parse(saved):{})
+  }catch{
+   setReactions({})
   }
+  try{
+   const savedPins=localStorage.getItem(`realm_pinned_${id}`)
+   setPinnedIds(savedPins?new Set(JSON.parse(savedPins)):new Set())
+  }catch{
+   setPinnedIds(new Set())
+  }
+  syncRef.current=sync;void sync()
   const handleStorage=(e:StorageEvent)=>{
    if(e.key===`realm_reactions_${id}`&&e.newValue){
     try{setReactions(JSON.parse(e.newValue))}catch{}
    }
   }
-  window.addEventListener('realm:reaction_toggle',handleCustomReaction)
   window.addEventListener('storage',handleStorage)
 
   const sub=client!.channel(`stream:${kind}:${id}`,{config:{broadcast:{self:false}}})
@@ -539,7 +558,6 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
    alive.current=false
    clearInterval(timer)
    window.removeEventListener('online',online)
-   window.removeEventListener('realm:reaction_toggle',handleCustomReaction)
    window.removeEventListener('storage',handleStorage)
    realtimeChannelRef.current=null
    void client!.removeChannel(sub)
@@ -574,7 +592,6 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  }
 
  function toggleReaction(msgId:string,emoji:string){
-  (document.activeElement as HTMLElement)?.blur()
   applyReactionToggle(msgId,emoji,user)
   try{
    realtimeChannelRef.current?.send({
@@ -582,9 +599,6 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     event:'reaction_toggle',
     payload:{msgId,emoji,reactingUser:user}
    })
-  }catch{}
-  try{
-   window.dispatchEvent(new CustomEvent('realm:reaction_toggle',{detail:{streamId:id,msgId,emoji,reactingUser:user}}))
   }catch{}
  }
 
@@ -701,10 +715,43 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
          {isMenuOpen&&(
           <>
            <div className="menu-backdrop" onClick={()=>setActiveMenu(null)}/>
-           <div ref={popoverRef} className="message-more-popover" role="menu" aria-label="Message actions" onKeyDown={e=>{if(!['ArrowDown','ArrowUp','Home','End'].includes(e.key))return;e.preventDefault();const items=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role=menuitem]:not(:disabled)')),i=items.indexOf(document.activeElement as HTMLButtonElement);items[e.key==='Home'?0:e.key==='End'?items.length-1:(i+(e.key==='ArrowDown'?1:items.length-1))%items.length]?.focus()}}>
-            <div className="menu-emoji-row">
+           <div ref={popoverRef} className="message-more-popover" role="menu" aria-label="Message actions" onKeyDown={e=>{
+            if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+            const popover=e.currentTarget;
+            const emojiBtns=Array.from(popover.querySelectorAll<HTMLButtonElement>('.menu-emoji-btn, .menu-emoji-edit-btn'));
+            const verticalItems=Array.from(popover.querySelectorAll<HTMLButtonElement>('.menu-item[role=menuitem]:not(:disabled)'));
+            const active=document.activeElement as HTMLButtonElement|null;
+            const emojiIdx=active?emojiBtns.indexOf(active):-1;
+            const verticalIdx=active?verticalItems.indexOf(active):-1;
+            if(emojiIdx>=0){
+             e.preventDefault();
+             if(e.key==='ArrowRight')emojiBtns[(emojiIdx+1)%emojiBtns.length]?.focus();
+             else if(e.key==='ArrowLeft')emojiBtns[(emojiIdx-1+emojiBtns.length)%emojiBtns.length]?.focus();
+             else if(e.key==='ArrowDown')verticalItems[0]?.focus();
+             else if(e.key==='ArrowUp')verticalItems[verticalItems.length-1]?.focus();
+             else if(e.key==='Home')emojiBtns[0]?.focus();
+             else if(e.key==='End')verticalItems[verticalItems.length-1]?.focus();
+            }else if(verticalIdx>=0){
+             if(e.key==='ArrowDown'){
+              e.preventDefault();
+              if(verticalIdx===verticalItems.length-1){if(emojiBtns.length>0)emojiBtns[0].focus();else verticalItems[0]?.focus()}
+              else verticalItems[verticalIdx+1]?.focus();
+             }else if(e.key==='ArrowUp'){
+              e.preventDefault();
+              if(verticalIdx===0){if(emojiBtns.length>0)emojiBtns[0].focus();else verticalItems[verticalItems.length-1]?.focus()}
+              else verticalItems[verticalIdx-1]?.focus();
+             }else if(e.key==='Home'){
+              e.preventDefault();
+              if(emojiBtns.length>0)emojiBtns[0].focus();else verticalItems[0]?.focus();
+             }else if(e.key==='End'){
+              e.preventDefault();
+              verticalItems[verticalItems.length-1]?.focus();
+             }
+            }
+           }}>
+            <div className="menu-emoji-row" role="group" aria-label="Quick reactions">
              {quickReactions.map(emoji=>(
-              <button key={emoji} type="button" className="menu-emoji-btn" onClick={()=>{toggleReaction(m.id,emoji);setActiveMenu(null)}} title={`React with ${emoji}`}>{emoji}</button>
+              <button key={emoji} type="button" className="menu-emoji-btn" onClick={()=>{toggleReaction(m.id,emoji);setActiveMenu(null)}} title={`React with ${emoji}`} aria-label={`React with ${emoji}`}>{emoji}</button>
              ))}
              <button type="button" className="menu-emoji-edit-btn" title="Edit quick reactions (max 3)" aria-label="Edit quick reactions" onClick={e=>openEmojiPicker(m,true,menuOpener.current)}><PencilIcon size={14}/></button>
             </div>
@@ -784,6 +831,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
       placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}
      />
     )}
+    <button type="button" ref={composerEmojiBtnRef} className="composer-emoji-btn" title="Add emoji" aria-label="Add emoji" disabled={readOnly||denied} onClick={()=>{menuOpener.current=composerEmojiBtnRef.current;setComposerEmojiOpen(true);setEmojiSearch('');setEditingQuickReactions(false);setQuickReactionAlert('')}}><SmileIcon size={18}/></button>
     <button type="submit" className="composer-send-btn" disabled={sending||readOnly||denied||!body.trim()}>{sending?'…':'Send'}{kind==='channel'&&<ForwardIcon size={16}/>}</button>
    </form>
    <p className="muted dm-note">{readOnly?'Archived conversations preserve their history.':'Drafts stay on this device for this account. Press Enter to send.'}</p>
@@ -854,13 +902,13 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     </div>
    )}
 
-   {emojiPickerMessage&&(
+   {isEmojiModalOpen&&(
     <div className="modal-backdrop" role="presentation" onClick={e=>{if(e.target===e.currentTarget)closeEmojiPicker()}}>
      <div ref={emojiDialog} tabIndex={-1} className="modal-dialog emoji-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="emoji-picker-title">
       <div className="emoji-picker-header">
        <div>
-        <h2 id="emoji-picker-title">Add Reaction</h2>
-        <p className="modal-subtitle">Select an emoji to react to this message</p>
+        <h2 id="emoji-picker-title">{composerEmojiOpen?'Insert Emoji':'Add Reaction'}</h2>
+        <p className="modal-subtitle">{composerEmojiOpen?'Select an emoji to add to your message':'Select an emoji to react to this message'}</p>
        </div>
        <button type="button" className="modal-close-btn" aria-label="Close" onClick={closeEmojiPicker}>✕</button>
       </div>
@@ -873,6 +921,19 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
         placeholder="Search emojis..."
         value={emojiSearch}
         onChange={e=>setEmojiSearch(e.target.value)}
+        onKeyDown={e=>{
+         if(e.key==='ArrowDown'){
+          e.preventDefault()
+          const quickSlot=emojiDialog.current?.querySelector<HTMLButtonElement>('.quick-reaction-slot-btn')
+          const firstGridBtn=emojiDialog.current?.querySelector<HTMLButtonElement>('.emoji-grid-btn')
+          ;(quickSlot??firstGridBtn)?.focus()
+         }else if(e.key==='Enter'){
+          e.preventDefault()
+          if(filteredEmojiCategories.length>0&&filteredEmojiCategories[0].emojis.length>0){
+           handleSelectEmoji(filteredEmojiCategories[0].emojis[0].e)
+          }
+         }
+        }}
        />
        {emojiSearch&&<button type="button" className="emoji-search-clear" onClick={()=>setEmojiSearch('')} aria-label="Clear search">✕</button>}
       </div>
@@ -915,7 +976,21 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
         </div>
        )}
 
-       <div className="quick-reactions-slots-row">
+       <div
+        className="quick-reactions-slots-row"
+        role="toolbar"
+        aria-label="Quick reaction slots"
+        onKeyDown={e=>{
+         const active=document.activeElement as HTMLButtonElement|null
+         const btns=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('.quick-reaction-slot-btn'))
+         const idx=active?btns.indexOf(active):-1
+         if(idx<0)return
+         if(e.key==='ArrowRight'){e.preventDefault();btns[(idx+1)%btns.length]?.focus()}
+         else if(e.key==='ArrowLeft'){e.preventDefault();btns[(idx-1+btns.length)%btns.length]?.focus()}
+         else if(e.key==='ArrowDown'){e.preventDefault();emojiDialog.current?.querySelector<HTMLButtonElement>('.emoji-grid-btn')?.focus()}
+         else if(e.key==='ArrowUp'){e.preventDefault();emojiSearchInputRef.current?.focus()}
+        }}
+       >
         {quickReactions.map(emoji=>(
          <div key={emoji} className="quick-reaction-slot-wrapper">
           <button
@@ -946,7 +1021,37 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
        </div>
       </div>
 
-      <div className="emoji-grid-container" role="listbox" aria-label="Emojis">
+      <div
+       className="emoji-grid-container"
+       role="listbox"
+       aria-label="Emojis"
+       onKeyDown={e=>{
+        const active=document.activeElement as HTMLButtonElement|null
+        if(!active||!active.classList.contains('emoji-grid-btn'))return
+        const allBtns=Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('.emoji-grid-btn'))
+        const idx=allBtns.indexOf(active)
+        if(idx<0)return
+        const grid=active.closest('.emoji-grid')
+        const cols=grid?Math.max(1,Math.round(grid.clientWidth/44)):8
+        if(e.key==='ArrowRight'){e.preventDefault();if(idx+1<allBtns.length)allBtns[idx+1].focus()}
+        else if(e.key==='ArrowLeft'){e.preventDefault();if(idx-1>=0)allBtns[idx-1].focus()}
+        else if(e.key==='ArrowDown'){
+         e.preventDefault()
+         if(idx+cols<allBtns.length)allBtns[idx+cols].focus()
+         else emojiDialog.current?.querySelector<HTMLButtonElement>('.emoji-picker-footer button')?.focus()
+        }else if(e.key==='ArrowUp'){
+         e.preventDefault()
+         if(idx-cols>=0)allBtns[idx-cols].focus()
+         else{
+          const quickBtn=emojiDialog.current?.querySelector<HTMLButtonElement>('.quick-reaction-slot-btn')
+          if(quickBtn)quickBtn.focus();else emojiSearchInputRef.current?.focus()
+         }
+        }else if(e.key==='Home'){e.preventDefault();(grid?.querySelector<HTMLButtonElement>('.emoji-grid-btn'))?.focus()}
+        else if(e.key==='End'){e.preventDefault();(Array.from(grid?.querySelectorAll<HTMLButtonElement>('.emoji-grid-btn')??[]).at(-1))?.focus()}
+        else if(e.key==='PageDown'){e.preventDefault();allBtns[Math.min(allBtns.length-1,idx+cols*3)]?.focus()}
+        else if(e.key==='PageUp'){e.preventDefault();allBtns[Math.max(0,idx-cols*3)]?.focus()}
+       }}
+      >
        {filteredEmojiCategories.length===0?<p className="emoji-picker-empty">No emojis found matching &ldquo;{emojiSearch}&rdquo;</p>:filteredEmojiCategories.map(cat=>(
         <div key={cat.name} className="emoji-category-section">
          <h3 className="emoji-category-title">{cat.name}</h3>

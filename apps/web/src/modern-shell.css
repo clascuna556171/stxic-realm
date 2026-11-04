@@ -1903,6 +1903,29 @@ button.secondary-btn:disabled,
   cursor: not-allowed !important;
 }
 
+.conversation .composer .composer-emoji-btn,
+.composer-emoji-btn {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: var(--realm-muted) !important;
+  border-radius: 6px !important;
+  margin-right: 4px !important;
+}
+
+.conversation .composer .composer-emoji-btn:hover:not(:disabled),
+.composer-emoji-btn:hover:not(:disabled) {
+  background: var(--realm-raised) !important;
+  color: var(--realm-text) !important;
+  border: 0 !important;
+}
+
 .community-shell .conversation > .dm-note,
 .conversation .dm-note {
   margin-top: 4px !important;

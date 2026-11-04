@@ -1,41 +1,95 @@
-# World character artwork
+# World character artwork and flexible archetype specification
 
-3 November 2026. Owner-authorized character overhaul using the supplied pixel-character reference as visual direction. This supersedes the 2 November smaller-head/longer-leg treatment. Artwork is original code-authored pixel art; no reference pixels, downloaded sprites or generated bitmap assets are shipped.
+4 November 2026. Owner-authorized update expanding Realm's character specification to flexibly support rich fantasy class archetypes—including wide-brim mages, armored knights/paladins, hooded rogues, beastkin, elves, royals, and clerics—as visual directions. Artwork remains original code-authored pixel art executed within Realm's procedural rasterizer; no reference pixels or static bitmap sprite sheets are shipped.
 
-`apps/web/src/character.ts` retains the 48×64 grid and bottom-center (24,64) pivot. Native-scale inspection showed enough room for expressive faces and clothing without increasing resolution. Broad cheeks, a stepped chin, separated brows/eyes, a small mouth and ears establish the head; the compact body has connected sleeves, thumb-notched hands and distinct boots. The support sole still ends at y63. Headgear begins at y2 and remains inside the portrait crop.
+`apps/web/src/character.ts` retains the foundational 48×64 canvas and bottom-center `(24, 64)` pivot, but relaxes anatomical and silhouette boundaries so that diverse headgear, ears, visors, capes, and garment silhouettes fit cohesively into the world.
 
-![Before and after: six representative combinations](images/character-overhaul-comparison.png)
+![Expanded fantasy class avatar reference](images/references/fantasy-class-avatars.jpg)
 
-## Art rules
+---
 
-- Author the silhouette first. Use contiguous stepped contours, consistent dark `#202029` outlines and large connected color clusters. The deterministic contour rasterizer samples pixel centers, insets by one pixel for outlines, caches geometry and merges equal vertical runs into rectangles. Both rendering backends receive identical integer rectangles; no vector antialiasing, smoothing, gradients or higher-resolution substitute is used.
-- Keep skull and headgear stable through walking and breathing. Front/rear and profile views share cheek/chin, shoulder, hip and sole heights. Profile geometry is mirrored; upper-plane light clusters and a single shadow ramp define volume without noisy strands or material texture.
-- Short hair has a broken fringe and tapered nape; swept hair has an asymmetric wave; curls use a continuous lobed contour with grouped highlights; long hair has separated scalloped shoulder locks. Headphones and crowns fit the skull envelope, and glasses frame the visible eyes. Keep selected skin, hair and iris colors visible after layer compositing.
-- Everyday clothing is an open chore jacket with folded lapels, linen shirt, pockets and light shoes. Medieval clothing is a leather jerkin, brass gorget/pauldrons, diagonal baldric, buckled boots and a flared green mantle with burgundy lining. Tech clothing is a cropped utility shell with chamfered steel panels and restrained cyan hardware. Preserve the saved outfit base colors and derive limited material ramps around them.
-- Animate whole connected limbs with opposing arm/leg phases and a grounded support foot. Idle uses one pixel of chest movement and a brief blink in a four-second phrase. Sitting has bent thighs, vertical shins and supported hands; bed rest brings the legs together, relaxes the arms and closes the eyes. Preserve costume volume and attachment through every pose.
+## 1. System invariants (non-negotiable boundaries)
 
-The medieval scout is the representative target. The same anatomy and contour rules cover every existing option: five skins, five hair colors, four hairstyles, four iris colors, three outfits and four accessories (4,800 combinations). All twelve starters currently present in Character Studio are retained, including the owner's pre-existing uncommitted additions.
+To ensure that world collision, depth sorting, furniture interaction, and viewport scaling remain fully functional across Phaser 3.90, SVG inspection, and Character Studio, the following system invariants remain fixed:
 
-![Medieval scout: four directions and seven states, with native-size views](images/character-overhaul-poses.png)
+- **Canvas & Pivot:** Native grid is 48×64 pixels with the anchor point fixed at bottom-center `(24, 64)`.
+- **Grounding Sole:** The support foot/sole strictly terminates at line `y63`. Characters must never float or sink into floor tiles.
+- **Top Clearance:** Tallest headgear (wizard hat points, helmet crests, crown tips, animal ears) starts no higher than `y2`, ensuring complete clearance inside avatar circles and portrait crops.
+- **Integer Rasterization:** All geometry is deterministically rasterized into integer rectangles with consistent `#202029` dark contours. No vector anti-aliasing, smoothing, gradients, or blurring.
+- **Collision & Movement Authority:** Cardinal collision footprints, 0.66 default world scale, and server-owned movement checks are independent of character appearance.
+- **Account Separation:** World pixel characters represent spatial presence in rooms and halls; they remain strictly decoupled from account profile photos and banners.
+- **Accessibility & Motion Gates:** Animations pause under `prefers-reduced-motion` and when browser tabs are hidden.
 
-## Integration boundaries
+---
 
-Home's Phaser 3.90 renderer, personal/shared HallTraveler SVGs, Character Studio, portraits and composed scenes continue to consume the same pixel functions. There is no parallel sprite-sheet wardrobe. Existing world display scale (0.66), movement cadence, bottom-center transforms, collision footprints, furniture anchors, furniture foreground occlusion, layouts and permission logic remain unchanged. Inspection sheets use native 1× and integer 2×/3× nearest-neighbor views; responsive world fitting retains its existing fractional scale.
+## 2. Flexible art and silhouette rules
 
-No Studio controls or account appearance schema were changed in this pass. Existing direction/pose controls, drafts, saves, palettes and IDs retain their meaning. Account photos and profile banners remain separate. Existing timers, reduced-motion and hidden-document gates, teardown and asynchronous lifecycles are preserved. Rest stays still; seated characters may blink and breathe.
+The rules below replace rigid one-size-fits-all garment and facial constraints with flexible ranges tailored for diverse fantasy and modern archetypes:
 
-## Asset family / provenance manifest
+### A. Silhouette & envelope flexibility
+- **Horizontal Breadth:** The silhouette may extend up to 44 pixels wide (leaving at least 2px padding on each side of the 48px canvas) to accommodate wide-brim witch/wizard hats, flared cloaks, shoulder pauldrons, wing-like elf ears, or billowing mantles.
+- **Vertical Headroom (`y2`–`y16`):** Reserved for expressive headwear: conical pointed wizard hats, spiked monarch crowns, hooded cowls, bear/cat hoods, and horned or crested knight helmets.
+- **Volume & Clustering:** Shading uses large, connected color clusters with clean 2-to-3 tone ramps (base, shadow, and minimal highlight). Avoid noisy dithering or isolated single-pixel speckles.
 
-| Source | Canvas / pivot | Variants | Motion / pose | Use |
-| --- | --- | --- | --- | --- |
-| `character.ts` resident layers | 48×64 / 24,64 | Existing 5 skins × 5 hair colors × 4 hair silhouettes × 4 eyes × 3 outfits × 4 accessories; four directions | Neutral, walk A/B, blink, inhale, seated, supine rest | World resident, shared SVG inspection |
+### B. Head, facial expression, and head coverage modes
+Characters can use any of three distinct head-coverage modes:
+1. **Open Expressive Face:** Broad cheeks, stepped chin, distinct 2-pixel vertical eyes (with customizable iris color), subtle brows, and ears.
+2. **Shadowed / Hooded Cowl (Rogues, Mages, Monks):** A deep cowl casts a prominent shadow over the upper face; eyes peer out with high-contrast irises or mystical luminescence against the shadow tone.
+3. **Full Enclosed Helmet / Visor (Knights, Dark Paladins):** Face is completely enclosed in steel or obsidian plate. Features horizontal, T-shaped, or vertical slit visors. Instead of an eyelid blink, idle animation uses a subtle single-pixel visor sheen/glint.
 
-Provenance: original TypeScript contour coordinates and pixel clusters authored for Realm in this implementation. The owner's supplied 3 November fantasy-character montage informed proportions, silhouette clarity and outline treatment only; its reuse rights are not established and none of its artwork is copied or included as a runtime asset. No external package, generator, image service or engine migration was used. The two compact PNGs above are deterministic exports of Realm's own before/after source. Backgrounds and companions in captures are existing Realm artwork, including the owner's uncommitted changes.
+### C. Species & ear traits
+- **Human:** Standard round ear silhouettes nestled beneath hair locks.
+- **Elf / Fae:** Extended horizontal/angled pointed ears protruding through hair and hooded openings.
+- **Beastkin / Animal Traits:** Upright feline or lupine ears positioned on the crown of the skull (`y8`–`y18`), with distinct inner-ear contrast tones.
 
-## Repeatable evidence
+### D. Hairstyles & volume
+- **Short / Tapered:** Broken fringe, side tufts, and tapered nape.
+- **Swept / Spiky:** Asymmetric wave or spiked anime rogue tufts with directional volume.
+- **Twin Buns / Pigtails:** Lobed lateral silhouettes extending beyond the skull envelope.
+- **Long / Scalloped:** Straight or wavy locks draping over shoulders and behind the torso.
+- **Headdress Integration:** Hair geometry adapts beneath hats and hoods—bangs and side-locks peek out naturally from cowls, wimples, and wide brims.
 
-`node apps/web/scripts/verify-character-art-ui.mjs` exports 48 sampled appearances × four directions × seven states at 1×/3× (2,688 rendered cells per before/after family), captures actual Studio/Home and a real Phaser room with multiple residents, Village Cat, Triarch and Wisp at desktop/390px, and compares all 16 Studio view/pose combinations to shared source under reduced motion. It also checks idle animation and hidden/reduced-motion pauses. Unit coverage checks all 4,800 combinations across the four directions and seven states, fixed support soles and palette immutability. Additional composited-pixel checks verify visible hair/skin/irises, distinct hairstyles under headgear, stable skulls/equipment and closed eyes for blinking/resting.
+---
 
-For this pass set `REALM_CHARACTER_ART_OUTPUT=.impeccable/review/character-overhaul`. `--before` saves baseline source and captures before editing; `--before --sheets-only` re-exports that source without overwriting the in-world captures. The normal run also exports `poses.png` and, when baseline source exists, `comparison.png`. Baseline/captures, detailed sheets, browser results and the final verification report remain in that local ignored evidence directory. Earlier evidence remains under `.impeccable/review/character-art`.
+## 3. Modular layering architecture
 
-These are lead-run local browser fixtures. They do not establish live authenticated multiplayer behavior, physical-device rendering, Safari/assistive-technology coverage or independent art approval. The existing two opposing walk phases and grid movement cadence are retained; this pass does not add a skeletal animation system or change authoritative movement timing.
+Outfits are no longer restricted to only three rigid garments (jacket, scout, tech). The rendering pipeline accepts a flexible 8-tier modular layering stack:
+
+```
+[Layer 7: Forefront Accents] -> Buckled belts, baldrics, brooches, cowl scarves, holy pendants
+[Layer 6: Headgear]          -> Witch hats, cowls, helmets, crowns, wimples, animal hoods, glasses
+[Layer 5: Hair Front]        -> Bangs, side-locks, fringes
+[Layer 4: Facial Features]   -> Open eyes/mouth, hooded eye glint, or helmet visor slit
+[Layer 3: Head Base & Ears]  -> Skin tone skull, human ears, elf ears, or beastkin ears
+[Layer 2: Torso & Garments]  -> Tunic, robes, plate armor cuirass, maid apron, dress, utility shell
+[Layer 1: Body & Boots]      -> Limbs, boots, leggings, folded cuffs, hands with thumb notches
+[Layer 0: Back Attachments]  -> Cloaks, flowing capes, mantles, long back hair
+```
+
+### Archetype reference palette & garment sets
+- **Wizards & Witches:** Conical wide-brim hats with buckled bands, flowing dual-tone cloaks, high-collared tunics, and mystic robes (rich violet, midnight blue, emerald green).
+- **Knights & Paladins:** Steel breastplates, articulated pauldrons, greaves, buckled leather sword-belts, and optional heraldic mantles (polished silver, burnished brass, shadow obsidian).
+- **Rogues, Rangers & Assassins:** Asymmetric cowl hoods, face-covering scarves, fingerless gloves, dual-tone leather vests, and utility baldrics (forest green, slate charcoal, deep crimson).
+- **Clerics & Healers:** Hooded habits, wimples/veils with cross/star insignias, and gold-embroidered vestments (pure white with gold trim, deep mauve, celestial blue).
+- **Royals & Nobles:** Gemmed golden crowns, ermine-collared velvet mantles, ornate gold brooches, and regalia tunics (royal red, regal purple).
+- **Cozy & Themed:** Animal-eared fleece winter hoodies, maid dresses with ruffled lace headbands, and casual travelers' attire.
+
+---
+
+## 4. Animation and pose flexibility
+
+All archetypes adapt seamlessly across Realm's standard 7 animation states:
+
+- **Idle:** 1-pixel vertical chest motion. Open faces execute a natural blink every ~4 seconds; fully helmeted knights execute a 1-pixel visor reflection glint; resting beasts have a subtle ear twitch.
+- **Locomotion (Walk A/B):** Two opposing limb phases with grounded support foot. Back capes and mantles shift by 1–2 pixels to convey fluid movement.
+- **Sitting:** Bent horizontal thighs, vertical shins, hands supported on knees or lap. Capes and long robes drape naturally over the chair seat behind the character's feet.
+- **Supine Bed Rest:** Legs brought together, arms relaxed by sides, eyes closed (or visor darkened). Complete stillness.
+- **Reduced Motion:** When active, continuous breathing/blinking halts; characters render in crisp neutral poses.
+
+---
+
+## 5. Integration and extensible schema
+
+- **Extensibility:** The 5 skins × 5 hair colors × 4 hairstyles × 4 eyes × 3 outfits baseline serves as the starting core, but the schema allows arbitrary addition of new headgear IDs, cape IDs, ear trait IDs, and garment IDs without requiring database schema rewrites.
+- **Portraits and Previews:** The same procedural drawing routine automatically provides cropped avatar portraits, Character Studio previews, and in-game Phaser world sprites.
+- **Verification:** `node apps/web/scripts/verify-character-art-ui.mjs` verifies palette immutability, grounded sole alignment (`y63`), headgear clearance (`y2`), and proper layer occlusion across all combinations and directions.

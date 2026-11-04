@@ -161,7 +161,7 @@ input,textarea{caret-color:var(--realm-accent)}
 .conversation .message-actions-trigger{display:inline-flex;align-items:center;justify-content:center;flex:none;margin-left:auto;width:32px;min-height:32px;padding:4px;border:0;border-radius:6px;background:transparent;color:var(--realm-muted);cursor:pointer}
 .conversation .message-actions-trigger svg{width:18px;height:18px}
 .conversation .message-actions-trigger:hover,.conversation .message-actions-trigger[aria-expanded=true]{background:var(--realm-inset);color:var(--realm-text)}
-.conversation :is(.message-actions-trigger,.toolbar-btn,.menu-item):focus-visible{outline:2px solid var(--realm-accent)!important;outline-offset:2px!important}
+.conversation :is(.message-actions-trigger,.toolbar-btn,.menu-item,.composer-emoji-btn):focus-visible{outline:2px solid var(--realm-accent)!important;outline-offset:2px!important}
 .conversation .message:focus-within .message-hover-toolbar{display:flex!important}
 .conversation .message-more-popover .menu-item{min-height:40px!important;font-size:13px!important}
 .modal-dialog .realm-forward-dest-item{width:100%;text-align:left;font:inherit;color:var(--realm-text);border:1px solid transparent;background:transparent}
