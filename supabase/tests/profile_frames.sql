@@ -11,22 +11,31 @@ select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(real
 select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(realm_private.default_profile_style(),'{frame_id}','null')),'null ID rejected');
 select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(realm_private.default_profile_style(),'{frame_effects}','"true"')),'string effects rejected');
 select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(realm_private.default_profile_style(),'{avatar_shape}','"triangle"')),'invalid shape rejected');
+select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(realm_private.default_profile_style(),'{banner_shroud}','"unknown-shroud"')),'unknown shroud rejected');
+select pg_temp.frame_assert(not realm_private.valid_profile_style(jsonb_set(realm_private.default_profile_style(),'{banner_anthem}','"unknown-anthem"')),'unknown anthem rejected');
+select pg_temp.frame_assert(realm_private.valid_profile_style(jsonb_set(jsonb_set(realm_private.default_profile_style(),'{banner_shroud}','"crows"'),'{banner_anthem}','"midnight-vinyl"')),'shroud and anthem valid');
 select pg_temp.frame_assert(not realm_private.valid_profile_style(realm_private.default_profile_style()||'{"arbitrary":"style"}'),'unrelated keys rejected');
 select pg_temp.frame_assert(not has_function_privilege('anon','public.save_profile_card(jsonb,jsonb,integer,integer)','EXECUTE'),'anonymous saves denied');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
-select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(jsonb_set(public.get_profile_card()->'card','{style,frame_id}','"dark-realm"'),'{status}','"Keep my profile fields"'),0,0);
+select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(jsonb_set(jsonb_set(jsonb_set(public.get_profile_card()->'card','{style,frame_id}','"dark-realm"'),'{style,banner_shroud}','"crows"'),'{style,banner_anthem}','"midnight-vinyl"'),'{status}','"Keep my profile fields"'),0,0);
 select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'frame_id'='dark-realm','equipped and reload');
+select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'banner_shroud'='crows','shroud equipped and reload');
+select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'banner_anthem'='midnight-vinyl','anthem equipped and reload');
 select pg_temp.frame_assert(public.get_profile_card()->'card'->>'status'='Keep my profile fields','unrelated status retained');
 select pg_temp.frame_assert(public.get_identity()->'profile'->>'frame_id'='dark-realm','own identity frame projection');
 select pg_temp.frame_assert((select object_path is null and frame_id='dark-realm' from public.account_portraits where user_id=auth.uid()),'initials get frame without upload');
 select pg_temp.frame_denied($q$select public.save_profile_card(public.get_profile_card()->'profile',public.get_profile_card()->'card',0,0)$q$,'PT409');
 select pg_temp.frame_denied($q$select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(public.get_profile_card()->'card','{style,frame_id}','"invalid"'),1,1)$q$,'22023');
--- Legacy full-card saves preserve the equipped ID and effects preference.
-select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(public.get_profile_card()->'card','{style}',(public.get_profile_card()->'card'->'style')-'frame_id'-'frame_effects'),1,1);
+-- Legacy full-card saves preserve the equipped ID, effects, shroud, and anthem preference.
+select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(public.get_profile_card()->'card','{style}',(public.get_profile_card()->'card'->'style')-'frame_id'-'frame_effects'-'banner_shroud'-'banner_anthem'),1,1);
 select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'frame_id'='dark-realm','legacy save retains frame');
+select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'banner_shroud'='crows','legacy save retains shroud');
+select pg_temp.frame_assert(public.get_profile_card()->'card'->'style'->>'banner_anthem'='midnight-vinyl','legacy save retains anthem');
 select set_config('request.jwt.claim.sub','20000000-0000-4000-8000-000000000002',true);
 select pg_temp.frame_assert((select frame_id='dark-realm' from public.account_portraits where user_id='10000000-0000-4000-8000-000000000001'),'other member sees frame');
+select pg_temp.frame_assert(public.get_profile_card('10000000-0000-4000-8000-000000000001')->'card'->'style'->>'banner_shroud'='crows','other member sees shroud');
+select pg_temp.frame_assert(public.get_profile_card('10000000-0000-4000-8000-000000000001')->'card'->'style'->>'banner_anthem'='midnight-vinyl','other member sees anthem');
 select pg_temp.frame_denied($q$update public.profile_cards set style=jsonb_set(style,'{frame_id}','"none"') where user_id='10000000-0000-4000-8000-000000000001'$q$);
 -- Forged card owner IDs are ignored: the RPC always saves auth.uid().
 select public.save_profile_card(public.get_profile_card()->'profile',jsonb_set(jsonb_set(public.get_profile_card()->'card','{user_id}','"10000000-0000-4000-8000-000000000001"'),'{style,frame_id}','"cozy-friends"'),0,0);

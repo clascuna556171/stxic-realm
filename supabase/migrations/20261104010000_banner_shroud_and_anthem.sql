@@ -27,3 +27,4 @@ do $$declare definition text;begin
 end $$;
 
 revoke all on function realm_private.valid_profile_style(jsonb),realm_private.default_profile_style() from public,anon,authenticated;
+notify pgrst,'reload schema';
