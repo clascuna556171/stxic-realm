@@ -78,3 +78,38 @@ test('profile shroud entrance transitions are defined for all shroud cosmetics w
   assert.ok(reducedSlice.includes('.shroud-crow-swoop'), 'Reduced motion must hide crow swoop')
   assert.ok(reducedSlice.includes('.shroud-mist-veil'), 'Reduced motion must hide mist veil')
 })
+
+test('full-screen atmospheric shroud entrance transitions are defined with viewport overlay and reduced-motion safety', async () => {
+  const { readFileSync } = await import('node:fs')
+  const { resolve } = await import('node:path')
+  const css = readFileSync(resolve(import.meta.dirname, '../src/account-profile.css'), 'utf8')
+
+  // Fullscreen overlay container
+  assert.ok(css.includes('.fullscreen-shroud-overlay'), 'Must have .fullscreen-shroud-overlay rule')
+  assert.ok(css.includes('pointer-events: none'), 'Fullscreen overlay must be pointer-events: none')
+  assert.ok(css.includes('z-index: 9999'), 'Fullscreen overlay must have top z-index')
+
+  // Themed atmospheric backdrops
+  assert.ok(css.includes('.fullscreen-shroud-crows .fullscreen-shroud-backdrop'), 'Must have crows fullscreen backdrop')
+  assert.ok(css.includes('.fullscreen-shroud-embers .fullscreen-shroud-backdrop'), 'Must have embers fullscreen backdrop')
+  assert.ok(css.includes('.fullscreen-shroud-mist .fullscreen-shroud-backdrop'), 'Must have mist fullscreen backdrop')
+  assert.ok(css.includes('.fullscreen-shroud-stardust .fullscreen-shroud-backdrop'), 'Must have stardust fullscreen backdrop')
+
+  // Signature fullscreen elements
+  assert.ok(css.includes('.fullscreen-crow-flock'), 'Must have flock of crows')
+  assert.ok(css.includes('.fullscreen-feather'), 'Must have fullscreen cascading feathers')
+  assert.ok(css.includes('.fullscreen-embers-underglow'), 'Must have ember underglow')
+  assert.ok(css.includes('.fullscreen-ember'), 'Must have rising fullscreen ember particles')
+  assert.ok(css.includes('.fullscreen-mist-cloud'), 'Must have rolling fullscreen mist clouds')
+  assert.ok(css.includes('.fullscreen-mist-curtain-left'), 'Must have parting mist veil curtains')
+  assert.ok(css.includes('.fullscreen-shooting-star'), 'Must have shooting star streaks')
+  assert.ok(css.includes('.fullscreen-star'), 'Must have glistening diamond stars')
+
+  // Reduced motion safety
+  const reducedMotionIndex = css.lastIndexOf('@media (prefers-reduced-motion: reduce)')
+  const reducedSlice = css.slice(reducedMotionIndex)
+  assert.ok(reducedSlice.includes('.fullscreen-crows-scene'), 'Reduced motion must suppress fullscreen crows scene')
+  assert.ok(reducedSlice.includes('.fullscreen-embers-scene'), 'Reduced motion must suppress fullscreen embers scene')
+  assert.ok(reducedSlice.includes('.fullscreen-mist-scene'), 'Reduced motion must suppress fullscreen mist scene')
+  assert.ok(reducedSlice.includes('.fullscreen-stardust-scene'), 'Reduced motion must suppress fullscreen stardust scene')
+})

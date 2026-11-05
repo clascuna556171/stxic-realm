@@ -19,6 +19,7 @@ import {BadgeToastContainer} from './BadgeToast'
 import {getUserBadgeState, trackHallmarkMilestone, syncBadgesToServer, type UserBadgeState} from './badges'
 import {ProfileBannerPet} from './ProfileBannerPet'
 import {BannerShroud} from './BannerShroud'
+import {FullScreenShroud} from './FullScreenShroud'
 import {BannerAnthem} from './BannerAnthem'
 import {BANNER_SHROUDS, BANNER_ANTHEMS, getLocalBannerCosmetics, saveLocalBannerCosmetics} from './banner-cosmetics'
 import {storeCustomAnthem} from './banner-audio'
@@ -44,8 +45,8 @@ function ProfileStudio({user}:{user:string}){
  const badgeSavingRef=useRef(false)
  const [badgeSaving,setBadgeSaving]=useState(false),[badgeError,setBadgeError]=useState('')
  const [bannerPet,setBannerPet]=useState<EquippedPetSummary|null>(null)
- const [previewEntranceKey,setPreviewEntranceKey]=useState(0)
- const triggerEntrancePreview=()=>setPreviewEntranceKey(k=>k+1)
+ const [previewEntranceKey,setPreviewEntranceKey]=useState(0),[fullScreenActive,setFullScreenActive]=useState(!own)
+ const triggerEntrancePreview=()=>{setPreviewEntranceKey(k=>k+1);setFullScreenActive(true)}
  useEffect(()=>{
   let active=true
   setBannerPet(null)
@@ -131,7 +132,7 @@ function ProfileStudio({user}:{user:string}){
  function triggerBannerEdit(){setTab('images');bannerInputRef.current?.click()}
  const view=own?draft:snapshot?{profile:snapshot.profile,card:snapshot.card}:null
  const tabs=['identity','images','frames','pets','style','sections'] as const
- return <main className="workspace-page account-profile-page"><WorkspaceNav current="profile"/><header className="workspace-header"><strong>{own?'Your account profile':'Member profile'}</strong><nav className="admin-links"><a href="/?friends">Friends & messages</a><a href="/?privacy">Privacy & data</a></nav></header>
+ return <main className="workspace-page account-profile-page"><FullScreenShroud shroud={view?.card.style.banner_shroud} active={fullScreenActive} key={`fs-${user}:${previewEntranceKey}`} onComplete={()=>setFullScreenActive(false)}/><WorkspaceNav current="profile"/><header className="workspace-header"><strong>{own?'Your account profile':'Member profile'}</strong><nav className="admin-links"><a href="/?friends">Friends & messages</a><a href="/?privacy">Privacy & data</a></nav></header>
   <div className="account-profile-content"><div className="account-profile-intro"><div><h1>{own?'Your profile, your way.':'Meet your people.'}</h1><p>{own?'Make a profile that feels like you. Your world character has its own studio.':'Account photos and profiles are separate from world characters.'}</p></div>{own&&<a href="/?appearance">Customize your world character <Icon name="arrow"/></a>}</div>
    {error&&<p role="alert" className="error">{error}</p>}{loadError&&<p role="alert" className="error">{loadError}</p>}{notice&&<p role="status" className="profile-notice">{notice}</p>}
    {own&&snapshot&&<div className="profile-mobile-switch" aria-label="Profile editor view"><button type="button" aria-pressed={phonePanel==='edit'} onClick={()=>setPhonePanel('edit')}>Edit profile</button><button type="button" aria-pressed={phonePanel==='preview'} onClick={()=>setPhonePanel('preview')}>Preview profile</button></div>}
@@ -155,37 +156,78 @@ function ProfileStudio({user}:{user:string}){
        <h3>Account photos</h3><p>Upload your own photos and banner. Your character’s look stays in the character studio.</p><p className="muted">PNG, JPEG, WebP, GIF or AVIF · up to 8 MiB each. Static images are processed before upload. GIF animation is preserved within the server budget.</p>
        <div className="profile-custom-media-grid">
         <div className="profile-media-action-tile">
-         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="avatar"/></div><div><strong>Profile photo</strong><small>{draft.card.avatar_id?'Custom avatar photo set':'Initials placeholder'}</small></div></div>
+         <div className="profile-media-tile-label">
+          <div className={`profile-media-tile-icon ${draft.card.avatar_id && urls[draft.card.avatar_id] ? 'has-thumbnail' : ''}`}>
+           {draft.card.avatar_id && urls[draft.card.avatar_id] ? <img src={urls[draft.card.avatar_id]} alt="Avatar preview" /> : <Icon name="avatar"/>}
+          </div>
+          <div className="profile-media-tile-info">
+           <strong>Profile photo</strong>
+           <small>{draft.card.avatar_id ? 'Custom avatar photo set' : 'Initials placeholder'}</small>
+          </div>
+         </div>
          <div className="profile-media-tile-buttons">
           <label className="profile-icon-button primary"><Icon name="pencil"/><span>Edit photo</span><input ref={avatarInputRef} aria-label="Upload account photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'avatar');e.target.value=''}}/></label>
-          {draft.card.avatar_id&&<button type="button" className="profile-icon-button" onClick={()=>card({avatar_id:null})}>Remove</button>}
+          {draft.card.avatar_id && <button type="button" className="profile-icon-button remove-btn" onClick={()=>card({avatar_id:null})}>Remove</button>}
          </div>
         </div>
         <div className="profile-media-action-tile">
-         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="sparkle"/></div><div><strong>Profile banner</strong><small>{draft.card.banner_id?'Custom banner set':'Default banner'}</small></div></div>
+         <div className="profile-media-tile-label">
+          <div className={`profile-media-tile-icon ${draft.card.banner_id && urls[draft.card.banner_id] ? 'has-thumbnail' : ''}`}>
+           {draft.card.banner_id && urls[draft.card.banner_id] ? <img src={urls[draft.card.banner_id]} alt="Banner preview" /> : <Icon name="sparkle"/>}
+          </div>
+          <div className="profile-media-tile-info">
+           <strong>Profile banner</strong>
+           <small>{draft.card.banner_id ? 'Custom banner set' : 'Default banner'}</small>
+          </div>
+         </div>
          <div className="profile-media-tile-buttons">
           <label className="profile-icon-button primary"><Icon name="pencil"/><span>Edit banner</span><input ref={bannerInputRef} aria-label="Upload banner" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'banner');e.target.value=''}}/></label>
-          {draft.card.banner_id&&<button type="button" className="profile-icon-button" onClick={()=>card({banner_id:null})}>Remove</button>}
+          {draft.card.banner_id && <button type="button" className="profile-icon-button remove-btn" onClick={()=>card({banner_id:null})}>Remove</button>}
          </div>
         </div>
-        <div className="profile-media-action-tile">
-         <div className="profile-media-tile-label"><div className="profile-media-tile-icon"><Icon name="plus"/></div><div><strong>Gallery photos</strong><small>{draft.card.gallery.length}/6 photos</small></div></div>
-         <div className="profile-media-tile-buttons">
-          <label className={`profile-icon-button primary ${draft.card.gallery.length>=6?'disabled':''}`}><Icon name="plus"/><span>Add photo</span><input ref={photoInputRef} aria-label="Upload gallery photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'photo');e.target.value=''}} disabled={draft.card.gallery.length>=6}/></label>
+        <div className="profile-media-action-tile has-gallery-panel">
+         <div className="profile-media-action-tile-top">
+          <div className="profile-media-tile-label">
+           <div className="profile-media-tile-icon"><Icon name="plus"/></div>
+           <div className="profile-media-tile-info">
+            <strong>Gallery photos</strong>
+            <small>{draft.card.gallery.length}/6 photos</small>
+           </div>
+          </div>
+          <div className="profile-media-tile-buttons">
+           <label className={`profile-icon-button primary ${draft.card.gallery.length>=6?'disabled':''}`}><Icon name="plus"/><span>Add photo</span><input ref={photoInputRef} aria-label="Upload gallery photo" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" onChange={e=>{void upload(e.target.files?.[0],'photo');e.target.value=''}} disabled={draft.card.gallery.length>=6}/></label>
+          </div>
          </div>
+         {draft.card.gallery.length > 0 && (
+          <div className="profile-gallery-manage-strip" aria-label="Uploaded gallery photos">
+           {draft.card.gallery.map((id, index) => (
+            <div key={id} className="profile-gallery-manage-item">
+             {urls[id] ? <img src={urls[id]} alt={`Gallery photo ${index + 1}`} /> : <div className="profile-gallery-placeholder" />}
+             <button
+              type="button"
+              className="profile-gallery-remove-btn"
+              aria-label={`Remove photo ${index + 1}`}
+              title="Remove photo"
+              onClick={() => card({ gallery: draft.card.gallery.filter(gId => gId !== id) })}
+             >
+              <Icon name="close" />
+             </button>
+            </div>
+           ))}
+          </div>
+         )}
         </div>
        </div>
        {retryUpload&&<p className="muted">The last upload can be retried while this page stays open. <button type="button" disabled={busy||!!uploading||(retryUpload.kind==='photo'&&draft.card.gallery.length>=6)} onClick={()=>void retryImage()}>Retry image upload</button></p>}
-       <div className="social-actions"><button type="button" onClick={()=>card({avatar_id:null})}>Remove account photo</button><button type="button" onClick={()=>card({banner_id:null})}>Remove banner</button></div>
        <h3>Crop & framing</h3>{(['avatar_x','avatar_y','banner_x','banner_y'] as const).map(key=><label key={key}>{({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]}<input type="range" aria-label={({avatar_x:'Photo horizontal focus',avatar_y:'Photo vertical focus',banner_x:'Banner horizontal focus',banner_y:'Banner vertical focus'})[key]} min={0} max={100} value={draft.card.style[key]} onChange={e=>style({[key]:Number(e.target.value)})}/></label>)}
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
         <h3>Atmosphere & Vinyl Anthem</h3>
         <label>Banner atmospheric shroud
-         <select aria-label="Banner atmospheric shroud" value={draft.card.style.banner_shroud||'none'} onChange={e=>{style({banner_shroud:e.target.value as BannerShroudId});setPreviewEntranceKey(k=>k+1)}}>
+         <select aria-label="Banner atmospheric shroud" value={draft.card.style.banner_shroud||'none'} onChange={e=>{style({banner_shroud:e.target.value as BannerShroudId});setPreviewEntranceKey(k=>k+1);setFullScreenActive(true)}}>
           {BANNER_SHROUDS.map(s=><option key={s.id} value={s.id}>{s.name} — {s.description}</option>)}
          </select>
         </label>
-        {draft.card.style.banner_shroud&&draft.card.style.banner_shroud!=='none'&&<div className="profile-entrance-preview-wrap"><button type="button" className="profile-preview-reveal-btn" onClick={triggerEntrancePreview} title="Preview how visitors experience your profile entrance"><Icon name="sparkle"/><span>Preview Entrance Reveal</span></button></div>}
+        {draft.card.style.banner_shroud&&draft.card.style.banner_shroud!=='none'&&<div className="profile-entrance-preview-wrap"><button type="button" className="profile-preview-reveal-btn" onClick={triggerEntrancePreview} title="Preview full-screen atmospheric entrance visitors experience"><Icon name="sparkle"/><span>✨ Test Full-Screen Entrance</span></button></div>}
         <label>Banner vinyl anthem
          <select aria-label="Banner vinyl anthem" value={draft.card.style.banner_anthem||'none'} onChange={e=>style({banner_anthem:e.target.value as BannerAnthemId})}>
           {BANNER_ANTHEMS.map(a=><option key={a.id} value={a.id}>{a.name} — {a.subtitle}</option>)}
@@ -246,7 +288,7 @@ function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onO
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
 
    <ProfileBannerPet pet={bannerPet}/>
-   <BannerAnthem anthem={theme.banner_anthem} userId={profile.id}/>
+   <BannerAnthem anthem={theme.banner_anthem} userId={profile.id} autoPlay={isEntrance}/>
    {onEditBanner&&<button type="button" className="profile-banner-pencil-btn" aria-label="Edit banner" title="Edit banner" onClick={onEditBanner}><Icon name="pencil"/><span>Edit banner</span></button>}
   </div>
   <div className="account-profile-card-body">

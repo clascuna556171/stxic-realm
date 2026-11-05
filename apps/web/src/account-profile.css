@@ -37,21 +37,44 @@
 .profile-banner-pencil-btn{position:absolute;top:12px;right:14px;display:inline-flex!important;align-items:center;gap:6px;padding:6px 12px!important;min-height:30px!important;border-radius:6px!important;background:rgba(22,25,31,.82)!important;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.18)!important;color:#fff!important;font-size:11px!important;font-weight:500;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4);transition:transform .15s ease,background .15s ease;z-index:5}
 .profile-banner-pencil-btn:hover{background:#16191f!important;border-color:var(--realm-accent)!important;transform:translateY(-1px)}
 .profile-banner-pencil-btn svg{width:13px;height:13px}
-.profile-custom-media-grid{display:grid;gap:12px;margin-bottom:8px}
-.profile-media-action-tile{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;background:var(--realm-bg);border:1px solid var(--realm-line);border-radius:8px}
-.profile-media-tile-label{display:flex;align-items:center;gap:12px}
-.profile-media-tile-icon{width:32px;height:32px;border-radius:6px;background:var(--realm-surface);display:grid;place-items:center;color:var(--realm-accent)}
-.profile-media-tile-icon svg{width:16px;height:16px}
-.profile-media-tile-label strong{display:block;font-size:12px;color:var(--realm-text)}
-.profile-media-tile-label small{display:block;font-size:10px;color:var(--realm-muted)}
-.profile-media-tile-buttons{display:flex;align-items:center;gap:8px;position:relative}
-.profile-icon-button{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:11px;font-weight:500;border-radius:5px;cursor:pointer;background:var(--realm-surface);border:1px solid var(--realm-line);color:var(--realm-text);transition:background .15s ease,color .15s ease;position:relative;overflow:hidden}
-.profile-icon-button:hover{background:var(--realm-raised);color:var(--realm-text)}
-.profile-icon-button.primary{background:var(--realm-action-btn-bg,var(--realm-save-btn-bg,#23a55a));color:var(--realm-action-btn-text,var(--realm-save-btn-text,#ffffff));border:0}
-.profile-icon-button.primary:hover{background:var(--realm-action-btn-hover,var(--realm-save-btn-hover,#1f8b4c));opacity:1}
-.profile-icon-button.disabled{opacity:.5;cursor:not-allowed}
-.profile-icon-button svg{width:13px;height:13px}
-.profile-icon-button input[type=file]{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer}
+/* Custom Media Tiles (Photos, Banner, Gallery) */
+.profile-custom-media-grid{display:grid;gap:12px;margin-bottom:16px}
+.profile-media-action-tile{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.09);border-radius:10px;transition:background .15s ease,border-color .15s ease}
+.profile-media-action-tile:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.15)}
+.profile-media-action-tile.has-gallery-panel{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+.profile-media-action-tile-top{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%}
+.profile-media-tile-label{display:flex;align-items:center;gap:14px;min-width:0}
+.profile-media-tile-icon{width:40px;height:40px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);display:grid;place-items:center;color:var(--realm-accent,#dedee6);flex-shrink:0;overflow:hidden}
+.profile-media-tile-icon.has-thumbnail{background:#14151a;border-color:rgba(255,255,255,.16)}
+.profile-media-tile-icon.has-thumbnail img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-media-tile-icon svg{width:17px;height:17px}
+.profile-media-tile-info{min-width:0}
+.profile-media-tile-info strong{display:block;font-size:13px;font-weight:600;color:#f1f2f6;margin-bottom:2px}
+.profile-media-tile-info small{display:block;font-size:11px;color:var(--realm-muted,#9a9ba8)}
+.profile-media-tile-buttons{display:flex;align-items:center;gap:8px;position:relative;flex-shrink:0}
+
+/* Explicit override of .account-profile-page label grid inheritance */
+.account-profile-page label.profile-icon-button,
+.account-profile-page button.profile-icon-button{display:inline-flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:7px!important;padding:0 14px!important;min-height:34px!important;height:34px!important;line-height:1!important;font-size:12px!important;font-weight:500!important;border-radius:6px!important;cursor:pointer!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.05)!important;color:#f1f2f6!important;box-sizing:border-box!important;position:relative!important;overflow:hidden!important;margin:0!important;transition:all .15s ease!important;user-select:none}
+.account-profile-page label.profile-icon-button svg,
+.account-profile-page button.profile-icon-button svg{width:13px!important;height:13px!important;flex-shrink:0!important;display:block!important;margin:0!important}
+.account-profile-page label.profile-icon-button:hover:not(.disabled),
+.account-profile-page button.profile-icon-button:hover:not(:disabled){background:rgba(255,255,255,.1)!important;border-color:rgba(255,255,255,.22)!important;color:#fff!important;transform:translateY(-1px)}
+.account-profile-page label.profile-icon-button.primary{background:#252832!important;border-color:rgba(255,255,255,.2)!important;color:#fff!important;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.account-profile-page label.profile-icon-button.primary:hover:not(.disabled){background:#303542!important;border-color:rgba(255,255,255,.35)!important;color:#fff!important;box-shadow:0 2px 6px rgba(0,0,0,.45)}
+.account-profile-page button.profile-icon-button.remove-btn{background:transparent!important;border-color:rgba(255,255,255,.1)!important;color:#a0a1ae!important}
+.account-profile-page button.profile-icon-button.remove-btn:hover:not(:disabled){background:rgba(255,69,58,.12)!important;border-color:rgba(255,69,58,.35)!important;color:#ff5c5c!important}
+.account-profile-page .profile-icon-button.disabled{opacity:.45!important;cursor:not-allowed!important;pointer-events:none!important;transform:none!important}
+.account-profile-page .profile-icon-button input[type=file]{position:absolute;left:0;top:0;width:100%;height:100%;opacity:0;cursor:pointer}
+
+/* Gallery Management Strip */
+.profile-gallery-manage-strip{display:flex;flex-wrap:wrap;gap:10px;padding:10px 12px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:8px}
+.profile-gallery-manage-item{position:relative;width:58px;height:58px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:#14151a;flex-shrink:0}
+.profile-gallery-manage-item img{width:100%;height:100%;object-fit:cover;display:block}
+.profile-gallery-placeholder{width:100%;height:100%;background:#20222a}
+.profile-gallery-remove-btn{position:absolute;top:3px;right:3px;width:18px!important;height:18px!important;min-height:18px!important;padding:0!important;border-radius:50%!important;background:rgba(0,0,0,.8)!important;border:1px solid rgba(255,255,255,.22)!important;color:#fff!important;display:grid!important;place-items:center!important;cursor:pointer;transition:all .15s ease}
+.profile-gallery-remove-btn:hover{background:#ff453a!important;border-color:#ff453a!important;transform:scale(1.1)}
+.profile-gallery-remove-btn svg{width:10px!important;height:10px!important}
 @media(max-width:740px){.account-profile-avatar-wrap{width:104px;height:104px}}
 
 /* Pointer depth (card-tilt.ts). The card leans toward the pointer, the banner drifts back and the photo/frame lifts forward. Touch, coarse pointers and reduced motion never set data-tilt; at rest no transform is applied. */
@@ -561,7 +584,421 @@
 .profile-preview-reveal-btn:active {
   transform: translateY(0);
 }
+
+/* =========================================================
+   FULL-SCREEN ATMOSPHERIC SHROUD ENTRANCE TRANSITIONS
+   ========================================================= */
+.fullscreen-shroud-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  animation: fullscreen-shroud-fade 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fullscreen-shroud-fade {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.fullscreen-shroud-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 1. Full-Screen Crows & Feathers */
+.fullscreen-shroud-crows .fullscreen-shroud-backdrop {
+  background: radial-gradient(circle at 50% 50%, rgba(13, 16, 23, 0.28) 0%, rgba(5, 7, 10, 0.65) 100%);
+}
+.fullscreen-crows-scene {
+  position: absolute;
+  inset: 0;
+}
+.fullscreen-crow-flock {
+  position: absolute;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
+}
+.fullscreen-crow-svg {
+  width: 100%;
+  height: 100%;
+}
+.flock-bird-1 {
+  width: 38px;
+  height: 19px;
+  animation: crow-flight-diag-1 1.25s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+.flock-bird-2 {
+  width: 28px;
+  height: 14px;
+  animation: crow-flight-diag-2 1.3s cubic-bezier(0.22, 0.78, 0.28, 1) 0.08s forwards;
+}
+.flock-bird-3 {
+  width: 44px;
+  height: 22px;
+  animation: crow-flight-diag-3 1.2s cubic-bezier(0.18, 0.82, 0.32, 1) 0.04s forwards;
+}
+.flock-bird-4 {
+  width: 24px;
+  height: 12px;
+  animation: crow-flight-diag-4 1.35s cubic-bezier(0.25, 0.75, 0.35, 1) 0.15s forwards;
+}
+.flock-bird-5 {
+  width: 32px;
+  height: 16px;
+  animation: crow-flight-diag-5 1.28s cubic-bezier(0.2, 0.8, 0.3, 1) 0.12s forwards;
+}
+.flock-bird-6 {
+  width: 22px;
+  height: 11px;
+  animation: crow-flight-diag-6 1.4s cubic-bezier(0.24, 0.76, 0.34, 1) 0.2s forwards;
+}
+
+@keyframes crow-flight-diag-1 {
+  0% { transform: translate(-10vw, 85vh) scale(0.8) rotate(-18deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(110vw, 15vh) scale(1.1) rotate(-8deg); opacity: 0; }
+}
+@keyframes crow-flight-diag-2 {
+  0% { transform: translate(-8vw, 92vh) scale(0.65) rotate(-22deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(108vw, 25vh) scale(0.9) rotate(-12deg); opacity: 0; }
+}
+@keyframes crow-flight-diag-3 {
+  0% { transform: translate(-12vw, 75vh) scale(0.95) rotate(-15deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(112vw, 8vh) scale(1.25) rotate(-5deg); opacity: 0; }
+}
+@keyframes crow-flight-diag-4 {
+  0% { transform: translate(-6vw, 96vh) scale(0.55) rotate(-24deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(105vw, 32vh) scale(0.8) rotate(-15deg); opacity: 0; }
+}
+@keyframes crow-flight-diag-5 {
+  0% { transform: translate(-10vw, 80vh) scale(0.75) rotate(-19deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(110vw, 20vh) scale(1.05) rotate(-9deg); opacity: 0; }
+}
+@keyframes crow-flight-diag-6 {
+  0% { transform: translate(-5vw, 90vh) scale(0.5) rotate(-25deg); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.95; }
+  100% { transform: translate(104vw, 38vh) scale(0.75) rotate(-14deg); opacity: 0; }
+}
+
+.fullscreen-feather {
+  position: absolute;
+  width: 9px;
+  height: 22px;
+  background: radial-gradient(ellipse at 50% 40%, #15181f 0%, #08090c 75%, transparent 100%);
+  border-radius: 50% 50% 40% 40% / 70% 70% 30% 30%;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  animation: fullscreen-feather-fall ease-in-out forwards;
+}
+
+@keyframes fullscreen-feather-fall {
+  0% {
+    transform: translateY(-5vh) rotate(0deg) translateX(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(45vh) rotate(160deg) translateX(25px);
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(95vh) rotate(320deg) translateX(-18px);
+    opacity: 0;
+  }
+}
+
+/* 2. Full-Screen Crimson Embers */
+.fullscreen-shroud-embers .fullscreen-shroud-backdrop {
+  background: radial-gradient(circle at 50% 40%, rgba(20, 6, 6, 0.2) 0%, rgba(8, 2, 2, 0.6) 100%),
+              linear-gradient(to top, rgba(255, 60, 20, 0.22) 0%, rgba(220, 38, 18, 0.06) 35%, transparent 65%);
+}
+.fullscreen-embers-scene {
+  position: absolute;
+  inset: 0;
+}
+.fullscreen-embers-underglow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 38vh;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255, 90, 30, 0.32) 0%, rgba(200, 30, 10, 0.1) 50%, transparent 80%);
+  animation: fullscreen-ember-underglow-pulse 1.35s ease-out forwards;
+}
+@keyframes fullscreen-ember-underglow-pulse {
+  0% { opacity: 0; transform: scaleY(0.7); }
+  35% { opacity: 1; transform: scaleY(1.1); }
+  100% { opacity: 0; transform: scaleY(0.9); }
+}
+.fullscreen-embers-burst-flare {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #ff7b00, #ff2a00, #ffba08, transparent);
+  box-shadow: 0 0 24px #ff4500, 0 0 48px #ff7b00;
+  animation: fullscreen-ember-seam-flash 0.8s ease-out forwards;
+}
+@keyframes fullscreen-ember-seam-flash {
+  0% { opacity: 0; transform: scaleX(0.2); }
+  25% { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1.2); }
+}
+
+.fullscreen-ember {
+  position: absolute;
+  border-radius: 50%;
+  animation: fullscreen-ember-rise ease-out forwards;
+}
+.ember-type-1 {
+  background: #fff3b0;
+  box-shadow: 0 0 6px #ff7b00, 0 0 14px #ff2a00;
+}
+.ember-type-2 {
+  background: #ffaa44;
+  box-shadow: 0 0 8px #ff4500, 0 0 18px #d90429;
+}
+.ember-type-3 {
+  background: #ff5400;
+  box-shadow: 0 0 10px #ff0054, 0 0 20px #9e0059;
+}
+.ember-type-4 {
+  background: #ffe3a8;
+  box-shadow: 0 0 5px #ff9e00, 0 0 12px #ff4800;
+}
+
+@keyframes fullscreen-ember-rise {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15vh) translateX(6px) scale(1.15);
+  }
+  50% {
+    transform: translateY(-55vh) translateX(-14px) scale(1);
+    opacity: 0.95;
+  }
+  85% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-105vh) translateX(18px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* 3. Full-Screen Midnight Mist */
+.fullscreen-shroud-mist .fullscreen-shroud-backdrop {
+  background: radial-gradient(circle at 50% 50%, rgba(16, 22, 38, 0.3) 0%, rgba(7, 9, 18, 0.72) 100%);
+}
+.fullscreen-mist-scene {
+  position: absolute;
+  inset: 0;
+}
+.fullscreen-mist-cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(48px);
+  pointer-events: none;
+}
+.fullscreen-mist-cloud.cloud-1 {
+  width: 75vw;
+  height: 55vh;
+  top: 15%;
+  left: -20%;
+  background: radial-gradient(circle, rgba(90, 130, 190, 0.24) 0%, rgba(60, 90, 140, 0.08) 55%, transparent 75%);
+  animation: fullscreen-mist-sweep-left 1.35s ease-out forwards;
+}
+.fullscreen-mist-cloud.cloud-2 {
+  width: 80vw;
+  height: 60vh;
+  top: 30%;
+  right: -25%;
+  background: radial-gradient(circle, rgba(110, 150, 210, 0.22) 0%, rgba(70, 100, 160, 0.06) 60%, transparent 80%);
+  animation: fullscreen-mist-sweep-right 1.35s ease-out forwards;
+}
+.fullscreen-mist-cloud.cloud-3 {
+  width: 90vw;
+  height: 40vh;
+  bottom: -10%;
+  left: 5%;
+  background: radial-gradient(circle, rgba(130, 170, 225, 0.2) 0%, rgba(80, 110, 170, 0.05) 50%, transparent 70%);
+  animation: fullscreen-mist-ground-surge 1.35s ease-out forwards;
+}
+
+@keyframes fullscreen-mist-sweep-left {
+  0% { transform: translateX(-15vw) scale(0.85); opacity: 0; }
+  30% { opacity: 0.95; }
+  100% { transform: translateX(20vw) scale(1.15); opacity: 0; }
+}
+@keyframes fullscreen-mist-sweep-right {
+  0% { transform: translateX(15vw) scale(0.85); opacity: 0; }
+  30% { opacity: 0.95; }
+  100% { transform: translateX(-20vw) scale(1.15); opacity: 0; }
+}
+@keyframes fullscreen-mist-ground-surge {
+  0% { transform: translateY(10vh); opacity: 0; }
+  35% { opacity: 0.85; transform: translateY(-5vh); }
+  100% { opacity: 0; transform: translateY(-15vh); }
+}
+
+.fullscreen-mist-curtain-left,
+.fullscreen-mist-curtain-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 55vw;
+  filter: blur(36px);
+  pointer-events: none;
+}
+.fullscreen-mist-curtain-left {
+  left: 0;
+  background: linear-gradient(90deg, rgba(15, 20, 35, 0.6) 0%, rgba(30, 45, 75, 0.3) 70%, transparent 100%);
+  animation: fullscreen-mist-curtain-part-left 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.fullscreen-mist-curtain-right {
+  right: 0;
+  background: linear-gradient(270deg, rgba(15, 20, 35, 0.6) 0%, rgba(30, 45, 75, 0.3) 70%, transparent 100%);
+  animation: fullscreen-mist-curtain-part-right 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fullscreen-mist-curtain-part-left {
+  0% { transform: translateX(0); opacity: 0.85; }
+  30% { transform: translateX(-5vw); opacity: 0.8; }
+  100% { transform: translateX(-55vw); opacity: 0; }
+}
+@keyframes fullscreen-mist-curtain-part-right {
+  0% { transform: translateX(0); opacity: 0.85; }
+  30% { transform: translateX(5vw); opacity: 0.8; }
+  100% { transform: translateX(55vw); opacity: 0; }
+}
+
+/* 4. Full-Screen Stardust Shimmer */
+.fullscreen-shroud-stardust .fullscreen-shroud-backdrop {
+  background: radial-gradient(circle at 50% 50%, rgba(26, 14, 46, 0.32) 0%, rgba(8, 4, 18, 0.7) 100%),
+              radial-gradient(ellipse at 85% 15%, rgba(168, 85, 247, 0.18) 0%, transparent 60%);
+}
+.fullscreen-stardust-scene {
+  position: absolute;
+  inset: 0;
+}
+.fullscreen-shooting-star {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(-45deg, rgba(255, 255, 255, 1), rgba(192, 132, 252, 0.8), transparent);
+  border-radius: 999px;
+  filter: drop-shadow(0 0 8px rgba(216, 180, 254, 0.9));
+  transform: rotate(-35deg);
+}
+.star-streak-1 {
+  top: 18%;
+  left: 20%;
+  width: 140px;
+  animation: fullscreen-shooting-star-dash-1 1.0s cubic-bezier(0.1, 0.8, 0.2, 1) 0.05s forwards;
+}
+.star-streak-2 {
+  top: 35%;
+  left: 55%;
+  width: 190px;
+  animation: fullscreen-shooting-star-dash-2 1.1s cubic-bezier(0.1, 0.8, 0.2, 1) 0.2s forwards;
+}
+.star-streak-3 {
+  top: 8%;
+  left: 70%;
+  width: 110px;
+  animation: fullscreen-shooting-star-dash-3 0.95s cubic-bezier(0.1, 0.8, 0.2, 1) 0.35s forwards;
+}
+
+@keyframes fullscreen-shooting-star-dash-1 {
+  0% { transform: translate(-30vw, -10vh) rotate(-35deg) scaleX(0); opacity: 0; }
+  25% { opacity: 1; transform: translate(0, 0) rotate(-35deg) scaleX(1); }
+  100% { transform: translate(45vw, 25vh) rotate(-35deg) scaleX(0.1); opacity: 0; }
+}
+@keyframes fullscreen-shooting-star-dash-2 {
+  0% { transform: translate(-25vw, -8vh) rotate(-35deg) scaleX(0); opacity: 0; }
+  25% { opacity: 1; transform: translate(0, 0) rotate(-35deg) scaleX(1); }
+  100% { transform: translate(40vw, 20vh) rotate(-35deg) scaleX(0.1); opacity: 0; }
+}
+@keyframes fullscreen-shooting-star-dash-3 {
+  0% { transform: translate(-20vw, -6vh) rotate(-35deg) scaleX(0); opacity: 0; }
+  25% { opacity: 1; transform: translate(0, 0) rotate(-35deg) scaleX(1); }
+  100% { transform: translate(35vw, 18vh) rotate(-35deg) scaleX(0.1); opacity: 0; }
+}
+
+.fullscreen-star {
+  position: absolute;
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  background: #ffffff;
+  animation: fullscreen-star-glisten ease-in-out forwards;
+}
+.star-size-1 {
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 10px #e9d5ff, 0 0 20px #a855f7;
+}
+.star-size-2 {
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 0 14px #ffffff, 0 0 28px #c084fc;
+}
+.star-size-3 {
+  width: 4px;
+  height: 4px;
+  box-shadow: 0 0 6px #f3e8ff;
+}
+
+@keyframes fullscreen-star-glisten {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  35% { transform: scale(1.3) rotate(45deg); opacity: 1; }
+  70% { transform: scale(0.9) rotate(90deg); opacity: 0.9; }
+  100% { transform: scale(0) rotate(135deg); opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .fullscreen-shroud-overlay {
+    animation: fullscreen-shroud-reduced 0.15s ease-out forwards !important;
+  }
+  @keyframes fullscreen-shroud-reduced {
+    0% { opacity: 0; }
+    50% { opacity: 0.35; }
+    100% { opacity: 0; }
+  }
+  .fullscreen-crows-scene,
+  .fullscreen-embers-scene,
+  .fullscreen-mist-scene,
+  .fullscreen-stardust-scene {
+    display: none !important;
+  }
   .banner-shroud-layer { display: none !important; }
   .account-profile-card.shroud-entering { animation: none !important; transform: none !important; }
   .account-profile-card.shroud-crows.shroud-entering,

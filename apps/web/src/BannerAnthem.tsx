@@ -8,9 +8,10 @@ export type BannerAnthemProps = {
   anthem?: BannerAnthemId | string | null
   userId: string
   compact?: boolean
+  autoPlay?: boolean
 }
 
-export const BannerAnthem = memo(function BannerAnthem({ anthem, userId, compact = false }: BannerAnthemProps) {
+export const BannerAnthem = memo(function BannerAnthem({ anthem, userId, compact = false, autoPlay = false }: BannerAnthemProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [status, setStatus] = useState<string>('')
   const audioCtxRef = useRef<AudioContext | null>(null)
@@ -121,6 +122,13 @@ export const BannerAnthem = memo(function BannerAnthem({ anthem, userId, compact
       void startAudio()
     }
   }
+
+  // Auto-play anthem during entrance transition
+  useEffect(() => {
+    if (autoPlay && anthem && anthem !== 'none' && !isPlaying) {
+      void startAudio()
+    }
+  }, [autoPlay, anthem, startAudio])
 
   // Pause on hidden tabs
   useEffect(() => {
