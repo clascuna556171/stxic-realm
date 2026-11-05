@@ -1,16 +1,58 @@
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import type { BannerShroudId } from './profile-model'
 
 export type BannerShroudProps = {
   shroud?: BannerShroudId | string | null
+  isEntrance?: boolean
+  entranceKey?: string | number
 }
 
-export const BannerShroud = memo(function BannerShroud({ shroud }: BannerShroudProps) {
+export const BannerShroud = memo(function BannerShroud({
+  shroud,
+  isEntrance = false,
+  entranceKey,
+}: BannerShroudProps) {
+  const [entering, setEntering] = useState(isEntrance)
+
+  useEffect(() => {
+    if (!isEntrance) {
+      setEntering(false)
+      return
+    }
+    setEntering(true)
+    const timer = setTimeout(() => {
+      setEntering(false)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [isEntrance, entranceKey, shroud])
+
   if (!shroud || shroud === 'none') return null
 
   if (shroud === 'crows') {
     return (
-      <div className="banner-shroud-layer banner-shroud-crows" aria-hidden="true">
+      <div className={`banner-shroud-layer banner-shroud-crows ${entering ? 'is-entrance' : ''}`} aria-hidden="true">
+        {/* Entrance swoop flock */}
+        {entering && (
+          <div className="shroud-crow-swoop" aria-hidden="true">
+            <svg viewBox="0 0 24 12" className="crow-svg">
+              <path d="M0,7 Q6,0 12,5 Q18,0 24,7 Q16,3 12,8 Q8,3 0,7 Z" fill="#08090c" />
+            </svg>
+          </div>
+        )}
+
+        {/* Entrance feather flurry */}
+        {entering && Array.from({ length: 8 }).map((_, i) => (
+          <div
+            key={`burst-${i}`}
+            className="shroud-feather shroud-feather-burst"
+            style={{
+              left: `${8 + ((i * 13 + 3) % 84)}%`,
+              top: `${-15 + (i % 3) * 5}%`,
+              animationDelay: `${(i * 0.05).toFixed(2)}s`,
+            }}
+          />
+        ))}
+
         {/* Distant gliding crows in the banner sky */}
         <div className="shroud-crow crow-1">
           <svg viewBox="0 0 24 12" className="crow-svg">
@@ -47,8 +89,22 @@ export const BannerShroud = memo(function BannerShroud({ shroud }: BannerShroudP
 
   if (shroud === 'embers') {
     return (
-      <div className="banner-shroud-layer banner-shroud-embers" aria-hidden="true">
+      <div className={`banner-shroud-layer banner-shroud-embers ${entering ? 'is-entrance' : ''}`} aria-hidden="true">
         <div className="shroud-ember-underglow" />
+
+        {/* Entrance ember burst flurry */}
+        {entering && Array.from({ length: 10 }).map((_, i) => (
+          <span
+            key={`burst-${i}`}
+            className={`shroud-ember ember-${(i % 4) + 1} shroud-ember-burst`}
+            style={{
+              left: `${6 + ((i * 9.8 + 4) % 88)}%`,
+              bottom: '-6px',
+              animationDelay: `${(i * 0.05).toFixed(2)}s`,
+            }}
+          />
+        ))}
+
         {/* Rising embers from the card base */}
         {Array.from({ length: 18 }).map((_, i) => (
           <span
@@ -81,7 +137,14 @@ export const BannerShroud = memo(function BannerShroud({ shroud }: BannerShroudP
 
   if (shroud === 'mist') {
     return (
-      <div className="banner-shroud-layer banner-shroud-mist" aria-hidden="true">
+      <div className={`banner-shroud-layer banner-shroud-mist ${entering ? 'is-entrance' : ''}`} aria-hidden="true">
+        {/* Parting mist veil on entrance */}
+        {entering && (
+          <div className="shroud-mist-veil" aria-hidden="true">
+            <div className="mist-veil-part left" />
+            <div className="mist-veil-part right" />
+          </div>
+        )}
         <div className="shroud-mist-fog fog-card-bottom" />
         <div className="shroud-mist-fog fog-banner-seam" />
         <div className="shroud-mist-ambient" />
@@ -91,7 +154,23 @@ export const BannerShroud = memo(function BannerShroud({ shroud }: BannerShroudP
 
   if (shroud === 'stardust') {
     return (
-      <div className="banner-shroud-layer banner-shroud-stardust" aria-hidden="true">
+      <div className={`banner-shroud-layer banner-shroud-stardust ${entering ? 'is-entrance' : ''}`} aria-hidden="true">
+        {/* Entrance diagonal celestial streak */}
+        {entering && <div className="shroud-stardust-streak" aria-hidden="true" />}
+
+        {/* Entrance blooming star bursts */}
+        {entering && Array.from({ length: 8 }).map((_, i) => (
+          <span
+            key={`burst-${i}`}
+            className={`shroud-star star-${(i % 3) + 1} shroud-star-burst`}
+            style={{
+              top: `${12 + ((i * 11) % 76)}%`,
+              left: `${10 + ((i * 12) % 80)}%`,
+              animationDelay: `${(i * 0.04).toFixed(2)}s`,
+            }}
+          />
+        ))}
+
         {Array.from({ length: 24 }).map((_, i) => (
           <span
             key={i}

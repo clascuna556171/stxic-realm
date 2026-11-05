@@ -44,6 +44,8 @@ function ProfileStudio({user}:{user:string}){
  const badgeSavingRef=useRef(false)
  const [badgeSaving,setBadgeSaving]=useState(false),[badgeError,setBadgeError]=useState('')
  const [bannerPet,setBannerPet]=useState<EquippedPetSummary|null>(null)
+ const [previewEntranceKey,setPreviewEntranceKey]=useState(0)
+ const triggerEntrancePreview=()=>setPreviewEntranceKey(k=>k+1)
  useEffect(()=>{
   let active=true
   setBannerPet(null)
@@ -134,7 +136,7 @@ function ProfileStudio({user}:{user:string}){
    {error&&<p role="alert" className="error">{error}</p>}{loadError&&<p role="alert" className="error">{loadError}</p>}{notice&&<p role="status" className="profile-notice">{notice}</p>}
    {own&&snapshot&&<div className="profile-mobile-switch" aria-label="Profile editor view"><button type="button" aria-pressed={phonePanel==='edit'} onClick={()=>setPhonePanel('edit')}>Edit profile</button><button type="button" aria-pressed={phonePanel==='preview'} onClick={()=>setPhonePanel('preview')}>Preview profile</button></div>}
    {!snapshot?<div className="social-empty"><p>{loadError?'Your profile could not be opened. Your unsaved edits are kept until you leave.':'Opening profile…'}</p><button onClick={()=>void read()}>Try opening profile again</button></div>:view&&<div className={`account-profile-layout ${own?`phone-${phonePanel}`:'is-public'}`}>
-    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} badgeState={badgeState} bannerPet={bannerPet} housePets={snapshot.house_pets} onOpenHallmarks={()=>setShowHallmarks(true)} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined}>
+    <aside className="account-profile-preview" aria-label="Profile preview"><AccountCard profile={view.profile} card={view.card} urls={urls} roles={snapshot.roles} badgeState={badgeState} bannerPet={bannerPet} housePets={snapshot.house_pets} onOpenHallmarks={()=>setShowHallmarks(true)} onEditAvatar={own?triggerAvatarEdit:undefined} onEditBanner={own?triggerBannerEdit:undefined} isEntrance={!own||previewEntranceKey>0} entranceKey={!own?user:`${user}:${previewEntranceKey}:${draft?.card.style.banner_shroud}`}>
      {!own&&<div className="account-profile-actions"><button className="profile-message" disabled={busy||!snapshot.friends} onClick={()=>void social('message')}>Message</button>{!snapshot.friends&&<button disabled={busy} onClick={()=>void social('friend')}>Add friend</button>}<a href={`/?home=${user}`}>Visit home</a><button onClick={()=>setReport(true)}>Report</button><button disabled={busy} onClick={()=>void social('block')}>Block</button></div>}
     </AccountCard>{!own&&<form className="private-profile-note" onSubmit={saveNote}><label>Note (only visible to you)<textarea aria-label="Private profile note" value={note} maxLength={1000} onChange={e=>setNote(e.target.value)}/></label><button disabled={busy||note===noteBase.note}>Save private note</button></form>}{own&&<p className="profile-preview-help">Live preview · Changes are shared when you save.</p>}</aside>
     {own&&draft&&<form className="account-profile-editor profile-form" onSubmit={save} noValidate>
@@ -179,10 +181,11 @@ function ProfileStudio({user}:{user:string}){
        <label>Banner height<input type="range" aria-label="Banner height" min={120} max={320} value={draft.card.style.banner_height} onChange={e=>style({banner_height:Number(e.target.value)})}/></label>
         <h3>Atmosphere & Vinyl Anthem</h3>
         <label>Banner atmospheric shroud
-         <select aria-label="Banner atmospheric shroud" value={draft.card.style.banner_shroud||'none'} onChange={e=>style({banner_shroud:e.target.value as BannerShroudId})}>
+         <select aria-label="Banner atmospheric shroud" value={draft.card.style.banner_shroud||'none'} onChange={e=>{style({banner_shroud:e.target.value as BannerShroudId});setPreviewEntranceKey(k=>k+1)}}>
           {BANNER_SHROUDS.map(s=><option key={s.id} value={s.id}>{s.name} — {s.description}</option>)}
          </select>
         </label>
+        {draft.card.style.banner_shroud&&draft.card.style.banner_shroud!=='none'&&<div className="profile-entrance-preview-wrap"><button type="button" className="profile-preview-reveal-btn" onClick={triggerEntrancePreview} title="Preview how visitors experience your profile entrance"><Icon name="sparkle"/><span>Preview Entrance Reveal</span></button></div>}
         <label>Banner vinyl anthem
          <select aria-label="Banner vinyl anthem" value={draft.card.style.banner_anthem||'none'} onChange={e=>style({banner_anthem:e.target.value as BannerAnthemId})}>
           {BANNER_ANTHEMS.map(a=><option key={a.id} value={a.id}>{a.name} — {a.subtitle}</option>)}
@@ -232,11 +235,13 @@ function ProfileStudio({user}:{user:string}){
    <BadgeToastContainer onOpenTrophyCase={()=>setShowHallmarks(true)}/>
  </main>
 }
-function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onOpenHallmarks,children,onEditAvatar,onEditBanner}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;bannerPet?:EquippedPetSummary|null;housePets?:EquippedPetSummary[];onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void}){
+function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onOpenHallmarks,children,onEditAvatar,onEditBanner,isEntrance,entranceKey}:{profile:Profile;card:ProfileCard;urls:Record<string,string>;roles:string[];badgeState?:UserBadgeState;bannerPet?:EquippedPetSummary|null;housePets?:EquippedPetSummary[];onOpenHallmarks?:()=>void;children:React.ReactNode;onEditAvatar?:()=>void;onEditBanner?:()=>void;isEntrance?:boolean;entranceKey?:string|number}){
  const theme=card.style,avatar=card.avatar_id?urls[card.avatar_id]:null,banner=card.banner_id?urls[card.banner_id]:null
  const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font],'--banner-height':`${theme.banner_height}px`} as CSSProperties
  const tilt=useCardTilt<HTMLElement>()
- return <article ref={tilt} className={`account-profile-card shroud-${theme.banner_shroud||'none'}`} style={vars}>
+ const [cardEntering,setCardEntering]=useState(false)
+ useEffect(()=>{if(!isEntrance){setCardEntering(false);return}setCardEntering(true);const timer=setTimeout(()=>setCardEntering(false),950);return()=>clearTimeout(timer)},[isEntrance,entranceKey,theme.banner_shroud])
+ return <article ref={tilt} className={`account-profile-card shroud-${theme.banner_shroud||'none'} ${cardEntering?'shroud-entering':''}`} style={vars}>
   <div className="account-profile-banner" style={{height:theme.banner_height}}>
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
 
@@ -265,6 +270,6 @@ function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onO
     {section==='member'&&(card.joined_at?<time dateTime={card.joined_at}>{new Date(card.joined_at).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})}</time>:<p className="profile-empty-copy">Join date unavailable.</p>)}
    </section>)}
   </div>
-  <BannerShroud shroud={theme.banner_shroud}/>
+  <BannerShroud shroud={theme.banner_shroud} isEntrance={isEntrance} entranceKey={entranceKey}/>
  </article>
 }

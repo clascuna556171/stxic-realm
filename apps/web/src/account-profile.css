@@ -97,6 +97,47 @@
   border: 1px solid rgba(168, 85, 247, 0.25);
 }
 
+/* Card Entrance Pulse & Stalk Transition Aura */
+.account-profile-card.shroud-entering {
+  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes card-reveal-entrance {
+  0% { opacity: 0.92; }
+  100% { opacity: 1; }
+}
+.account-profile-card.shroud-crows.shroud-entering {
+  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-crows-card-pulse 0.9s ease-out both;
+}
+@keyframes shroud-crows-card-pulse {
+  0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(180, 20, 20, 0); }
+  35% { box-shadow: 0 6px 32px rgba(0, 0, 0, 0.6), 0 0 48px rgba(180, 20, 20, 0.4); border-color: rgba(220, 40, 40, 0.45); }
+  100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 32px rgba(180, 20, 20, 0.12); border-color: rgba(180, 20, 20, 0.22); }
+}
+.account-profile-card.shroud-embers.shroud-entering {
+  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-embers-card-pulse 0.85s ease-out both;
+}
+@keyframes shroud-embers-card-pulse {
+  0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(255, 69, 58, 0); }
+  35% { box-shadow: 0 6px 32px rgba(0, 0, 0, 0.6), 0 0 52px rgba(255, 69, 58, 0.45); border-color: rgba(255, 80, 70, 0.5); }
+  100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(255, 69, 58, 0.15); border-color: rgba(255, 69, 58, 0.25); }
+}
+.account-profile-card.shroud-mist.shroud-entering {
+  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-mist-card-pulse 0.95s ease-out both;
+}
+@keyframes shroud-mist-card-pulse {
+  0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(90, 120, 165, 0); }
+  40% { box-shadow: 0 6px 32px rgba(0, 0, 0, 0.6), 0 0 48px rgba(120, 160, 220, 0.35); border-color: rgba(140, 180, 240, 0.45); }
+  100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 32px rgba(90, 120, 165, 0.14); border-color: rgba(120, 150, 195, 0.22); }
+}
+.account-profile-card.shroud-stardust.shroud-entering {
+  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-stardust-card-pulse 0.85s ease-out both;
+}
+@keyframes shroud-stardust-card-pulse {
+  0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(168, 85, 247, 0); }
+  35% { box-shadow: 0 6px 32px rgba(0, 0, 0, 0.6), 0 0 54px rgba(192, 132, 252, 0.45); border-color: rgba(216, 180, 254, 0.5); }
+  100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(168, 85, 247, 0.16); border-color: rgba(168, 85, 247, 0.25); }
+}
+
 /* Crows & Feathers */
 .banner-shroud-crows {
   overflow: hidden;
@@ -184,6 +225,38 @@
   100% { transform: translate(55px, 700px) rotate(-75deg); opacity: 0; }
 }
 
+/* Entrance Crow Swoop & Feather Burst */
+.shroud-crow-swoop {
+  position: absolute;
+  width: 36px;
+  height: 18px;
+  top: 28px;
+  left: -48px;
+  pointer-events: none;
+  opacity: 0.95;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
+  animation: crow-swoop-entrance 0.85s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
+  z-index: 4;
+}
+@keyframes crow-swoop-entrance {
+  0% { transform: translate(0, -10px) scale(1.35) rotate(-8deg); opacity: 0; }
+  20% { opacity: 1; }
+  85% { opacity: 0.9; }
+  100% { transform: translate(620px, 35px) scale(0.9) rotate(4deg); opacity: 0; }
+}
+.shroud-feather-burst {
+  width: 6px;
+  height: 12px;
+  background: #090a0f;
+  animation: feather-burst-cascade 0.85s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+}
+@keyframes feather-burst-cascade {
+  0% { transform: translateY(-20px) rotate(0deg) scale(0.8); opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 0.85; }
+  100% { transform: translateY(340px) rotate(140deg) scale(1.1); opacity: 0; }
+}
+
 /* Crimson Embers */
 .banner-shroud-embers {
   overflow: hidden;
@@ -226,6 +299,28 @@
   100% { transform: translate(calc(sin(1) * -24px), -360px) scale(0.25); opacity: 0; }
 }
 
+/* Entrance Ember Flare & Burst */
+.banner-shroud-layer.is-entrance .shroud-ember-underglow {
+  animation: ember-ignition-flare 0.8s ease-out forwards;
+}
+@keyframes ember-ignition-flare {
+  0% { opacity: 0; transform: scaleY(0.3); }
+  30% { opacity: 0.85; transform: scaleY(1.35); filter: blur(3px); }
+  100% { opacity: 1; transform: scaleY(1); filter: blur(0px); }
+}
+.shroud-ember-burst {
+  width: 4px;
+  height: 4px;
+  box-shadow: 0 0 10px #ff453a, 0 0 18px rgba(255, 69, 58, 0.8);
+  animation: ember-burst-fly 0.75s cubic-bezier(0.12, 0.8, 0.25, 1) forwards;
+}
+@keyframes ember-burst-fly {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { opacity: 1; transform: translateY(-35px) scale(1.4); }
+  70% { opacity: 0.9; }
+  100% { transform: translateY(-420px) scale(0.3); opacity: 0; }
+}
+
 /* Midnight Mist */
 .banner-shroud-mist {
   overflow: hidden;
@@ -266,6 +361,42 @@
   100% { transform: translateX(25px); }
 }
 
+/* Entrance Mist Parting Veil */
+.shroud-mist-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+.mist-veil-part {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 55%;
+  background: radial-gradient(circle at center, rgba(30, 40, 60, 0.65), rgba(15, 20, 32, 0.45));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.mist-veil-part.left {
+  left: 0;
+  animation: mist-part-left 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.mist-veil-part.right {
+  right: 0;
+  animation: mist-part-right 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes mist-part-left {
+  0% { transform: translateX(0); opacity: 0.85; }
+  40% { opacity: 0.6; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+@keyframes mist-part-right {
+  0% { transform: translateX(0); opacity: 0.85; }
+  40% { opacity: 0.6; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+
 /* Stardust Shimmer */
 .banner-shroud-stardust {
   overflow: hidden;
@@ -285,6 +416,44 @@
 @keyframes star-twinkle {
   0%, 100% { opacity: 0.15; transform: scale(0.7); }
   50% { opacity: 0.95; transform: scale(1.3); }
+}
+
+/* Entrance Celestial Streak & Supernova Bursts */
+.shroud-stardust-streak {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    135deg,
+    transparent 40%,
+    rgba(216, 180, 254, 0.22) 50%,
+    rgba(255, 255, 255, 0.32) 52%,
+    rgba(168, 85, 247, 0.18) 55%,
+    transparent 65%
+  );
+  pointer-events: none;
+  z-index: 4;
+  animation: stardust-streak-sweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes stardust-streak-sweep {
+  0% { transform: translateY(-100%) rotate(25deg); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: translateY(100%) rotate(25deg); opacity: 0; }
+}
+.shroud-star-burst {
+  width: 5px;
+  height: 5px;
+  background: #ffffff;
+  box-shadow: 0 0 10px #ffffff, 0 0 18px rgba(168, 85, 247, 0.9);
+  animation: stardust-burst-pop 0.75s ease-out forwards;
+}
+@keyframes stardust-burst-pop {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  30% { transform: scale(2) rotate(45deg); opacity: 1; }
+  75% { opacity: 0.8; }
+  100% { transform: scale(0.2) rotate(90deg); opacity: 0; }
 }
 
 /* Banner Anthem Mini-Vinyl Badge */
@@ -365,8 +534,47 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Profile Preview Entrance Reveal Button in Studio */
+.profile-entrance-preview-wrap {
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+.profile-preview-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #f1f2f6;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.profile-preview-reveal-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+.profile-preview-reveal-btn:active {
+  transform: translateY(0);
+}
 @media (prefers-reduced-motion: reduce) {
   .banner-shroud-layer { display: none !important; }
+  .account-profile-card.shroud-entering { animation: none !important; transform: none !important; }
+  .account-profile-card.shroud-crows.shroud-entering,
+  .account-profile-card.shroud-embers.shroud-entering,
+  .account-profile-card.shroud-mist.shroud-entering,
+  .account-profile-card.shroud-stardust.shroud-entering { animation: none !important; }
+  .shroud-crow-swoop,
+  .shroud-feather-burst,
+  .shroud-ember-burst,
+  .shroud-mist-veil,
+  .shroud-stardust-streak,
+  .shroud-star-burst { display: none !important; }
+  .profile-preview-reveal-btn { transition: none !important; transform: none !important; }
   .banner-anthem-badge.is-playing .anthem-vinyl-svg { animation: none !important; }
   .banner-anthem-badge.is-playing .anthem-wave-bar { animation: none !important; height: 6px; }
 }
