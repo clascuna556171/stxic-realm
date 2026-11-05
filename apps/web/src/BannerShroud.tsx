@@ -22,7 +22,7 @@ export const BannerShroud = memo(function BannerShroud({
     setEntering(true)
     const timer = setTimeout(() => {
       setEntering(false)
-    }, 1000)
+    }, 2000)
     return () => clearTimeout(timer)
   }, [isEntrance, entranceKey, shroud])
 

@@ -122,14 +122,14 @@
 
 /* Card Entrance Pulse & Stalk Transition Aura */
 .account-profile-card.shroud-entering {
-  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: card-reveal-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes card-reveal-entrance {
   0% { opacity: 0.92; }
   100% { opacity: 1; }
 }
 .account-profile-card.shroud-crows.shroud-entering {
-  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-crows-card-pulse 0.9s ease-out both;
+  animation: card-reveal-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-crows-card-pulse 1.8s ease-out both;
 }
 @keyframes shroud-crows-card-pulse {
   0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(180, 20, 20, 0); }
@@ -137,7 +137,7 @@
   100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 32px rgba(180, 20, 20, 0.12); border-color: rgba(180, 20, 20, 0.22); }
 }
 .account-profile-card.shroud-embers.shroud-entering {
-  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-embers-card-pulse 0.85s ease-out both;
+  animation: card-reveal-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-embers-card-pulse 1.75s ease-out both;
 }
 @keyframes shroud-embers-card-pulse {
   0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(255, 69, 58, 0); }
@@ -145,7 +145,7 @@
   100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 36px rgba(255, 69, 58, 0.15); border-color: rgba(255, 69, 58, 0.25); }
 }
 .account-profile-card.shroud-mist.shroud-entering {
-  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-mist-card-pulse 0.95s ease-out both;
+  animation: card-reveal-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-mist-card-pulse 1.85s ease-out both;
 }
 @keyframes shroud-mist-card-pulse {
   0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(90, 120, 165, 0); }
@@ -153,7 +153,7 @@
   100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 32px rgba(90, 120, 165, 0.14); border-color: rgba(120, 150, 195, 0.22); }
 }
 .account-profile-card.shroud-stardust.shroud-entering {
-  animation: card-reveal-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-stardust-card-pulse 0.85s ease-out both;
+  animation: card-reveal-entrance 1.5s cubic-bezier(0.16, 1, 0.3, 1) both, shroud-stardust-card-pulse 1.75s ease-out both;
 }
 @keyframes shroud-stardust-card-pulse {
   0% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), 0 0 0 rgba(168, 85, 247, 0); }
@@ -258,7 +258,7 @@
   pointer-events: none;
   opacity: 0.95;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.7));
-  animation: crow-swoop-entrance 0.85s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
+  animation: crow-swoop-entrance 1.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
   z-index: 4;
 }
 @keyframes crow-swoop-entrance {
@@ -271,7 +271,7 @@
   width: 6px;
   height: 12px;
   background: #090a0f;
-  animation: feather-burst-cascade 0.85s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
+  animation: feather-burst-cascade 1.65s cubic-bezier(0.15, 0.85, 0.35, 1) forwards;
 }
 @keyframes feather-burst-cascade {
   0% { transform: translateY(-20px) rotate(0deg) scale(0.8); opacity: 0; }
@@ -324,7 +324,7 @@
 
 /* Entrance Ember Flare & Burst */
 .banner-shroud-layer.is-entrance .shroud-ember-underglow {
-  animation: ember-ignition-flare 0.8s ease-out forwards;
+  animation: ember-ignition-flare 1.6s ease-out forwards;
 }
 @keyframes ember-ignition-flare {
   0% { opacity: 0; transform: scaleY(0.3); }
@@ -335,7 +335,7 @@
   width: 4px;
   height: 4px;
   box-shadow: 0 0 10px #ff453a, 0 0 18px rgba(255, 69, 58, 0.8);
-  animation: ember-burst-fly 0.75s cubic-bezier(0.12, 0.8, 0.25, 1) forwards;
+  animation: ember-burst-fly 1.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards;
 }
 @keyframes ember-burst-fly {
   0% { transform: translateY(0) scale(0.5); opacity: 0; }
@@ -403,11 +403,11 @@
 }
 .mist-veil-part.left {
   left: 0;
-  animation: mist-part-left 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: mist-part-left 1.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .mist-veil-part.right {
   right: 0;
-  animation: mist-part-right 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: mist-part-right 1.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 @keyframes mist-part-left {
   0% { transform: translateX(0); opacity: 0.85; }
@@ -458,7 +458,7 @@
   );
   pointer-events: none;
   z-index: 4;
-  animation: stardust-streak-sweep 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: stardust-streak-sweep 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 @keyframes stardust-streak-sweep {
   0% { transform: translateY(-100%) rotate(25deg); opacity: 0; }
@@ -470,7 +470,7 @@
   height: 5px;
   background: #ffffff;
   box-shadow: 0 0 10px #ffffff, 0 0 18px rgba(168, 85, 247, 0.9);
-  animation: stardust-burst-pop 0.75s ease-out forwards;
+  animation: stardust-burst-pop 1.55s ease-out forwards;
 }
 @keyframes stardust-burst-pop {
   0% { transform: scale(0) rotate(0deg); opacity: 0; }
@@ -596,17 +596,17 @@
   z-index: 9999;
   pointer-events: none;
   overflow: hidden;
-  animation: fullscreen-shroud-fade 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fullscreen-shroud-fade 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fullscreen-shroud-fade {
   0% {
     opacity: 0;
   }
-  15% {
+  12% {
     opacity: 1;
   }
-  75% {
+  78% {
     opacity: 0.95;
   }
   100% {
@@ -639,32 +639,32 @@
 .flock-bird-1 {
   width: 38px;
   height: 19px;
-  animation: crow-flight-diag-1 1.25s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+  animation: crow-flight-diag-1 2.15s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
 }
 .flock-bird-2 {
   width: 28px;
   height: 14px;
-  animation: crow-flight-diag-2 1.3s cubic-bezier(0.22, 0.78, 0.28, 1) 0.08s forwards;
+  animation: crow-flight-diag-2 2.25s cubic-bezier(0.22, 0.78, 0.28, 1) 0.12s forwards;
 }
 .flock-bird-3 {
   width: 44px;
   height: 22px;
-  animation: crow-flight-diag-3 1.2s cubic-bezier(0.18, 0.82, 0.32, 1) 0.04s forwards;
+  animation: crow-flight-diag-3 2.05s cubic-bezier(0.18, 0.82, 0.32, 1) 0.06s forwards;
 }
 .flock-bird-4 {
   width: 24px;
   height: 12px;
-  animation: crow-flight-diag-4 1.35s cubic-bezier(0.25, 0.75, 0.35, 1) 0.15s forwards;
+  animation: crow-flight-diag-4 2.3s cubic-bezier(0.25, 0.75, 0.35, 1) 0.22s forwards;
 }
 .flock-bird-5 {
   width: 32px;
   height: 16px;
-  animation: crow-flight-diag-5 1.28s cubic-bezier(0.2, 0.8, 0.3, 1) 0.12s forwards;
+  animation: crow-flight-diag-5 2.2s cubic-bezier(0.2, 0.8, 0.3, 1) 0.16s forwards;
 }
 .flock-bird-6 {
   width: 22px;
   height: 11px;
-  animation: crow-flight-diag-6 1.4s cubic-bezier(0.24, 0.76, 0.34, 1) 0.2s forwards;
+  animation: crow-flight-diag-6 2.35s cubic-bezier(0.24, 0.76, 0.34, 1) 0.28s forwards;
 }
 
 @keyframes crow-flight-diag-1 {
@@ -750,7 +750,7 @@
   right: 0;
   height: 38vh;
   background: radial-gradient(ellipse at 50% 100%, rgba(255, 90, 30, 0.32) 0%, rgba(200, 30, 10, 0.1) 50%, transparent 80%);
-  animation: fullscreen-ember-underglow-pulse 1.35s ease-out forwards;
+  animation: fullscreen-ember-underglow-pulse 2.4s ease-out forwards;
 }
 @keyframes fullscreen-ember-underglow-pulse {
   0% { opacity: 0; transform: scaleY(0.7); }
@@ -765,7 +765,7 @@
   height: 4px;
   background: linear-gradient(90deg, transparent, #ff7b00, #ff2a00, #ffba08, transparent);
   box-shadow: 0 0 24px #ff4500, 0 0 48px #ff7b00;
-  animation: fullscreen-ember-seam-flash 0.8s ease-out forwards;
+  animation: fullscreen-ember-seam-flash 1.4s ease-out forwards;
 }
 @keyframes fullscreen-ember-seam-flash {
   0% { opacity: 0; transform: scaleX(0.2); }
@@ -837,7 +837,7 @@
   top: 15%;
   left: -20%;
   background: radial-gradient(circle, rgba(90, 130, 190, 0.24) 0%, rgba(60, 90, 140, 0.08) 55%, transparent 75%);
-  animation: fullscreen-mist-sweep-left 1.35s ease-out forwards;
+  animation: fullscreen-mist-sweep-left 2.4s ease-out forwards;
 }
 .fullscreen-mist-cloud.cloud-2 {
   width: 80vw;
@@ -845,7 +845,7 @@
   top: 30%;
   right: -25%;
   background: radial-gradient(circle, rgba(110, 150, 210, 0.22) 0%, rgba(70, 100, 160, 0.06) 60%, transparent 80%);
-  animation: fullscreen-mist-sweep-right 1.35s ease-out forwards;
+  animation: fullscreen-mist-sweep-right 2.4s ease-out forwards;
 }
 .fullscreen-mist-cloud.cloud-3 {
   width: 90vw;
@@ -853,7 +853,7 @@
   bottom: -10%;
   left: 5%;
   background: radial-gradient(circle, rgba(130, 170, 225, 0.2) 0%, rgba(80, 110, 170, 0.05) 50%, transparent 70%);
-  animation: fullscreen-mist-ground-surge 1.35s ease-out forwards;
+  animation: fullscreen-mist-ground-surge 2.4s ease-out forwards;
 }
 
 @keyframes fullscreen-mist-sweep-left {
@@ -884,12 +884,12 @@
 .fullscreen-mist-curtain-left {
   left: 0;
   background: linear-gradient(90deg, rgba(15, 20, 35, 0.6) 0%, rgba(30, 45, 75, 0.3) 70%, transparent 100%);
-  animation: fullscreen-mist-curtain-part-left 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fullscreen-mist-curtain-part-left 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 .fullscreen-mist-curtain-right {
   right: 0;
   background: linear-gradient(270deg, rgba(15, 20, 35, 0.6) 0%, rgba(30, 45, 75, 0.3) 70%, transparent 100%);
-  animation: fullscreen-mist-curtain-part-right 1.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fullscreen-mist-curtain-part-right 2.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fullscreen-mist-curtain-part-left {
@@ -924,19 +924,19 @@
   top: 18%;
   left: 20%;
   width: 140px;
-  animation: fullscreen-shooting-star-dash-1 1.0s cubic-bezier(0.1, 0.8, 0.2, 1) 0.05s forwards;
+  animation: fullscreen-shooting-star-dash-1 1.7s cubic-bezier(0.1, 0.8, 0.2, 1) 0.08s forwards;
 }
 .star-streak-2 {
   top: 35%;
   left: 55%;
   width: 190px;
-  animation: fullscreen-shooting-star-dash-2 1.1s cubic-bezier(0.1, 0.8, 0.2, 1) 0.2s forwards;
+  animation: fullscreen-shooting-star-dash-2 1.85s cubic-bezier(0.1, 0.8, 0.2, 1) 0.3s forwards;
 }
 .star-streak-3 {
   top: 8%;
   left: 70%;
   width: 110px;
-  animation: fullscreen-shooting-star-dash-3 0.95s cubic-bezier(0.1, 0.8, 0.2, 1) 0.35s forwards;
+  animation: fullscreen-shooting-star-dash-3 1.65s cubic-bezier(0.1, 0.8, 0.2, 1) 0.55s forwards;
 }
 
 @keyframes fullscreen-shooting-star-dash-1 {

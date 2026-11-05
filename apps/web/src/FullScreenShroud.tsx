@@ -12,7 +12,7 @@ export type FullScreenShroudProps = {
 export const FullScreenShroud = memo(function FullScreenShroud({
   shroud,
   active = false,
-  durationMs = 1350,
+  durationMs = 2400,
   onComplete,
 }: FullScreenShroudProps) {
   const [mounted, setMounted] = useState(false)
@@ -98,8 +98,8 @@ export const FullScreenShroud = memo(function FullScreenShroud({
               style={{
                 left: `${3 + ((i * 17 + 5) % 94)}%`,
                 top: `${-10 - (i % 4) * 8}%`,
-                animationDelay: `${(i * 0.045).toFixed(2)}s`,
-                animationDuration: `${0.9 + (i % 3) * 0.25}s`,
+                animationDelay: `${(i * 0.075).toFixed(2)}s`,
+                animationDuration: `${1.6 + (i % 3) * 0.35}s`,
                 transform: `scale(${0.75 + (i % 4) * 0.2})`,
               }}
             />
@@ -118,8 +118,8 @@ export const FullScreenShroud = memo(function FullScreenShroud({
               style={{
                 left: `${2 + ((i * 13 + 7) % 96)}%`,
                 bottom: `${-5 - (i % 3) * 10}px`,
-                animationDelay: `${(i * 0.035).toFixed(2)}s`,
-                animationDuration: `${0.85 + (i % 5) * 0.15}s`,
+                animationDelay: `${(i * 0.055).toFixed(2)}s`,
+                animationDuration: `${1.55 + (i % 5) * 0.22}s`,
                 width: `${3 + (i % 4) * 2}px`,
                 height: `${3 + (i % 4) * 2}px`,
               }}
@@ -150,8 +150,8 @@ export const FullScreenShroud = memo(function FullScreenShroud({
               style={{
                 left: `${3 + ((i * 19 + 11) % 94)}%`,
                 top: `${5 + ((i * 23 + 7) % 88)}%`,
-                animationDelay: `${(i * 0.04).toFixed(2)}s`,
-                animationDuration: `${0.7 + (i % 4) * 0.2}s`,
+                animationDelay: `${(i * 0.06).toFixed(2)}s`,
+                animationDuration: `${1.35 + (i % 4) * 0.28}s`,
               }}
             />
           ))}

@@ -282,7 +282,7 @@ function AccountCard({profile,card,urls,roles,badgeState,bannerPet,housePets,onO
  const vars={'--profile-surface':theme.surface,'--profile-text':theme.text,'--profile-accent':theme.accent,'--profile-ink':readableInk(theme.accent),'--profile-font':profileFonts[theme.font],'--banner-height':`${theme.banner_height}px`} as CSSProperties
  const tilt=useCardTilt<HTMLElement>()
  const [cardEntering,setCardEntering]=useState(false)
- useEffect(()=>{if(!isEntrance){setCardEntering(false);return}setCardEntering(true);const timer=setTimeout(()=>setCardEntering(false),950);return()=>clearTimeout(timer)},[isEntrance,entranceKey,theme.banner_shroud])
+ useEffect(()=>{if(!isEntrance){setCardEntering(false);return}setCardEntering(true);const timer=setTimeout(()=>setCardEntering(false),1900);return()=>clearTimeout(timer)},[isEntrance,entranceKey,theme.banner_shroud])
  return <article ref={tilt} className={`account-profile-card shroud-${theme.banner_shroud||'none'} ${cardEntering?'shroud-entering':''}`} style={vars}>
   <div className="account-profile-banner" style={{height:theme.banner_height}}>
    {banner?<ProfileImage src={banner} alt={`${profile.display_name} profile banner`} style={{objectPosition:`${theme.banner_x}% ${theme.banner_y}%`}}/>:<div className="account-banner-empty" aria-hidden="true"/>}
