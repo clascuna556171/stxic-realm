@@ -4,5 +4,5 @@ import { Component, type ReactNode } from 'react'
 export class HallSceneBoundary extends Component<{ children: ReactNode; fallback?: string }, { failed: boolean }> {
  state = { failed: false }
  static getDerivedStateFromError() { return { failed: true } }
- render() { return this.state.failed ? <p role="status">{this.props.fallback ?? 'The hall scene could not load. Channel controls, announcements and chat are still available.'}</p> : this.props.children }
+ render() { return this.state.failed ? <div><p role="status">{this.props.fallback ?? 'The hall scene could not load. Channel controls, announcements and chat are still available.'}</p><button type="button" onClick={()=>this.setState({failed:false})}>Retry hall scene</button></div> : this.props.children }
 }

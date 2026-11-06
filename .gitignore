@@ -68,6 +68,7 @@ lerna-debug.log*
 # Scratch output
 /tmp/
 /temp/
+/work/
 *.tmp
 *.temp
 

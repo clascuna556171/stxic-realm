@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,type FormEvent,type ReactNode} from 'react'
+import {createContext,useContext,useEffect,useRef,useState,type FormEvent,type ReactNode,type SetStateAction} from 'react'
 import {useAccount} from '../Account'
 import {rpc,errorText} from '../account-repository'
 import {client} from '../data'
@@ -6,6 +6,16 @@ import {focusClock,focusSeconds,intentLabel,type CommunityMemory,type CommunityP
 import type {CommunityController} from './useCommunity'
 import './community-place.css'
 import type {HallLayout} from './hall-layout'
+
+// Unsent input lives in this mounted server workspace, never in shared storage.
+// Failed reads discard protected snapshots but must not discard a member's own draft.
+const Drafts=createContext<Map<string,unknown>|null>(null)
+function useDraft<T,>(key:string,initial:T){
+ const drafts=useContext(Drafts)!
+ const [value,setValue]=useState<T>(()=>drafts.has(key)?drafts.get(key) as T:initial)
+ function update(next:SetStateAction<T>){setValue(previous=>{const value=typeof next==='function'?(next as (v:T)=>T)(previous):next;drafts.set(key,value);return value})}
+ return [value,update] as const
+}
 
 export type CommunitySection='focus'|'projects'|'noticeboard'|'memory'
 export function HallMemoryDisplay({layout,memories,onOpen}:{layout:HallLayout;memories:CommunityMemory[];onOpen:()=>void}){
@@ -15,33 +25,33 @@ export function HallMemoryDisplay({layout,memories,onOpen}:{layout:HallLayout;me
  return <svg className="hall-memory-display" viewBox="0 0 768 512" preserveAspectRatio="xMidYMid meet" aria-label="Community memory display"><g role="button" tabIndex={0} aria-label={`Read community memory: ${memory.title}`} onClick={onOpen} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();onOpen()}}}><title>{memory.title}</title><rect x={x} y={y} width="128" height="22" fill="var(--realm-inset)" stroke="var(--realm-muted)"/><text x={x+64} y={y+14} textAnchor="middle" fontSize="9" fill="var(--realm-text)">{memory.title.length>22?memory.title.slice(0,21)+'…':memory.title}</text></g></svg>
 }
 type Action=CommunityController['change']
-function useAction(change:Action){
- const [notice,setNotice]=useState(''),[failed,setFailed]=useState(false),retry=useRef(crypto.randomUUID())
- async function act(action:string,data:Record<string,unknown>={},id?:string,revision?:number){setNotice('');setFailed(false);try{await change(action,id??retry.current,data,revision);retry.current=crypto.randomUUID();setNotice('Saved.');return true}catch(e){setFailed(true);setNotice(errorText(e));return false}}
+function useAction(change:Action,key:string){
+ const [notice,setNotice]=useState(''),[failed,setFailed]=useState(false),[intent,setIntent]=useDraft(key+'-intent',crypto.randomUUID())
+ async function act(action:string,data:Record<string,unknown>={},id?:string,revision?:number){setNotice('Saving…');setFailed(false);try{await change(action,id??intent,data,revision);setIntent(crypto.randomUUID());setNotice('Saved.');return true}catch(e){setFailed(true);setNotice(errorText(e));return false}}
  return {act,feedback:notice?<p className="community-feedback" role={failed?'alert':'status'}>{notice}</p>:null}
 }
 function Identity({id,name}:{id:string;name:string}){return <a href={`/?profile=${encodeURIComponent(id)}`}>{name}</a>}
 export function CommunityPlace({community:c,space,section,onSection,board,settings}:{community:CommunityController;space:string;section:CommunitySection;onSection:(s:CommunitySection)=>void;board:ReactNode;settings:ReactNode}){
- const user=useAccount().session!.user.id,data=c.data
- return <section className="community-place" aria-label="Community activities">
+ const user=useAccount().session!.user.id,data=c.data,drafts=useRef(new Map<string,unknown>())
+ return <Drafts.Provider value={drafts.current}><section className="community-place" aria-label="Community activities">
   <div className="community-heading"><div><h2>Community activities</h2><p>Find a useful next step together.</p></div><button disabled={c.busy} onClick={()=>void c.refresh().catch(()=>{})}>Refresh activities</button></div>
   {c.error&&<div className="community-unavailable" role="alert"><strong>Activities couldn’t connect.</strong><p>{c.error}</p><button onClick={()=>void c.refresh().catch(()=>{})}>Retry activities</button><a href={`/?space=${encodeURIComponent(space)}`}>Continue in chat</a></div>}
   {!data&&!c.error&&<p role="status">Checking community access and activities…</p>}
   {data&&<>
+   <nav className="community-tabs" aria-label="Community sections">{(['focus','projects','noticeboard','memory'] as const).map(s=><button key={s} aria-pressed={s===section} onClick={()=>onSection(s)}>{({focus:'Focus',projects:'Projects',noticeboard:'Noticeboard',memory:'Memory'})[s]}</button>)}</nav>
+   <div className="community-section" key={section}>
+    {section==='focus'&&<Focus community={c} onProject={()=>onSection('projects')}/>}
+    {section==='projects'&&<Projects community={c} onMemory={()=>onSection('memory')} onNotice={()=>onSection('noticeboard')}/>}
+    {section==='noticeboard'&&<><Noticeboard community={c}/>{board}</>}
+    {section==='memory'&&<MemoryWall community={c} space={space}/>}
+   </div>
    <details className="community-people"><summary>People in this hall · {data.occupants.length} sharing presence</summary><p>Hall presence is separate from account availability. Only members who opt in appear here. Intent describes their choice, not whether they are free.</p>
     <PresenceControls community={c}/>
     {data.occupants.length?<ul className="community-roster">{data.occupants.map(p=><li key={p.id}><Identity id={p.id} name={p.id===user?'You':p.name}/><span>{intentLabel(p.intent)}</span></li>)}</ul>:<p>No one is sharing hall presence yet. You can participate privately.</p>}
    </details>
-   <nav className="community-tabs" aria-label="Community sections">{(['focus','projects','noticeboard','memory'] as const).map(s=><button key={s} aria-pressed={s===section} onClick={()=>onSection(s)}>{({focus:'Focus',projects:'Projects',noticeboard:'Noticeboard',memory:'Memory'})[s]}</button>)}</nav>
-   <div className="community-section" key={section}>
-    {section==='focus'&&<Focus community={c} onProject={()=>onSection('projects')}/>}
-    {section==='projects'&&<Projects community={c} onMemory={()=>onSection('memory')}/>}
-    {section==='noticeboard'&&<><Noticeboard community={c}/>{board}</>}
-    {section==='memory'&&<MemoryWall community={c} space={space}/>}
-   </div>
    {data.can_manage&&<details className="community-admin"><summary>Hall administration</summary>{settings}<a href={`/?moderation&space=${encodeURIComponent(space)}`}>Review community reports</a></details>}
   </>}
- </section>
+ </section></Drafts.Provider>
 }
 function PresenceControls({community:c}:{community:CommunityController}){
  const [intent,setIntent]=useState<SocialIntent|''>(c.visit?.intent??''),[visible,setVisible]=useState(c.visit?.visible??false),[error,setError]=useState('')
@@ -50,7 +60,7 @@ function PresenceControls({community:c}:{community:CommunityController}){
  return <form className="community-presence" onSubmit={e=>void save(e)}><label className="community-check"><input disabled={c.busy} type="checkbox" checked={visible} onChange={e=>setVisible(e.target.checked)}/>Show me in this hall</label><label>Intent (optional)<select disabled={c.busy} aria-label="Intent (optional)" value={intent} onChange={e=>setIntent(e.target.value as SocialIntent|'')}><option value="">No intent shared</option><option value="chat">Open to chat</option><option value="focus">Focusing</option><option value="group">Looking for a group</option></select></label><div className="community-actions"><button disabled={c.busy}>{c.busy?'Updating…':'Update hall presence'}</button>{c.visit&&<button type="button" onClick={()=>{c.disconnect();void c.refresh().catch(()=>{})}}>Leave hall participation</button>}</div><p className="community-hint">{c.visit?.visible?'Your character and intent are visible here.':c.visit?'Connected privately. Your location is hidden.':'Browsing privately. Your location is hidden.'} Participation pauses when you leave this page, hide it or stay idle for five minutes.</p>{error&&<p role="alert">{error}</p>}</form>
 }
 function Focus({community:c,onProject}:{community:CommunityController;onProject:()=>void}){
- const data=c.data!,s=data.session,user=useAccount().session!.user.id,[title,setTitle]=useState('Quiet work together'),[minutes,setMinutes]=useState(25),[visible,setVisible]=useState(false),[tick,setTick]=useState(performance.now()),{act,feedback}=useAction(c.change)
+ const data=c.data!,s=data.session,user=useAccount().session!.user.id,[title,setTitle]=useDraft('focus-title','Quiet work together'),[minutes,setMinutes]=useDraft('focus-minutes',25),[visible,setVisible]=useState(false),[tick,setTick]=useState(performance.now()),{act,feedback}=useAction(c.change,'focus')
  useEffect(()=>setVisible(s?.participation_visible??false),[s?.id,s?.participation_visible])
  useEffect(()=>{const timer=setInterval(()=>{if(!document.hidden)setTick(performance.now())},1000);return()=>clearInterval(timer)},[])
  const seconds=s?focusSeconds(s.ends_at,data.server_now,Math.max(0,tick-c.readAt.current)):0
@@ -64,16 +74,16 @@ function Focus({community:c,onProject}:{community:CommunityController;onProject:
  <div className="community-next"><h4>Prefer to make something?</h4><p>{data.projects.find(p=>!p.completed_at)?.goal??'Community projects give shared work a clear next step.'}</p><button onClick={onProject}>Open project desk</button></div>
  </section>
 }
-function Projects({community:c,onMemory}:{community:CommunityController;onMemory:()=>void}){
- const data=c.data!,[goal,setGoal]=useState(''),[description,setDescription]=useState(''),[milestones,setMilestones]=useState(''),{act,feedback}=useAction(c.change)
+function Projects({community:c,onMemory,onNotice}:{community:CommunityController;onMemory:()=>void;onNotice:()=>void}){
+ const data=c.data!,[goal,setGoal]=useDraft('project-goal',''),[description,setDescription]=useDraft('project-description',''),[milestones,setMilestones]=useDraft('project-milestones',''),{act,feedback}=useAction(c.change,'projects')
  return <section aria-labelledby="community-project-title"><h3 id="community-project-title">Project desk</h3><p>Work toward a shared goal. Progress comes from contributions accepted by community staff.</p>
-  {!data.projects.length&&<div className="community-empty"><h4>Your first project starts here.</h4><p>{data.can_manage?'Choose one achievable goal and a few small milestones. Members can then offer their work for review.':'No project has started yet. Ask community staff to open a goal, or post an idea on the noticeboard.'}</p></div>}
+  {!data.projects.length&&<div className="community-empty"><h4>Your first project starts here.</h4><p>{data.can_manage?'Choose one achievable goal and a few small milestones. Members can then offer their work for review.':'No project has started yet. Ask community staff to open a goal, or post an idea on the noticeboard.'}</p>{!data.can_manage&&<button onClick={onNotice}>Suggest a project on the noticeboard</button>}</div>}
   {data.projects.map(p=><Project key={p.id} project={p} community={c} onMemory={onMemory}/>)}
   {data.can_manage&&<details className="community-create"><summary>Start a community project</summary><form onSubmit={e=>{e.preventDefault();void act('project_create',{title:goal,body:description,milestones:milestones.split('\n').map(s=>s.trim()).filter(Boolean)}).then(ok=>{if(ok){setGoal('');setDescription('');setMilestones('')}})}}><label>Project goal<input disabled={c.busy} required maxLength={120} value={goal} onChange={e=>setGoal(e.target.value)}/></label><label>Description<textarea disabled={c.busy} required maxLength={2000} value={description} onChange={e=>setDescription(e.target.value)}/></label><label>Milestones (one per line, up to eight)<textarea disabled={c.busy} required value={milestones} maxLength={967} onChange={e=>setMilestones(e.target.value)}/></label><p className="community-hint">Shared project goals remain without your attribution if you delete your account. Your personal contributions are removed.</p><button className="community-primary" disabled={c.busy}>Create project</button>{feedback}</form></details>}
  </section>
 }
 function Project({project:p,community:c,onMemory}:{project:CommunityProject;community:CommunityController;onMemory:()=>void}){
- const [body,setBody]=useState(''),[milestone,setMilestone]=useState(0),[editing,setEditing]=useState(false),[goal,setGoal]=useState(p.goal),[description,setDescription]=useState(p.description),{act,feedback}=useAction(c.change),manager=c.data!.can_manage
+ const [body,setBody]=useDraft(p.id+'-contribution',''),[milestone,setMilestone]=useDraft(p.id+'-milestone',0),[editing,setEditing]=useDraft(p.id+'-editing',false),[goal,setGoal]=useDraft(p.id+'-goal',p.goal),[description,setDescription]=useDraft(p.id+'-description',p.description),{act,feedback}=useAction(c.change,p.id),manager=c.data!.can_manage
  return <article className="community-project"><div className="community-row"><h4>{p.goal}</h4><span>{p.completed_at?'Completed':`${p.accepted.length} of ${p.milestones.length} milestones accepted`}</span></div><p className="community-copy">{p.description}</p><progress value={p.accepted.length} max={p.milestones.length} aria-label={`Accepted milestones for ${p.goal}`}/><ol className="community-milestones">{p.milestones.map((m,i)=><li key={i}><span>{m}</span><small>{p.accepted.includes(i)?'Accepted':'Open'}</small></li>)}</ol>
   {!p.completed_at&&<details><summary>Offer a contribution</summary><form onSubmit={e=>{e.preventDefault();void act('contribute',{project:p.id,milestone,body}).then(ok=>{if(ok)setBody('')})}}><label>Milestone<select disabled={c.busy} aria-label="Milestone" value={milestone} onChange={e=>setMilestone(Number(e.target.value))}>{p.milestones.map((m,i)=><option key={i} value={i}>{m}</option>)}</select></label><label>Your contribution<textarea disabled={c.busy} aria-label="Your contribution" required maxLength={1500} value={body} onChange={e=>setBody(e.target.value)}/></label><p className="community-hint">Describe the work or paste its reference. Submitted contributions are immutable; staff reviews them before they count.</p><button className="community-primary" disabled={c.busy}>Submit contribution</button></form></details>}
   <details><summary>Contributions · {p.contributions.length} visible</summary>{p.contributions.length?p.contributions.map(co=><div className="community-entry" key={co.id}><p><Identity id={co.author} name={co.name}/> · {p.milestones[co.milestone]} · {co.status}</p><p className="community-copy">{co.body}</p>{manager&&!p.completed_at&&<div className="community-actions"><button disabled={c.busy||co.status==='accepted'} onClick={()=>void act('review',{status:'accepted'},co.id,co.revision)}>Accept contribution</button><button disabled={c.busy||co.status==='rejected'} onClick={()=>void act('review',{status:'rejected'},co.id,co.revision)}>Reject contribution</button></div>}<EntryReport kind="contribution" id={co.id} author={co.author}/></div>):<p>No contributions yet. Choose a milestone and offer the first.</p>}</details>
@@ -82,23 +92,24 @@ function Project({project:p,community:c,onMemory}:{project:CommunityProject;comm
  </article>
 }
 function Noticeboard({community:c}:{community:CommunityController}){
- const [body,setBody]=useState(''),[editing,setEditing]=useState<string|null>(null),{act,feedback}=useAction(c.change),user=useAccount().session!.user.id
+ const [body,setBody]=useDraft('notice-body',''),[editing,setEditing]=useDraft<string|null>('notice-editing',null),{act,feedback}=useAction(c.change,'notice'),user=useAccount().session!.user.id
  return <section><h3>Community noticeboard</h3><p>Ask for help or offer a next step. Staff updates appear below.</p><form onSubmit={e=>{e.preventDefault();const n=c.data!.notices.find(n=>n.id===editing);void act(n?'notice_edit':'notice_create',{body},n?.id,n?.revision).then(ok=>{if(ok){setBody('');setEditing(null)}})}}><label>{editing?'Edit help request':'Ask the community'}<textarea disabled={c.busy} aria-label={editing?"Edit help request":"Ask the community"} required maxLength={1000} value={body} onChange={e=>setBody(e.target.value)}/></label><div className="community-actions"><button className="community-primary" disabled={c.busy}>{editing?'Save help request':'Post help request'}</button>{editing&&<button type="button" onClick={()=>{setEditing(null);setBody('')}}>Cancel edit</button>}</div>{feedback}</form>
   {!c.data!.notices.length&&<p>No requests yet. Share one concrete thing someone could help with.</p>}{c.data!.notices.map(n=><article className="community-entry" key={n.id}><p><Identity id={n.author} name={n.name}/> · <time dateTime={n.created_at}>{new Date(n.created_at).toLocaleDateString()}</time>{n.resolved?' · Resolved':''}</p><p className="community-copy">{n.body}</p>{(n.author===user||c.data!.can_manage)&&<div className="community-actions"><button disabled={c.busy} onClick={()=>{setEditing(n.id);setBody(n.body)}}>Edit request</button>{!n.resolved&&<button disabled={c.busy} onClick={()=>void act('notice_resolve',{},n.id,n.revision)}>Mark resolved</button>}<button disabled={c.busy} onClick={()=>void act('notice_remove',{},n.id,n.revision)}>Remove request</button></div>}<EntryReport kind="notice" id={n.id} author={n.author}/></article>)}
  </section>
 }
 function MemoryWall({community:c,space}:{community:CommunityController;space:string}){
- const [kind,setKind]=useState('event'),[title,setTitle]=useState(''),[body,setBody]=useState(''),[source,setSource]=useState(''),{act,feedback}=useAction(c.change),manager=c.data!.can_manage
- useEffect(()=>{if(!manager)setKind('conversation')},[manager])
+ const [kind,setKind]=useDraft('memory-kind','event'),[title,setTitle]=useDraft('memory-title',''),[body,setBody]=useDraft('memory-body',''),[source,setSource]=useDraft('memory-source',''),{act,feedback}=useAction(c.change,'memory'),manager=c.data!.can_manage
+
  return <section><h3>Community memory</h3><p>Keep the moments you choose. Nothing is archived automatically.</p>{!c.data!.memories.length&&<div className="community-empty"><h4>A shared history, made deliberately.</h4><p>Preserve a completed project, a recap or your own channel message. Private conversations stay private.</p></div>}
   <ol className="community-timeline">{c.data!.memories.map(m=><li key={m.id}><MemoryEntry memory={m} community={c} space={space}/></li>)}</ol>
-  <details className="community-create"><summary>Preserve a memory</summary><form onSubmit={e=>{e.preventDefault();void act('memory_create',{kind,title,body,source}).then(ok=>{if(ok){setTitle('');setBody('');setSource('')}})}}><label>Memory type<select disabled={c.busy} aria-label="Memory type" value={kind} onChange={e=>{setKind(e.target.value);setSource('')}}>{manager&&<><option value="event">Event recap</option><option value="milestone">Community milestone</option><option value="project">Finished project</option></>}<option value="conversation">My channel message</option></select></label><label>Memory title<input disabled={c.busy} required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)}/></label>
-   {kind==='project'?<label>Completed project<select disabled={c.busy} aria-label="Completed project" required value={source} onChange={e=>setSource(e.target.value)}><option value="">Choose a completed project</option>{c.data!.projects.filter(p=>p.completed_at).map(p=><option key={p.id} value={p.id}>{p.goal}</option>)}</select></label>:kind==='conversation'?<><label>Your channel message ID<input disabled={c.busy} required placeholder="Message UUID" value={source} onChange={e=>setSource(e.target.value)}/></label><p className="community-hint">Use “Copy message ID” in your channel message actions. Only your own message from this server can be shared. Its current text appears here; deletion, channel archival or lost access hides the memory.</p></>:<label>What should be remembered?<textarea disabled={c.busy} aria-label="What should be remembered?" required maxLength={2000} value={body} onChange={e=>setBody(e.target.value)}/></label>}
-   <button className="community-primary" disabled={c.busy}>Preserve memory</button>{feedback}</form></details>
+  <p className="community-hint">To preserve a conversation, open your own channel message’s actions and choose “Preserve in community memory”. Only that message is shared, after you confirm.</p><a href={`/?space=${encodeURIComponent(space)}`}>Choose a message in chat</a>
+  {manager&&<details className="community-create"><summary>Preserve a memory</summary><form onSubmit={e=>{e.preventDefault();void act('memory_create',{kind,title,body,source}).then(ok=>{if(ok){setTitle('');setBody('');setSource('')}})}}><label>Memory type<select disabled={c.busy} aria-label="Memory type" value={kind} onChange={e=>{setKind(e.target.value);setSource('')}}>{manager&&<><option value="event">Event recap</option><option value="milestone">Community milestone</option><option value="project">Finished project</option></>}</select></label><label>Memory title<input disabled={c.busy} required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)}/></label>
+   {kind==='project'?<label>Completed project<select disabled={c.busy} aria-label="Completed project" required value={source} onChange={e=>setSource(e.target.value)}><option value="">Choose a completed project</option>{c.data!.projects.filter(p=>p.completed_at).map(p=><option key={p.id} value={p.id}>{p.goal}</option>)}</select></label>:<label>What should be remembered?<textarea disabled={c.busy} aria-label="What should be remembered?" required maxLength={2000} value={body} onChange={e=>setBody(e.target.value)}/></label>}
+   <button className="community-primary" disabled={c.busy}>Preserve memory</button>{feedback}</form></details>}
  </section>
 }
 function MemoryEntry({memory:m,community:c,space}:{memory:CommunityMemory;community:CommunityController;space:string}){
- const [editing,setEditing]=useState(false),[title,setTitle]=useState(m.title),[body,setBody]=useState(m.body),{act,feedback}=useAction(c.change),user=useAccount().session!.user.id,manager=c.data!.can_manage
+ const [editing,setEditing]=useDraft(m.id+'-editing',false),[title,setTitle]=useDraft(m.id+'-title',m.title),[body,setBody]=useDraft(m.id+'-body',m.body),{act,feedback}=useAction(c.change,m.id),user=useAccount().session!.user.id,manager=c.data!.can_manage
  return <article><time dateTime={m.created_at}>{new Date(m.created_at).toLocaleDateString([],{year:'numeric',month:'short',day:'numeric'})}</time><h4>{m.title}</h4><p className="community-hint">Preserved by <Identity id={m.author} name={m.name}/> · {m.kind==='conversation'?'Shared by its author':m.kind==='project'?'Completed project':m.kind==='event'?'Event recap':'Community milestone'}{m.displayed?' · On hall display':''}{m.revision>0?' · Edited':''}</p><p className="community-copy">{m.body}</p>{m.channel_id&&<a href={`/?space=${encodeURIComponent(space)}&channel=${encodeURIComponent(m.channel_id)}`}>Open source channel</a>}
   {(manager||m.author===user)&&<details><summary>Memory actions</summary><div className="community-actions"><button onClick={()=>setEditing(v=>!v)}>Edit memory</button>{manager&&<button disabled={c.busy} onClick={()=>void act('memory_display',{},m.id,m.revision)}>{m.displayed?'Take off hall display':'Display in hall'}</button>}<button disabled={c.busy} onClick={()=>{if(confirm('Remove this memory from the timeline and hall display?'))void act('memory_remove',{},m.id,m.revision)}}>Remove memory</button></div>{editing&&<form onSubmit={e=>{e.preventDefault();void act('memory_edit',{title,body},m.id,m.revision).then(ok=>{if(ok)setEditing(false)})}}><label>Memory title<input disabled={c.busy} required maxLength={120} value={title} onChange={e=>setTitle(e.target.value)}/></label>{['event','milestone'].includes(m.kind)&&<label>Description<textarea disabled={c.busy} aria-label="What should be remembered?" required maxLength={2000} value={body} onChange={e=>setBody(e.target.value)}/></label>}<button disabled={c.busy}>Save memory edit</button></form>}</details>}{feedback}<EntryReport kind="memory" id={m.id} author={m.author}/>
  </article>

@@ -64,3 +64,23 @@
 .hall-memory-display g:focus-visible rect{stroke:var(--realm-accent);stroke-width:3}
 @media(max-width:760px){.community-heading{align-items:center;gap:8px}.community-heading>div{min-width:0}.community-heading>button{max-width:100px;flex:none}.community-heading p{margin-bottom:0}.community-place input:not([type=checkbox]),.community-place textarea,.community-place select{font-size:16px}.community-tabs{flex-wrap:nowrap}.community-tabs button{flex:0 0 auto;padding-inline:10px}.community-place>.community-section{padding-top:18px}.shared-hall-workspace[data-view=details] .shared-hall-sidebar{padding:0 12px}.community-roster li{flex-wrap:wrap;gap:4px}.community-place h2{font-size:19px}.shared-hall-page .shared-hall-heading h1{font-size:20px}}
 @media(max-height:500px){.community-heading{padding-block:8px}.community-heading h2{font-size:22px}.community-place>.community-section{padding-top:16px}.community-place .community-clock{font-size:36px}}
+
+/* Keep the current task above the fold; secondary tools stay in disclosures. */
+.shared-hall-page .shared-hall-content>p[role=status]{margin:0;font-size:13px;line-height:1.4;flex:none}
+.shared-hall-page .shared-hall-heading h1{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.shared-hall-page .hall-chat-disclosure{border-top:1px solid var(--realm-line);margin-top:16px}
+.shared-hall-page .hall-chat-disclosure>summary{min-height:44px;display:list-item;padding:12px 0;cursor:pointer;font-size:14px}
+.shared-hall-page .hall-chat-disclosure>summary:focus-visible{outline:2px solid var(--realm-accent);outline-offset:2px}
+@media(max-height:500px){
+ .shared-hall-page.viewport-world>.shared-hall-content{padding:8px 12px;gap:6px}
+ .shared-hall-page .shared-hall-heading>div:first-child>a{display:none}
+ .shared-hall-page .shared-hall-heading h1{font-size:20px;margin:0}
+ .shared-hall-page .community-heading{padding:4px 0;align-items:center;flex-direction:row}
+ .shared-hall-page .community-heading h2{font-size:17px;margin:0}
+ .shared-hall-page .community-heading p{display:none}
+ .shared-hall-page .community-heading>button{max-width:none}
+ .shared-hall-page .community-tabs{padding:6px 0}
+ .shared-hall-page .community-place>.community-section{padding:12px 0}
+ .shared-hall-page .community-place h3{font-size:20px;margin-bottom:6px}
+ .shared-hall-page .community-place .community-clock{font-size:32px;margin:8px 0}
+}

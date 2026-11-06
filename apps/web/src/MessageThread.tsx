@@ -1,3 +1,4 @@
+import {PreserveMessage} from './PreserveMessage'
 import {useModalFocus} from './useModalFocus'
 import {useTyping} from './world/useWorldActivity'
 import {Fragment,useEffect,useLayoutEffect,useRef,useState,type FormEvent} from 'react'
@@ -286,11 +287,13 @@ function formatDiscordTimestamp(dateStr: string) {
  }
 }
 
-export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,searchQuery='',onSync,onOpenSettings,availableChannels}:{kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;searchQuery?:string;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
+export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,searchQuery='',onSync,onOpenSettings,availableChannels,spaceId}:{spaceId?:string;kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;searchQuery?:string;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
  const user=useAccount().session!.user.id,key=draftKey(user,kind,id)
  const worldTyping=useTyping(kind==='channel'&&visible&&!readOnly?{kind:'channel',id}:null,user)
  const [messages,setMessages]=useState<StreamMessage[]>([]),[people,setPeople]=useState<Record<string,PublicIdentity>>({}),[body,setBody]=useState(()=>{try{return localStorage.getItem(key)??''}catch{return ''}}),[error,setError]=useState(''),[status,setStatus]=useState('Loading messages…'),[loading,setLoading]=useState(true),[older,setOlder]=useState(false),[end,setEnd]=useState(false),[sending,setSending]=useState(false),[denied,setDenied]=useState(false),[editing,setEditing]=useState<StreamMessage|null>(null),[editBody,setEditBody]=useState(''),[changing,setChanging]=useState(false),[report,setReport]=useState<StreamMessage|null>(null)
  const [activeMenu,setActiveMenu]=useState<string|null>(null),[copiedId,setCopiedId]=useState<string|null>(null),[replyingTo,setReplyingTo]=useState<StreamMessage|null>(null)
+ const [preserving,setPreserving]=useState<StreamMessage|null>(null)
+ useEffect(()=>{if(!preserving)return;const current=messages.find(m=>m.id===preserving.id);if(denied||!current||current.removed_at||current.author_id!==user)setPreserving(null);else if(current.revision!==preserving.revision)setPreserving(current)},[messages,denied,preserving,user])
  const [pinsOnly,setPinsOnly]=useState(false)
  const [reactions,setReactions]=useState<Record<string,Record<string,string[]>>>(()=>{try{const s=localStorage.getItem(`realm_reactions_${id}`);return s?JSON.parse(s):{}}catch{return {}}})
  const [pinnedIds,setPinnedIds]=useState<Set<string>>(()=>{try{const s=localStorage.getItem(`realm_pinned_${id}`);return s?new Set(JSON.parse(s)):new Set()}catch{return new Set()}})
@@ -761,7 +764,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{setReplyingTo(m);setActiveMenu(null)}}><span>Reply</span><ReplyIcon size={16}/></button>
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{openForward(m,menuOpener.current);setActiveMenu(null)}}><span>Forward</span><ForwardIcon size={16}/></button>
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{void navigator.clipboard.writeText(m.body);setCopiedId(m.id);setTimeout(()=>setCopiedId(null),2000);setActiveMenu(null)}}><span>{copiedId===m.id?'Copied!':'Copy Text'}</span><CopyIcon size={16}/></button>
-            <button type="button" className="menu-item" role="menuitem" onClick={()=>{void navigator.clipboard.writeText(m.id).then(()=>{setStatus('Message ID copied. You can preserve your own channel message in Community memory.')}).catch(()=>setError(`Could not copy. Message ID: ${m.id}`));setActiveMenu(null);menuOpener.current?.focus()}}><span>Copy message ID</span><CopyIcon size={16}/></button>
+            {isOwn&&kind==='channel'&&spaceId&&!readOnly&&!denied&&<button type="button" className="menu-item" role="menuitem" onClick={()=>{setPreserving(m);setActiveMenu(null)}}><span>Preserve in community memory</span><PinIcon size={16}/></button>}
             <button type="button" className="menu-item" role="menuitem" onClick={()=>{togglePin(m.id);setActiveMenu(null)}}><span>{isPinned?'Unpin Message':'Pin Message'}</span><PinIcon size={16}/></button>
             <div className="menu-divider"/>
             {isOwn?<button type="button" className="menu-item is-danger" role="menuitem" disabled={changing||readOnly} onClick={()=>{setActiveMenu(null);void change(m,true)}}><TrashIcon size={16}/><span>Delete Message</span></button>:<button type="button" className="menu-item is-danger" role="menuitem" onClick={()=>{setActiveMenu(null);setReport(m)}}><FlagIcon size={16}/><span>Report Message</span></button>}
@@ -1081,6 +1084,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
      </div>
     </div>
    )}
+  {preserving&&spaceId&&<PreserveMessage space={spaceId} message={preserving} opener={menuOpener} onClose={()=>setPreserving(null)}/>}
   </div>
  )
 }

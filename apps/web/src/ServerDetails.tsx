@@ -1,3 +1,4 @@
+import {CommunityNextStep} from './CommunityNextStep'
 import {useEffect,useRef,useState,type ReactNode} from 'react'
 import {client,type Channel} from './data'
 import {rpc,errorText,publicIdentities,type PublicIdentity} from './account-repository'
@@ -17,11 +18,12 @@ export function ServerDetails({space,channels,selected,onClose,children}:{space:
    <div className="community-identity"><span className="community-seal" aria-hidden="true">{space.name.trim().split(/\s+/).slice(0,2).map(word=>word[0]).join('').toLocaleUpperCase()}</span><div><h3>{space.name}</h3><p>{space.archived_at?'Archived space':space.closed_at?'Closed space':'Private member space'}</p></div></div>
    <dl className="community-counts"><div><dt>Members</dt><dd>{data?data.members.length:'—'}</dd></div><div><dt>Rooms</dt><dd>{channels.length}</dd></div></dl>
   </section>
+  <CommunityNextStep space={space.id} archived={!!space.archived_at||!!space.closed_at}/>
   {children}
   <section className="community-people"><div className="community-section-heading"><h2>People</h2>{data&&<span>{data.members.length} total</span>}</div>
    {error?<div className="server-details-error"><p role="alert">{error}</p><button type="button" onClick={()=>setAttempt(n=>n+1)}>Retry member details</button></div>:data?<details className="community-member-disclosure"><summary><span className="community-avatar-stack" aria-hidden="true">{data.members.slice(0,4).map(member=><span key={member.user_id}><AccountPortrait person={people[member.user_id]??{display_name:member.name}}/></span>)}</span><span className="community-people-caption"><strong>Members</strong><span>View members <Icon name="arrow"/></span></span></summary><ul className="server-member-list">{data.members.map(member=><li key={member.user_id}><a href={`/?profile=${member.user_id}&space=${space.id}`}><span className="server-member-photo"><AccountPortrait person={people[member.user_id]??{display_name:member.name}}/></span><span><strong>{member.name}</strong><small>{member.role}</small></span><Icon name="arrow"/></a></li>)}</ul></details>:<p className="server-details-loading" role="status">Loading members…</p>}
   </section>
-  <a className="community-hall" href={`/?server-hall=${encodeURIComponent(space.id)}`}><div className="community-section-heading"><span>Shared hall</span><Icon name="arrow"/></div><strong>Find something<br/>to do together.</strong><p>Join focus sessions, help a project and explore community memories.</p><span className="community-hall-folds" aria-hidden="true"><i/><i/><i/></span></a>
+
   <div className="community-rail-footer"><button type="button" onClick={()=>void copy()}><Icon name="link"/>Copy room link</button><a href="/?spaces">Manage space <Icon name="arrow"/></a>{manualCopy&&<input className="server-link-field" aria-label="Server destination link" readOnly value={url.href} onFocus={e=>e.currentTarget.select()}/>}<p role="status">{notice}</p></div>
  </aside>
 }
