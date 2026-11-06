@@ -1,11 +1,11 @@
 import {useCommunity} from './world/useCommunity'
 
 /** Membership-scoped facts only; browsing never registers presence or joins a session. */
-export function CommunityNextStep({space,archived}:{space:string;archived:boolean}){
+export function CommunityNextStep({space,channel,archived}:{space:string;channel:string;archived:boolean}){
  const c=useCommunity(space,!archived),data=c.data
  const project=data?.projects.find(p=>!p.completed_at),session=data?.session
  const destination=session?'focus':project?'projects':'noticeboard'
- const url=(section:string)=>`/?server-hall=${encodeURIComponent(space)}&activity=${section}`
+ const url=(section:string)=>`/?server-hall=${encodeURIComponent(space)}&activity=${section}&channel=${encodeURIComponent(channel)}`
  return <section className="community-next-step" aria-label="What’s happening">
   <h2>What’s happening</h2>
   {archived?<p>This space is read-only. You can still read its conversations.</p>:c.error?<><p role="status">Activities are unavailable. You can keep chatting here.</p><button onClick={()=>void c.refresh().catch(()=>{})}>Retry activity summary</button><a href={url('focus')}>Check shared hall access</a></>:!data?<p role="status">Checking community activities…</p>:<>

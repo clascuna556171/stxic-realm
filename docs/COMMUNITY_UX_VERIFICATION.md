@@ -34,7 +34,17 @@ The SQL suite now explicitly checks DM preservation denial, memory visibility af
 
 The community suite completes chat → selected community → shared hall → focus/projects at 1440×900, 390×844, 320×700 and 720×450. Other browser suites cover additional widths, long room lists and names. Keyboard checks cover message menus, dialog containment, Escape, focus restoration, and activity controls. The selected activity label passes the tested 4.5:1 foreground/background contrast check and 44px target-height check. Reduced motion and the existing Glass reduced-transparency fallback are exercised.
 
-Screenshots were opened and visually inspected, including desktop chat, phone preservation failure, phone memory, narrow community navigation and short-landscape focus. The short landscape pane scrolls to lower session controls; it does not require walking.
+Screenshots were opened and visually inspected, including desktop chat, phone preservation failure, phone memory, narrow community navigation and short-landscape focus. After the follow-up, Join focus session is visible without scrolling in the tested short landscape viewport. Lower session/staff controls can still require scrolling; walking is optional.
+
+## Follow-up refinement — 7 November 2026
+
+The initial work was subsequently committed as `7d7d20f` outside this follow-up. The tree was clean before this refinement; these further changes remain local and uncommitted.
+
+- Activity links carry the originating channel, so Return to chat and activity/hall failure recovery restore the room the member left, including a nondefault room.
+- Switching activity sections and Hall/Community views updates the current URL without adding a history entry for every tab. Reloading an activity restores its selected destination. Section changes return the activity pane to the top, avoiding a new section opening at an old scroll offset.
+- Active focus-session details and participation controls sit beside each other on desktop and short landscape. Short screens use one row for activity navigation and refresh. The join button is visible without scrolling at 720×450; phone layouts retain a single column.
+
+Fresh follow-up checks passed: typecheck, 124 unit tests, production build, 37 community journey checks and 20 chat-shell checks, run with browser suites sequentially. The community suite adds a nondefault-room round trip, selected-activity reload, URL/view consistency and an explicit join-button-within-the-visible-pane assertion. Desktop, phone and short-landscape focus captures were opened and visually inspected. SQL and renderer/pose code were unchanged; the earlier full database/shared-world/furniture results above were not rerun in this follow-up. The same local-fixture limitations apply.
 
 ## Evidence and screenshots
 

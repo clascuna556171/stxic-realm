@@ -71,6 +71,12 @@
 .shared-hall-page .hall-chat-disclosure{border-top:1px solid var(--realm-line);margin-top:16px}
 .shared-hall-page .hall-chat-disclosure>summary{min-height:44px;display:list-item;padding:12px 0;cursor:pointer;font-size:14px}
 .shared-hall-page .hall-chat-disclosure>summary:focus-visible{outline:2px solid var(--realm-accent);outline-offset:2px}
+.community-focus-session{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,1fr);gap:24px;align-items:start;margin:16px 0}
+.community-focus-overview,.community-focus-participation{min-width:0}
+.community-place .community-focus-overview .community-clock{margin-top:12px}
+.community-focus-participation .community-actions{margin-top:8px}
+.community-place .community-focus-participation>p{margin-bottom:0}
+@media(max-width:600px){.community-focus-session{grid-template-columns:minmax(0,1fr);gap:12px}.community-place .community-focus-overview .community-clock{margin-top:8px}}
 @media(max-height:500px){
  .shared-hall-page.viewport-world>.shared-hall-content{padding:8px 12px;gap:6px}
  .shared-hall-page .shared-hall-heading>div:first-child>a{display:none}
@@ -83,4 +89,10 @@
  .shared-hall-page .community-place>.community-section{padding:12px 0}
  .shared-hall-page .community-place h3{font-size:20px;margin-bottom:6px}
  .shared-hall-page .community-place .community-clock{font-size:32px;margin:8px 0}
+ .shared-hall-page .community-place:has(>.community-tabs){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px}
+ .shared-hall-page .community-heading{grid-column:2;grid-row:1}
+ .shared-hall-page .community-heading>div{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .shared-hall-page .community-tabs{grid-column:1;grid-row:1;margin:0;align-items:center}
+ .shared-hall-page .community-place>:is(.community-section,.community-people,.community-admin){grid-column:1/-1}
+ .shared-hall-page .community-focus-session{margin:8px 0;gap:16px;grid-template-columns:minmax(0,1fr) minmax(220px,1fr)}
 }
