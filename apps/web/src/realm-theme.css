@@ -60,10 +60,10 @@ input,textarea{caret-color:var(--realm-accent)}
 .workspace-page .workspace-more>summary{color:var(--realm-muted)}
 .workspace-page .workspace-more>summary[data-active=true],.workspace-page .workspace-more[open]>summary{background:var(--realm-paper);color:var(--realm-ink)}
 .workspace-page .workspace-more>nav{background:var(--realm-surface);border-color:var(--realm-line)}
-.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content,.room-content,.halls-content,.shared-hall-content,.dm-content){
+.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.hall-studio-content,.room-content,.halls-content,.shared-hall-content,.dm-content){
  width:100%;max-width:none;margin:0;background:var(--realm-surface);border-radius:var(--realm-radius-panel);
 }
-.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content){padding:30px 32px 36px}
+.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.hall-studio-content){padding:30px 32px 36px}
 .workspace-page.viewport-world>:is(.room-content,.halls-content,.shared-hall-content){padding:16px;gap:12px}
 .workspace-page.viewport-world>.halls-content{padding:8px;gap:8px}
 .workspace-page .server-hall{gap:8px}
@@ -83,7 +83,7 @@ input,textarea{caret-color:var(--realm-accent)}
 .workspace-page :is(.hall-workbench-head svg,.hall-edit-help svg,.profile-privacy svg,.hall-preview-note svg,.login-hall-link,.hall-channel-preview a){color:var(--realm-text)}
 /* Controls follow the same neutral surfaces in every module, including lazy
    loaded editor styles. Profile-card content retains --profile-* styling. */
-.workspace-page :is(.social-content,.account-profile-content,.settings-content,.appearance-content,.room-content,.halls-content,.shared-hall-content,.hall-studio-content,.dm-content) :is(input:not([type=color]):not([type=range]):not([type=checkbox]):not([type=radio]),textarea,select){background-color:var(--realm-inset);border-color:var(--realm-line);color:var(--realm-text);border-radius:var(--realm-radius-control)}
+.workspace-page :is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.room-content,.halls-content,.shared-hall-content,.hall-studio-content,.dm-content) :is(input:not([type=color]):not([type=range]):not([type=checkbox]):not([type=radio]),textarea,select){background-color:var(--realm-inset);border-color:var(--realm-line);color:var(--realm-text);border-radius:var(--realm-radius-control)}
 .workspace-page :is(.social-actions,.studio-actions,.studio-form-actions,.hall-save-actions,.hall-placement-panel,.hall-toolbox,.admin-content,.report-form,.profile-editor-fields,.profile-editor-top,.home-privacy) :is(button,a),.workspace-page :is(.room-studio-link,.room-head-btn,.home-heading-actions button,.direction-pad button,.walk-controls button,.hall-ambience,.hall-scene-tools>a,.hall-intro-actions a,.reload-appearance,.load-earlier){border-color:var(--realm-line);border-radius:var(--realm-radius-control);background:var(--realm-raised);color:var(--realm-text)}
 .workspace-page :is(.social-actions,.studio-actions,.studio-form-actions,.hall-save-actions,.hall-placement-panel,.hall-toolbox,.admin-content,.report-form,.profile-editor-fields,.profile-editor-top,.home-privacy) :is(button,a):hover:not(:disabled){background:var(--realm-line)}
 .workspace-page :is(.choice-row,.mood-choices,.hall-theme-choices,.hall-placed-list,.hall-server-list,.room-object-list) button[aria-pressed=true]{background:var(--realm-selected);border-color:var(--realm-accent);color:var(--realm-text)}
@@ -100,7 +100,7 @@ input,textarea{caret-color:var(--realm-accent)}
 .login .login-panel{background:var(--realm-surface);border-radius:24px;padding:28px}
 .login :is(input,.login-avatar-link){background:var(--realm-inset);border-color:var(--realm-line);color:var(--realm-text);border-radius:12px}
 .login :is(.login-hall-link,.login-avatar-link,.login-recovery){color:var(--realm-text)}
-@media(max-width:1300px) and (min-width:651px){:root{--realm-frame-gap:12px;--realm-frame-inset:10px;--realm-nav-width:60px}.workspace-page{padding:10px 10px 10px 82px}.workspace-page>.workspace-nav{padding-inline:6px}.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content){padding:26px}}
+@media(max-width:1300px) and (min-width:651px){:root{--realm-frame-gap:12px;--realm-frame-inset:10px;--realm-nav-width:60px}.workspace-page{padding:10px 10px 10px 82px}.workspace-page>.workspace-nav{padding-inline:6px}.workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.hall-studio-content){padding:26px}}
 @media(max-height:760px) and (min-width:651px){.workspace-page>.workspace-nav{padding-block:8px}.workspace-page .workspace-nav>nav{margin-top:12px;gap:0}.workspace-page .workspace-nav nav a{min-height:42px;padding:4px 0}.workspace-page .workspace-nav .workspace-account{margin-top:auto}}
 @media(max-height:760px) and (min-width:651px){.workspace-page.viewport-world>.workspace-header{min-height:42px;margin-bottom:4px}.workspace-page.viewport-world:not(.room-app) .is-scene-controls{height:54px;padding:4px 12px}.workspace-page.viewport-world .is-scene-controls .walk-message{-webkit-line-clamp:1}}
 @media(max-width:650px){
@@ -117,7 +117,7 @@ input,textarea{caret-color:var(--realm-accent)}
  .workspace-page .workspace-nav>nav{margin:0;gap:0}
  .workspace-page .workspace-nav nav a{min-height:56px;margin:5px 0;padding:5px 0;gap:5px;font-size:11px}
  .workspace-page .workspace-nav .workspace-account{display:none}
- .workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content){padding:24px 18px;border-radius:20px}
+ .workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.hall-studio-content){padding:24px 18px;border-radius:20px}
  .workspace-page.viewport-world>:is(.room-content,.halls-content,.shared-hall-content){padding:12px;border-radius:20px}
  .workspace-page.dm-page>.dm-content{padding:8px 14px 10px;border-radius:20px}
  .workspace-page .workspace-header .dm-peer-heading{gap:8px}
@@ -127,7 +127,7 @@ input,textarea{caret-color:var(--realm-accent)}
 @media(prefers-reduced-motion:reduce){.workspace-page{scroll-behavior:auto}.workspace-page>.workspace-nav *{transition:none}}
 
 /* Conventional UI type is independent of the authored world/profile palettes. */
-.workspace-page :is(.social-content,.settings-content,.account-profile-intro) h1{font-size:var(--realm-type-title);line-height:1.2;margin-top:0}
+.workspace-page :is(.social-content,.settings-content,.appearance-theme-intro,.account-profile-intro) h1{font-size:var(--realm-type-title);line-height:1.2;margin-top:0}
 .workspace-page :is(.social-content,.settings-content,.account-profile-intro)>.muted,
 .workspace-page .account-profile-intro p{font-size:var(--realm-type-body);line-height:1.6}
 .workspace-page :is(.social-actions,.admin-content,.report-form,.profile-editor-top,.profile-editor-fields,.profile-editor-tabs) button{font-size:var(--realm-type-label);min-height:var(--realm-control-height)}
@@ -191,5 +191,5 @@ input,textarea{caret-color:var(--realm-accent)}
  .conversation .message-more-popover{max-height:55dvh;overflow-y:auto;max-width:calc(100vw - 64px)}
 
  .workspace-page :is(.social-content,.admin-content,.profile-editor-fields) :is(input:not([type=color]):not([type=range]):not([type=checkbox]),textarea,select){font-size:16px}
- .workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.hall-studio-content){padding:20px 16px 28px;border-radius:16px}
+ .workspace-page>:is(.social-content,.account-profile-content,.settings-content,.appearance-content,.appearance-theme-content,.hall-studio-content){padding:20px 16px 28px;border-radius:16px}
 }

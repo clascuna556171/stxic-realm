@@ -1,15 +1,18 @@
 /* A material preference independent of color themes and application behavior. */
-.glass-setting{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;margin:8px 0 20px;border-block:1px solid var(--realm-line);color:var(--realm-text)}
-.glass-setting>div{min-width:0}
-.glass-setting strong{font-size:15px;font-weight:600}
-.glass-setting p{margin:6px 0 0;max-width:58ch;font-size:13px;line-height:1.6;color:var(--realm-muted)}
+.glass-setting{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 20px;margin:16px 0 24px;background:var(--realm-raised);border:1px solid var(--realm-line);border-radius:var(--realm-radius-control, 12px);color:var(--realm-text);box-sizing:border-box}
+.glass-setting>div,.glass-setting .glass-setting-info{min-width:0;flex:1}
+.glass-setting strong{font-size:15px;font-weight:600;display:block}
+.glass-setting p{margin:4px 0 0;max-width:58ch;font-size:13px;line-height:1.5;color:var(--realm-muted)}
+.glass-setting>svg{width:24px;height:24px;color:var(--realm-muted);flex:none}
 .glass-switch{display:flex;align-items:center;justify-content:center;gap:8px;flex:none;min-width:88px;min-height:44px;padding:6px;border:0;border-radius:8px;background:transparent;color:var(--realm-text);font:600 13px var(--realm-ui-font);cursor:pointer}
 .glass-switch:focus-visible{outline:2px solid var(--realm-accent);outline-offset:3px}
-.glass-switch-track{display:flex;align-items:center;width:42px;height:26px;padding:3px;border:1px solid var(--realm-muted);border-radius:20px;background:var(--realm-inset)}
-.glass-switch-track>span{width:18px;height:18px;flex:none;border-radius:50%;background:var(--realm-muted)}
+.glass-switch-track{display:flex;align-items:center;width:42px;height:26px;padding:3px;border:1px solid var(--realm-muted);border-radius:20px;background:var(--realm-inset);transition:background 0.15s ease,border-color 0.15s ease}
+.glass-switch-track>span{width:18px;height:18px;flex:none;border-radius:50%;background:var(--realm-muted);transition:transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1),background 0.15s ease}
 .glass-switch[aria-checked=true] .glass-switch-track{background:var(--realm-accent);border-color:var(--realm-accent)}
 .glass-switch[aria-checked=true] .glass-switch-track>span{transform:translateX(16px);background:var(--realm-on-accent)}
-@media(max-width:400px){.glass-setting{gap:10px}}
+@media(max-width:400px){.glass-setting{gap:12px;padding:14px 12px}}
+.settings-destinations>.glass-setting{margin:0;background:transparent;border:0;border-bottom:1px solid var(--realm-line);border-radius:var(--realm-radius-control, 8px)}
+.settings-destinations>.glass-setting:hover{background:var(--realm-raised)}
 
 /* Window material. Only paint changes: no positioning, dimensions or transforms.
    Neutral, diffuse daylight is visible through the entire window, like frosted

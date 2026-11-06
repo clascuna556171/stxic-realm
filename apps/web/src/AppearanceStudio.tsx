@@ -346,7 +346,7 @@ export default function AppearanceStudio() {
             <p>Customize the colors and visual mood of Realm on this device. Neutral themes respect your personal accent.</p>
            </div>
           </div>
-          <GlassToggle/>
+          <GlassToggle showIcon/>
           <h3 className="theme-group-title" id="default-themes-title">Default Themes</h3>
           <div className="theme-tile-grid" role="radiogroup" aria-labelledby="default-themes-title">
            {defaultThemes.map(t => {
@@ -426,7 +426,7 @@ export default function AppearanceStudio() {
          </section>
 
          <section className="theme-group-section" aria-labelledby="personal-accent-title">
-          <h2 id="personal-accent-title">Personal Accent &amp; Logo</h2>
+          <h2 id="personal-accent-title">Obsidian, with your accent.</h2>
           <p>Personalize interactive highlights and the orbital R mark across chat and menus.</p>
           <fieldset>
            <legend>Interface accent</legend>

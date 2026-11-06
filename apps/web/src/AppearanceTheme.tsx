@@ -41,7 +41,7 @@ export default function AppearanceTheme() {
           <p className="muted">Customize the colors and visual mood of Realm on this device.</p>
         </div>
 
-        <GlassToggle/>
+        <GlassToggle showIcon/>
         {/* Default Themes */}
         <section className="theme-group-section" aria-labelledby="default-themes-title">
           <h2 id="default-themes-title" className="theme-group-title">Default Themes</h2>

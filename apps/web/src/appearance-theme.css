@@ -3,23 +3,21 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background: var(--realm-bg);
   color: var(--realm-text);
 }
 
 .appearance-theme-content {
-  max-width: 860px;
+  max-width: 960px;
   width: 100%;
   margin: 0 auto;
-  padding: 32px 24px 64px;
 }
 
 .appearance-theme-intro {
-  margin-bottom: 32px;
+  margin-bottom: 28px;
 }
 
 .appearance-theme-intro h1 {
-  font-size: 28px;
+  font-size: clamp(26px, 3vw, 32px);
   font-weight: 700;
   margin: 0 0 8px;
   color: var(--realm-text);
@@ -28,6 +26,7 @@
 
 .appearance-theme-intro p {
   font-size: 14px;
+  line-height: 1.6;
   margin: 0;
   color: var(--realm-muted);
 }
@@ -127,7 +126,6 @@
   border-radius: 50%;
   background: var(--realm-accent, #dedee6);
   color: var(--realm-on-accent, #202020);
-  color: #fff;
   display: grid;
   place-items: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
@@ -146,6 +144,10 @@
   font-weight: 600;
   color: var(--realm-text);
   margin-top: 4px;
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .theme-card.is-selected .theme-card-name {
@@ -160,6 +162,13 @@
   gap: 16px;
 }
 
+@media (max-width: 650px) {
+  .color-themes-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
 .color-theme-card {
   display: flex;
   flex-direction: row;
@@ -171,6 +180,7 @@
   border: 1px solid var(--realm-line);
   border-radius: 14px;
   transition: all 0.15s ease;
+  min-width: 0;
 }
 
 .color-theme-card:hover {
@@ -238,6 +248,7 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .theme-card-text strong {
@@ -250,8 +261,8 @@
   font-size: 12px;
   line-height: 1.35;
   color: var(--realm-muted);
+  overflow-wrap: anywhere;
 }
-
 
 /* Space controls integration for theme presets & accents */
 .space-controls .theme-group-section {
