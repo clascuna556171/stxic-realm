@@ -1,7 +1,7 @@
 import {PreserveMessage} from './PreserveMessage'
 import {useModalFocus} from './useModalFocus'
 import {useTyping} from './world/useWorldActivity'
-import {Fragment,useEffect,useLayoutEffect,useRef,useState,type FormEvent} from 'react'
+import {Fragment,useEffect,useLayoutEffect,useRef,useState,type FormEvent,type ReactNode} from 'react'
 import {useAccount} from './Account'
 import {errorText,publicIdentities,rpc,type PublicIdentity} from './account-repository'
 import {client} from './data'
@@ -287,10 +287,109 @@ function formatDiscordTimestamp(dateStr: string) {
  }
 }
 
+function parseInlineMarkdown(text: string): ReactNode[] {
+ const regex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])|(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(~~[^~\n]+~~)|(\*[^*\n]+\*)|(_[^_\n]+_)/g
+ const parts: ReactNode[] = []
+ let lastIndex = 0
+ let match: RegExpExecArray | null
+
+ while ((match = regex.exec(text)) !== null) {
+  if (match.index > lastIndex) {
+   parts.push(text.slice(lastIndex, match.index))
+  }
+  const token = match[0]
+  if (match[1]) {
+   parts.push(<a key={match.index} href={token} target="_blank" rel="noopener noreferrer" className="chat-link">{token}</a>)
+  } else if (match[2]) {
+   parts.push(<code key={match.index} className="chat-inline-code">{token.slice(1, -1)}</code>)
+  } else if (match[3]) {
+   parts.push(<strong key={match.index}>{parseInlineMarkdown(token.slice(2, -2))}</strong>)
+  } else if (match[4]) {
+   parts.push(<del key={match.index}>{parseInlineMarkdown(token.slice(2, -2))}</del>)
+  } else if (match[5] || match[6]) {
+   parts.push(<em key={match.index}>{parseInlineMarkdown(token.slice(1, -1))}</em>)
+  }
+  lastIndex = regex.lastIndex
+ }
+ if (lastIndex < text.length) {
+  parts.push(text.slice(lastIndex))
+ }
+ return parts.length > 0 ? parts : [text]
+}
+
+function renderMessageContent(body: string): ReactNode {
+ if (!body.includes('```') && !body.includes('> ') && !body.includes('**') && !body.includes('`') && !body.includes('http') && !body.includes('~~') && !body.includes('*') && !body.includes('_')) {
+  return <p>{body}</p>
+ }
+ const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g
+ const blocks: ReactNode[] = []
+ let lastIndex = 0
+ let match: RegExpExecArray | null
+
+ function processTextLines(textChunk: string, keyPrefix: string | number) {
+  if (!textChunk) return
+  const lines = textChunk.split('\n')
+  let currentQuote: string[] = []
+  let currentText: string[] = []
+
+  function flushText() {
+   if (currentText.length > 0) {
+    const text = currentText.join('\n')
+    blocks.push(<p key={`${keyPrefix}-t-${blocks.length}`}>{parseInlineMarkdown(text)}</p>)
+    currentText = []
+   }
+  }
+  function flushQuote() {
+   if (currentQuote.length > 0) {
+    const quoteText = currentQuote.join('\n')
+    blocks.push(
+     <blockquote key={`${keyPrefix}-q-${blocks.length}`} className="chat-blockquote">
+      {parseInlineMarkdown(quoteText)}
+     </blockquote>
+    )
+    currentQuote = []
+   }
+  }
+
+  for (const line of lines) {
+   if (line.startsWith('> ') || line === '>') {
+    flushText()
+    currentQuote.push(line.replace(/^>\s?/, ''))
+   } else {
+    flushQuote()
+    currentText.push(line)
+   }
+  }
+  flushText()
+  flushQuote()
+ }
+
+ while ((match = codeBlockRegex.exec(body)) !== null) {
+  if (match.index > lastIndex) {
+   processTextLines(body.slice(lastIndex, match.index), lastIndex)
+  }
+  const code = match[2]
+  blocks.push(
+   <pre key={`cb-${match.index}`} className="chat-code-block">
+    <code>{code}</code>
+   </pre>
+  )
+  lastIndex = codeBlockRegex.lastIndex
+ }
+
+ if (lastIndex < body.length) {
+  processTextLines(body.slice(lastIndex), lastIndex)
+ }
+
+ return blocks.length > 0 ? <>{blocks}</> : <p>{body}</p>
+}
+
 export function MessageThread({kind,id,title,channelName,topic,readOnly=false,visible=true,searchQuery='',onSync,onOpenSettings,availableChannels,spaceId}:{spaceId?:string;kind:StreamKind;id:string;title:string;channelName?:string;topic?:string;readOnly?:boolean;visible?:boolean;searchQuery?:string;onSync?:()=>void;onOpenSettings?:()=>void;availableChannels?:{id:string;name:string;spaceName?:string}[]}){
  const user=useAccount().session!.user.id,key=draftKey(user,kind,id)
  const worldTyping=useTyping(kind==='channel'&&visible&&!readOnly?{kind:'channel',id}:null,user)
  const [messages,setMessages]=useState<StreamMessage[]>([]),[people,setPeople]=useState<Record<string,PublicIdentity>>({}),[body,setBody]=useState(()=>{try{return localStorage.getItem(key)??''}catch{return ''}}),[error,setError]=useState(''),[status,setStatus]=useState('Loading messages…'),[loading,setLoading]=useState(true),[older,setOlder]=useState(false),[end,setEnd]=useState(false),[sending,setSending]=useState(false),[denied,setDenied]=useState(false),[editing,setEditing]=useState<StreamMessage|null>(null),[editBody,setEditBody]=useState(''),[changing,setChanging]=useState(false),[report,setReport]=useState<StreamMessage|null>(null)
+ const [isOnline,setIsOnline]=useState(()=>typeof navigator!=='undefined'?navigator.onLine:true)
+ const [isReconnecting,setIsReconnecting]=useState(false)
  const [activeMenu,setActiveMenu]=useState<string|null>(null),[copiedId,setCopiedId]=useState<string|null>(null),[replyingTo,setReplyingTo]=useState<StreamMessage|null>(null)
  const [preserving,setPreserving]=useState<StreamMessage|null>(null)
  useEffect(()=>{if(!preserving)return;const current=messages.find(m=>m.id===preserving.id);if(denied||!current||current.removed_at||current.author_id!==user)setPreserving(null);else if(current.revision!==preserving.revision)setPreserving(current)},[messages,denied,preserving,user])
@@ -553,14 +652,19 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     if(!alive.current||!payload?.msgId||!payload?.emoji||!payload?.reactingUser)return
     applyReactionToggle(payload.msgId,payload.emoji,payload.reactingUser)
    })
-   .subscribe(s=>{if(!alive.current)return;if(s==='SUBSCRIBED')void sync();else setStatus('Reconnecting…')})
+   .subscribe(s=>{if(!alive.current)return;if(s==='SUBSCRIBED'){setIsReconnecting(false);void sync()}else{setStatus('Reconnecting…');setIsReconnecting(true)}})
   realtimeChannelRef.current=sub
   stopSubscription.current=()=>{void client!.removeChannel(sub)}
-  const timer=setInterval(()=>void sync(),10000),online=()=>void sync();window.addEventListener('online',online)
+  const timer=setInterval(()=>void sync(),10000)
+  const handleOnline=()=>{setIsOnline(true);setIsReconnecting(false);void sync()}
+  const handleOffline=()=>{setIsOnline(false)}
+  window.addEventListener('online',handleOnline)
+  window.addEventListener('offline',handleOffline)
   return()=>{
    alive.current=false
    clearInterval(timer)
-   window.removeEventListener('online',online)
+   window.removeEventListener('online',handleOnline)
+   window.removeEventListener('offline',handleOffline)
    window.removeEventListener('storage',handleStorage)
    realtimeChannelRef.current=null
    void client!.removeChannel(sub)
@@ -649,6 +753,13 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
  const displayedMessages=messages.filter(message=>(!query||!message.removed_at&&message.body.toLocaleLowerCase().includes(query))&&(!pinsOnly||pinnedIds.has(message.id)))
  return (
   <div className="conversation">
+   {(!isOnline||isReconnecting)&&(
+    <div className="realm-connection-toast" role="status" aria-live="polite">
+     <span className="toast-dot"/>
+     <span>{!isOnline?'You are offline. Reconnecting when back online…':'Connecting to chat…'}</span>
+     <button type="button" className="toast-retry-btn" onClick={()=>void syncRef.current()}>Retry now</button>
+    </div>
+   )}
    <div className="dm-toolbar">
     <span role="status">{status}</span>
     <button className="text-button" onClick={()=>void syncRef.current()}>Refresh messages</button>
@@ -691,7 +802,7 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
            <textarea id={`edit-${m.id}`} aria-label="Edit message" required maxLength={4000} value={editBody} onChange={e=>setEditBody(e.target.value)} onKeyDown={e=>{if(e.key==='Escape')setEditing(null);else if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void change(m,false)}}}/>
            <div className="message-edit-hint"><span>escape to <button type="button" onClick={()=>setEditing(null)}>cancel</button> • enter to <button type="submit" disabled={changing||!editBody.trim()}>save</button></span></div>
           </form>
-         ):<p>{m.body}</p>}
+         ):renderMessageContent(m.body)}
         </div>
         {!m.removed_at&&Object.keys(msgReactions).length>0&&(
          <div className="message-reaction-list">
