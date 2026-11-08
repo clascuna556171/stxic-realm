@@ -86,7 +86,7 @@
 .community-shell .composer textarea:focus-visible{outline:0}
 .community-shell .composer-actions{display:flex;align-items:center;gap:10px;flex:none;margin-left:auto}
 .room-composer-hint{color:var(--realm-muted);font-size:11px;white-space:nowrap;opacity:0.8}
-.community-shell .composer-actions button,.community-shell .composer>button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:68px;height:34px;min-height:34px;padding:6px 12px;border-radius:10px;background:var(--realm-accent);color:var(--realm-on-accent);font-size:12px;font-weight:600;border:0;cursor:pointer;transition:opacity 0.15s ease}
+.community-shell .composer-actions button,.community-shell .composer>button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:68px;height:36px;min-height:36px;padding:0 14px;border-radius:8px;background:var(--realm-accent);color:var(--realm-on-accent);font-size:13px;font-weight:600;border:0;cursor:pointer;transition:opacity 0.15s ease}
 .community-shell .composer-actions button:disabled,.community-shell .composer>button:disabled{opacity:0.4;cursor:not-allowed}
 .community-shell .conversation>.dm-note{font-size:11px;line-height:1.4;margin:6px 6px 0;color:var(--realm-muted);opacity:0.8}
 .community-shell .room-search-status{font-size:12px;color:var(--realm-muted);margin:8px 4px 20px}
@@ -119,13 +119,13 @@
 .community-shell .chat-server-name-wrap h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin:0;color:var(--community-paper-muted)}
 .community-shell .sidebar .server-menu-indicator{color:var(--community-paper-muted)}
 .community-shell .sidebar .side-section{padding:5px 10px 8px;min-height:36px;color:var(--community-paper-muted);font-size:12px;text-transform:none;letter-spacing:0}
-.community-shell .sidebar .channel-plus-button{width:32px;height:32px;border-radius:50%;color:var(--community-ink);background:var(--realm-raised)}
+.community-shell .sidebar .channel-plus-button{width:28px;height:28px;border-radius:6px;color:var(--community-ink);background:var(--realm-raised)}
 .community-shell .sidebar>nav{overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;padding:2px;gap:3px;max-height:clamp(120px,30dvh,280px);flex:none;scrollbar-gutter:auto}
-.community-shell .sidebar nav .channel-nav-item{border-radius:10px!important;min-height:40px!important;height:40px!important;max-height:none!important;padding:0 8px!important;display:flex;align-items:center;color:var(--community-ink)!important;transition:background 0.12s ease}
+.community-shell .sidebar nav .channel-nav-item{border-radius:10px!important;min-height:38px!important;height:38px!important;max-height:none!important;padding:0 8px!important;display:flex;align-items:center;color:var(--community-ink)!important;transition:background 0.12s ease}
 .community-shell .sidebar nav .channel-nav-item.is-selected{background:var(--realm-raised)!important;color:var(--community-ink)!important;font-weight:600}
 .community-shell .sidebar nav .channel-nav-item:hover{background:var(--realm-raised)!important;color:var(--community-ink)!important}
 .community-shell .sidebar nav .channel-nav-item.is-selected:hover{background:var(--realm-raised)!important}
-.community-shell .sidebar nav .channel-nav-btn{min-height:46px;height:auto;max-height:none;padding:10px 12px;color:var(--community-ink);background:transparent;border-radius:12px;white-space:normal;line-height:1.4}
+.community-shell .sidebar nav .channel-nav-btn{min-height:38px;height:38px;max-height:none;padding:0 6px;color:var(--community-ink);background:transparent;border-radius:8px;white-space:normal;line-height:1.4}
 .community-shell .sidebar nav .channel-nav-btn.selected{color:var(--community-ink)!important;background:transparent}
 .community-shell .sidebar nav .channel-nav-btn:hover{background:var(--realm-raised);color:var(--community-ink)}
 .community-shell .sidebar nav .channel-nav-btn .channel-hash{color:var(--community-paper-muted)!important}
@@ -135,7 +135,7 @@
 .community-shell .sidebar nav .channel-gear-btn:hover{color:var(--community-ink);background:var(--realm-raised)}
 .community-shell .sidebar .channel-category-name,.community-shell .sidebar .channel-category-arrow{color:var(--community-paper-muted)!important}
 .community-shell .sidebar .channel-category-header{padding-inline:10px!important}
-.community-shell .sidebar .channel-category-plus-btn{color:var(--community-ink)!important;min-width:30px!important;min-height:30px!important}
+.community-shell .sidebar .channel-category-plus-btn{color:var(--community-ink)!important;width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;border-radius:6px!important}
 .community-shell .sidebar :is(.channel-nav-btn,.channel-gear-btn,.channel-category-plus-btn):focus-visible{outline:2px solid var(--community-ink)!important;outline-offset:1px!important}
 .community-shell .sidebar .server-dropdown-menu{left:0;right:0;width:100%;min-width:220px;background:var(--realm-bg);border-color:var(--realm-line);color:var(--realm-text)}
 .community-shell .sidebar .server-dropdown-menu :is(button,a){min-height:40px}
