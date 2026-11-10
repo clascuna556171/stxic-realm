@@ -21,13 +21,37 @@ export default function DirectMessages({id}:{id:string}){
  )
 }
 
-function ConversationView({currentId}:{currentId:string}){
+function ConversationView({currentId: propId}:{currentId:string}){
  const user=useAccount().session!.user.id
+ const [currentId,setCurrentId]=useState(propId)
  const [peer,setPeer]=useState<PublicIdentity|null>(null)
  const [error,setError]=useState('')
  const [conversations,setConversations]=useState<ConversationItem[]>([])
  const [loadingConvs,setLoadingConvs]=useState(true)
  const [showMobileList,setShowMobileList]=useState(false)
+
+ useEffect(()=>{
+  setCurrentId(propId)
+ },[propId])
+
+ useEffect(()=>{
+  const handlePopState=()=>{
+   const params=new URLSearchParams(window.location.search)
+   const dm=params.get('dm')
+   if(dm)setCurrentId(dm)
+  }
+  window.addEventListener('popstate',handlePopState)
+  return()=>window.removeEventListener('popstate',handlePopState)
+ },[])
+
+ useEffect(()=>{
+  if(!showMobileList)return
+  const onKeyDown=(e:KeyboardEvent)=>{
+   if(e.key==='Escape')setShowMobileList(false)
+  }
+  window.addEventListener('keydown',onKeyDown)
+  return()=>window.removeEventListener('keydown',onKeyDown)
+ },[showMobileList])
 
  useEffect(()=>{
   const supabase=client
@@ -135,7 +159,14 @@ function ConversationView({currentId}:{currentId:string}){
          key={conv.id}
          href={`/?dm=${conv.id}`}
          className={`dm-sidebar-item ${active?'is-active':''}`}
-         onClick={()=>setShowMobileList(false)}
+         onClick={e=>{
+          e.preventDefault()
+          if(conv.id!==currentId){
+           setCurrentId(conv.id)
+           window.history.pushState(null,'',`/?dm=${conv.id}`)
+          }
+          setShowMobileList(false)
+         }}
         >
          <div className="dm-item-portrait-wrap">
           <AccountPortrait person={p}/>
