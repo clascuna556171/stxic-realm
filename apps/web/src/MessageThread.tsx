@@ -5,10 +5,10 @@ import {Fragment,useEffect,useLayoutEffect,useRef,useState,type FormEvent,type R
 import {useAccount} from './Account'
 import {errorText,publicIdentities,rpc,type PublicIdentity} from './account-repository'
 import {client} from './data'
-import {MemberPortrait} from './Social'
+import {MemberPortrait} from './MemberPortrait'
 import {draftKey,historyPage,mergeMessages,recoverStream,sameDraft,type StreamKind,type StreamMessage} from './stream-repository'
 import {listSpaces,listChannels} from './space-repository'
-import {ReportForm} from './Safety'
+import {ReportForm} from './ReportForm'
 
 function SmileIcon({size=18}:{size?:number}){
  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
@@ -287,8 +287,30 @@ function formatDiscordTimestamp(dateStr: string) {
  }
 }
 
+function CodeBlock({ code, lang }: { code: string; lang?: string }) {
+ const [copied, setCopied] = useState(false)
+ const copy = () => {
+  void navigator.clipboard.writeText(code)
+  setCopied(true)
+  setTimeout(() => setCopied(false), 2000)
+ }
+ return (
+  <div className="chat-code-block-wrap">
+   <div className="chat-code-block-header">
+    <span className="chat-code-lang">{lang || 'code'}</span>
+    <button type="button" className="chat-code-copy-btn" onClick={copy} title="Copy code snippet">
+     {copied ? 'Copied!' : 'Copy'}
+    </button>
+   </div>
+   <pre className="chat-code-block">
+    <code>{code}</code>
+   </pre>
+  </div>
+ )
+}
+
 function parseInlineMarkdown(text: string): ReactNode[] {
- const regex = /(https?:\/\/[^\s<]+[^<.,:;"')\]\s])|(`[^`\n]+`)|(\*\*[^*\n]+\*\*)|(~~[^~\n]+~~)|(\*[^*\n]+\*)|(_[^_\n]+_)/g
+ const regex = /(\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\))|(https?:\/\/[^\s<]+[^<.,:;"')\]\s])|(`[^`\n]+`)|(\*\*[^\n]+?\*\*)|(~~[^\n]+?~~)|(\*[^*\n]+?\*)|(_[^_\n]+?_)/g
  const parts: ReactNode[] = []
  let lastIndex = 0
  let match: RegExpExecArray | null
@@ -299,14 +321,18 @@ function parseInlineMarkdown(text: string): ReactNode[] {
   }
   const token = match[0]
   if (match[1]) {
-   parts.push(<a key={match.index} href={token} target="_blank" rel="noopener noreferrer" className="chat-link">{token}</a>)
-  } else if (match[2]) {
-   parts.push(<code key={match.index} className="chat-inline-code">{token.slice(1, -1)}</code>)
-  } else if (match[3]) {
-   parts.push(<strong key={match.index}>{parseInlineMarkdown(token.slice(2, -2))}</strong>)
+   const label = match[2]
+   const url = match[3]
+   parts.push(<a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="chat-link">{label}</a>)
   } else if (match[4]) {
+   parts.push(<a key={match.index} href={token} target="_blank" rel="noopener noreferrer" className="chat-link">{token}</a>)
+  } else if (match[5]) {
+   parts.push(<code key={match.index} className="chat-inline-code">{token.slice(1, -1)}</code>)
+  } else if (match[6]) {
+   parts.push(<strong key={match.index}>{parseInlineMarkdown(token.slice(2, -2))}</strong>)
+  } else if (match[7]) {
    parts.push(<del key={match.index}>{parseInlineMarkdown(token.slice(2, -2))}</del>)
-  } else if (match[5] || match[6]) {
+  } else if (match[8] || match[9]) {
    parts.push(<em key={match.index}>{parseInlineMarkdown(token.slice(1, -1))}</em>)
   }
   lastIndex = regex.lastIndex
@@ -318,7 +344,7 @@ function parseInlineMarkdown(text: string): ReactNode[] {
 }
 
 function renderMessageContent(body: string): ReactNode {
- if (!body.includes('```') && !body.includes('> ') && !body.includes('**') && !body.includes('`') && !body.includes('http') && !body.includes('~~') && !body.includes('*') && !body.includes('_')) {
+ if (!body.includes('```') && !body.includes('> ') && !body.includes('**') && !body.includes('`') && !body.includes('http') && !body.includes('~~') && !body.includes('*') && !body.includes('_') && !body.includes('[')) {
   return <p>{body}</p>
  }
  const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g
@@ -368,12 +394,9 @@ function renderMessageContent(body: string): ReactNode {
   if (match.index > lastIndex) {
    processTextLines(body.slice(lastIndex, match.index), lastIndex)
   }
+  const lang = match[1]?.trim()
   const code = match[2]
-  blocks.push(
-   <pre key={`cb-${match.index}`} className="chat-code-block">
-    <code>{code}</code>
-   </pre>
-  )
+  blocks.push(<CodeBlock key={`cb-${match.index}`} code={code} lang={lang} />)
   lastIndex = codeBlockRegex.lastIndex
  }
 
@@ -724,7 +747,10 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
   e.preventDefault();if(sending||readOnly||denied||!body.trim())return;setSending(true);setError('')
   worldTyping.stop();const version=draftVersion.current,clientId=retry.current??crypto.randomUUID();retry.current=clientId
   try{
-   await rpc(client!,'message_send',{p_kind:kind,p_stream:id,p_body:body.trim(),p_client:clientId})
+   const replyAuthor=replyingTo?(replyingTo.author_id===user?(people[user]?.display_name||'You'):(replyingTo.author_id?people[replyingTo.author_id]?.display_name||'Member':'Deleted account')):''
+   const replyQuote=replyingTo?`> 💬 *In reply to @${replyAuthor}*:\n> ${replyingTo.body.replace(/\n/g,'\n> ')}\n\n`:''
+   const fullBody=`${replyQuote}${body.trim()}`
+   await rpc(client!,'message_send',{p_kind:kind,p_stream:id,p_body:fullBody,p_client:clientId})
    if(!alive.current)return
    if(sameDraft(version,draftVersion.current)){setBody('');retry.current=null;setReplyingTo(null)}
    atBottom.current=true;await syncRef.current()
@@ -899,54 +925,31 @@ export function MessageThread({kind,id,title,channelName,topic,readOnly=false,vi
     </div>
    )}
    <form className="composer" onSubmit={send}>
-    {kind==='channel'?(
-     <textarea
-      ref={composerTextareaRef}
-      id="stream-body"
-      aria-label={channelName ? `Message #${channelName}` : title}
-      rows={1}
-      value={body}
-      disabled={readOnly||denied}
-      maxLength={4000}
-      spellCheck={false}
-      autoComplete="off"
-      autoCorrect="off"
-      autoCapitalize="off"
-      data-gramm="false"
-      data-gramm_editor="false"
-      data-enable-grammarly="false"
-      data-ms-editor="false"
-      // @ts-expect-error browser writing suggestion flags
-      writingsuggestions="false"
-      textprediction="false"
-      onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}}
-      onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();e.currentTarget.form?.requestSubmit()}}}
-      placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':'Message #' + (channelName||'general')}
-     />
-    ):(
-     <input
-      id="stream-body"
-      aria-label={title}
-      value={body}
-      disabled={readOnly||denied}
-      maxLength={4000}
-      spellCheck={false}
-      autoComplete="off"
-      autoCorrect="off"
-      autoCapitalize="off"
-      data-gramm="false"
-      data-gramm_editor="false"
-      data-enable-grammarly="false"
-      data-ms-editor="false"
-      // @ts-expect-error browser writing suggestion flags
-      writingsuggestions="false"
-      textprediction="false"
-      onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}}
-      placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':title}
-     />
-    )}
+    <textarea
+     ref={composerTextareaRef}
+     id="stream-body"
+     aria-label={kind==='channel'?(channelName?`Message #${channelName}`:title):title}
+     rows={1}
+     value={body}
+     disabled={readOnly||denied}
+     maxLength={4000}
+     spellCheck={false}
+     autoComplete="off"
+     autoCorrect="off"
+     autoCapitalize="off"
+     data-gramm="false"
+     data-gramm_editor="false"
+     data-enable-grammarly="false"
+     data-ms-editor="false"
+     // @ts-expect-error browser writing suggestion flags
+     writingsuggestions="false"
+     textprediction="false"
+     onChange={e=>{setBody(e.target.value);worldTyping.input(e.target.value);draftVersion.current++;retry.current=null}}
+     onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();e.currentTarget.form?.requestSubmit()}}}
+     placeholder={denied?'Access unavailable':readOnly?'This conversation is read-only':(kind==='channel'?('Message #'+(channelName||'general')):title)}
+    />
     <button type="button" ref={composerEmojiBtnRef} className="composer-emoji-btn" title="Add emoji" aria-label="Add emoji" disabled={readOnly||denied} onClick={()=>{menuOpener.current=composerEmojiBtnRef.current;setComposerEmojiOpen(true);setEmojiSearch('');setEditingQuickReactions(false);setQuickReactionAlert('')}}><SmileIcon size={18}/></button>
-    <button type="submit" className="composer-send-btn" disabled={sending||readOnly||denied||!body.trim()}>{sending?'…':'Send'}{kind==='channel'&&<ForwardIcon size={16}/>}</button>
+    <button type="submit" className="composer-send-btn" disabled={sending||readOnly||denied||!body.trim()}>{sending?'…':'Send'}<ForwardIcon size={16}/></button>
    </form>
    <p className="muted dm-note">{readOnly?'Archived conversations preserve their history.':'Drafts stay on this device for this account. Press Enter to send.'}</p>
 

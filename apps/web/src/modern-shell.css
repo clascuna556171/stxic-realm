@@ -2055,12 +2055,49 @@ button.secondary-btn:disabled,
   color: #e2e8f0;
 }
 
-.message-bubble .chat-code-block {
+.message-bubble .chat-code-block-wrap {
   background: #141518;
   border: 1px solid var(--realm-line);
   border-radius: 8px;
-  padding: 10px 14px;
   margin: 6px 0;
+  overflow: hidden;
+}
+
+.message-bubble .chat-code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--realm-line);
+  font-size: 11px;
+  color: var(--realm-muted);
+  font-family: var(--realm-mono-font, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  text-transform: uppercase;
+}
+
+.message-bubble .chat-code-copy-btn {
+  background: transparent;
+  border: none;
+  color: var(--realm-muted);
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.message-bubble .chat-code-copy-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.message-bubble .chat-code-block {
+  background: #141518;
+  border: none;
+  border-radius: 0;
+  padding: 10px 14px;
+  margin: 0;
   overflow-x: auto;
   font-family: var(--realm-mono-font, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
   font-size: 13px;
@@ -2141,4 +2178,10 @@ button.secondary-btn:disabled,
 .realm-connection-toast .toast-retry-btn:hover {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .realm-connection-toast .toast-dot {
+    animation: none;
+  }
 }
